@@ -1,13 +1,15 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import React from 'react';
-import { Alert, Pressable, ScrollView, Switch, Text, View } from 'react-native';
+import { useRouter } from 'expo-router';
+import React, { useState } from 'react';
+import { Alert, Image, Pressable, ScrollView, Switch, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { SelectModal, SelectOption } from '@/components/ui/select-modal';
 import { useAuthStore } from '@/store/auth-store';
-import { useSettingsStore } from '@/store/settings-store';
-import type { Currency, Language } from '@/types';
+import { primaryColors, useSettingsStore } from '@/store/settings-store';
+import type { Currency, Language, PrimaryColor } from '@/types';
 
 interface SettingItemProps {
     icon: keyof typeof MaterialCommunityIcons.glyphMap;
@@ -48,70 +50,84 @@ function SettingItem({ icon, iconColor = '#6b7280', title, subtitle, onPress, ri
     );
 }
 
+// Modal types
+type ModalType = 'language' | 'currency' | 'theme' | 'export' | 'logout' | null;
+
 export default function SettingsScreen() {
+    const router = useRouter();
     const { user, logout } = useAuthStore();
-    const { preferences, setTheme, setLanguage, setCurrency } = useSettingsStore();
+    const { preferences, setTheme, setLanguage, setCurrency, setPrimaryColor } = useSettingsStore();
+
+    const [activeModal, setActiveModal] = useState<ModalType>(null);
 
     const isDarkMode = preferences.theme === 'dark';
+    const currentPrimaryColor = primaryColors[preferences.primaryColor]?.hex || '#22c55e';
 
     const handleToggleDarkMode = () => {
         setTheme(isDarkMode ? 'light' : 'dark');
     };
 
-    const handleSelectLanguage = () => {
-        Alert.alert(
-            'Idioma',
-            'Selecciona tu idioma preferido',
-            [
-                { text: 'Español', onPress: () => setLanguage('es') },
-                { text: 'English', onPress: () => setLanguage('en') },
-                { text: 'Cancelar', style: 'cancel' },
-            ]
-        );
-    };
-
-    const handleSelectCurrency = () => {
-        Alert.alert(
-            'Moneda Principal',
-            'Selecciona tu moneda principal',
-            [
-                { text: 'USD ($)', onPress: () => setCurrency('USD') },
-                { text: 'VES (Bs.)', onPress: () => setCurrency('VES') },
-                { text: 'USDT', onPress: () => setCurrency('USDT') },
-                { text: 'Cancelar', style: 'cancel' },
-            ]
-        );
-    };
-
-    const handleExport = () => {
-        Alert.alert(
-            'Exportar Datos',
-            '¿En qué formato deseas exportar?',
-            [
-                { text: 'CSV', onPress: () => Alert.alert('Éxito', 'Datos exportados en CSV') },
-                { text: 'PDF', onPress: () => Alert.alert('Éxito', 'Datos exportados en PDF') },
-                { text: 'Cancelar', style: 'cancel' },
-            ]
-        );
-    };
-
-    const handleImport = () => {
-        Alert.alert('Importar Datos', 'Esta función estará disponible próximamente');
-    };
-
     const handleLogout = () => {
-        Alert.alert(
-            'Cerrar Sesión',
-            '¿Estás seguro que deseas cerrar sesión?',
-            [
-                { text: 'Cancelar', style: 'cancel' },
-                { text: 'Cerrar Sesión', style: 'destructive', onPress: logout },
-            ]
-        );
+        logout();
+        router.replace('/(auth)/login');
+    };
+
+    // Language options
+    const languageOptions: SelectOption<Language>[] = [
+        { label: 'Español', value: 'es', icon: 'translate' },
+        { label: 'English', value: 'en', icon: 'translate' },
+        { label: 'Português', value: 'pt', icon: 'translate' },
+    ];
+
+    // Currency options
+    const currencyOptions: SelectOption<Currency>[] = [
+        { label: 'USD ($)', value: 'USD', icon: 'currency-usd', color: '#22c55e' },
+        { label: 'VES (Bs.)', value: 'VES', icon: 'currency-usd', color: '#3b82f6' },
+        { label: 'USDT', value: 'USDT', icon: 'currency-btc', color: '#14b8a6' },
+    ];
+
+    // Theme color options
+    const themeColorOptions: SelectOption<PrimaryColor>[] = Object.entries(primaryColors).map(
+        ([key, value]) => ({
+            label: value.name,
+            value: key as PrimaryColor,
+            color: value.hex,
+        })
+    );
+
+    // Export options
+    const exportOptions: SelectOption<string>[] = [
+        { label: 'Exportar como CSV', value: 'csv', icon: 'file-delimited', color: '#22c55e' },
+        { label: 'Exportar como PDF', value: 'pdf', icon: 'file-pdf-box', color: '#ef4444' },
+    ];
+
+    // Logout options
+    const logoutOptions: SelectOption<string>[] = [
+        { label: 'Cancelar', value: 'cancel', icon: 'close', color: '#6b7280' },
+        { label: 'Cerrar Sesión', value: 'logout', icon: 'logout', color: '#ef4444' },
+    ];
+
+    const handleExportSelect = (value: string) => {
+        if (value === 'csv') {
+            Alert.alert('Éxito', 'Datos exportados en CSV');
+        } else if (value === 'pdf') {
+            Alert.alert('Éxito', 'Datos exportados en PDF');
+        }
+    };
+
+    const handleLogoutSelect = (value: string) => {
+        if (value === 'logout') {
+            handleLogout();
+        }
     };
 
     const getLanguageLabel = (lang: Language) => {
-        return lang === 'es' ? 'Español' : 'English';
+        const labels: Record<Language, string> = {
+            es: 'Español',
+            en: 'English',
+            pt: 'Português',
+        };
+        return labels[lang];
     };
 
     const getCurrencyLabel = (currency: Currency) => {
@@ -137,11 +153,22 @@ export default function SettingsScreen() {
                 {/* Profile Section */}
                 <Card variant="elevated" className="mb-6">
                     <View className="flex-row items-center">
-                        <View className="w-16 h-16 rounded-full bg-primary-500 items-center justify-center mr-4">
-                            <Text className="text-2xl font-bold text-white">
-                                {user?.fullName?.charAt(0).toUpperCase() || 'U'}
-                            </Text>
-                        </View>
+                        {user?.avatar ? (
+                            <Image
+                                source={{ uri: user.avatar }}
+                                className="w-16 h-16 rounded-full mr-4"
+                                resizeMode="cover"
+                            />
+                        ) : (
+                            <View
+                                className="w-16 h-16 rounded-full items-center justify-center mr-4"
+                                style={{ backgroundColor: currentPrimaryColor }}
+                            >
+                                <Text className="text-2xl font-bold text-white">
+                                    {user?.fullName?.charAt(0).toUpperCase() || 'U'}
+                                </Text>
+                            </View>
+                        )}
                         <View className="flex-1">
                             <Text className="text-lg font-semibold text-gray-900 dark:text-white">
                                 {user?.fullName || 'Usuario'}
@@ -150,8 +177,11 @@ export default function SettingsScreen() {
                                 {user?.email || 'email@ejemplo.com'}
                             </Text>
                         </View>
-                        <Pressable className="p-2">
-                            <MaterialCommunityIcons name="pencil" size={20} color="#22c55e" />
+                        <Pressable
+                            className="p-2"
+                            onPress={() => router.push('/profile-edit')}
+                        >
+                            <MaterialCommunityIcons name="pencil" size={20} color={currentPrimaryColor} />
                         </Pressable>
                     </View>
                 </Card>
@@ -170,9 +200,27 @@ export default function SettingsScreen() {
                             <Switch
                                 value={isDarkMode}
                                 onValueChange={handleToggleDarkMode}
-                                trackColor={{ false: '#e5e7eb', true: '#22c55e' }}
+                                trackColor={{ false: '#e5e7eb', true: currentPrimaryColor }}
                                 thumbColor="#fff"
                             />
+                        }
+                    />
+                    <View className="h-px bg-light-border dark:bg-dark-border" />
+
+                    <SettingItem
+                        icon="palette"
+                        iconColor={currentPrimaryColor}
+                        title="Color del Tema"
+                        subtitle={primaryColors[preferences.primaryColor]?.name || 'Verde'}
+                        onPress={() => setActiveModal('theme')}
+                        rightElement={
+                            <View className="flex-row items-center">
+                                <View
+                                    className="w-6 h-6 rounded-full mr-2"
+                                    style={{ backgroundColor: currentPrimaryColor }}
+                                />
+                                <MaterialCommunityIcons name="chevron-right" size={24} color="#9ca3af" />
+                            </View>
                         }
                     />
                     <View className="h-px bg-light-border dark:bg-dark-border" />
@@ -182,7 +230,7 @@ export default function SettingsScreen() {
                         iconColor="#3b82f6"
                         title="Idioma"
                         subtitle={getLanguageLabel(preferences.language)}
-                        onPress={handleSelectLanguage}
+                        onPress={() => setActiveModal('language')}
                     />
                     <View className="h-px bg-light-border dark:bg-dark-border" />
 
@@ -191,7 +239,7 @@ export default function SettingsScreen() {
                         iconColor="#22c55e"
                         title="Moneda Principal"
                         subtitle={getCurrencyLabel(preferences.mainCurrency)}
-                        onPress={handleSelectCurrency}
+                        onPress={() => setActiveModal('currency')}
                     />
                 </Card>
 
@@ -219,7 +267,7 @@ export default function SettingsScreen() {
                         iconColor="#14b8a6"
                         title="Exportar Datos"
                         subtitle="CSV o PDF"
-                        onPress={handleExport}
+                        onPress={() => setActiveModal('export')}
                     />
                     <View className="h-px bg-light-border dark:bg-dark-border" />
 
@@ -228,14 +276,14 @@ export default function SettingsScreen() {
                         iconColor="#a855f7"
                         title="Importar Datos"
                         subtitle="Restaurar desde backup"
-                        onPress={handleImport}
+                        onPress={() => Alert.alert('Importar Datos', 'Esta función estará disponible próximamente')}
                     />
                 </Card>
 
                 {/* Logout Button */}
                 <Button
                     variant="danger"
-                    onPress={handleLogout}
+                    onPress={() => setActiveModal('logout')}
                     className="mb-8"
                 >
                     Cerrar Sesión
@@ -246,6 +294,56 @@ export default function SettingsScreen() {
                     FinanceApp v1.0.0
                 </Text>
             </ScrollView>
+
+            {/* Modals */}
+            <SelectModal<Language>
+                visible={activeModal === 'language'}
+                onClose={() => setActiveModal(null)}
+                title="Idioma"
+                subtitle="Selecciona tu idioma preferido"
+                options={languageOptions}
+                selectedValue={preferences.language}
+                onSelect={setLanguage}
+            />
+
+            <SelectModal<Currency>
+                visible={activeModal === 'currency'}
+                onClose={() => setActiveModal(null)}
+                title="Moneda Principal"
+                subtitle="Selecciona tu moneda principal"
+                options={currencyOptions}
+                selectedValue={preferences.mainCurrency}
+                onSelect={setCurrency}
+            />
+
+            <SelectModal<PrimaryColor>
+                visible={activeModal === 'theme'}
+                onClose={() => setActiveModal(null)}
+                title="Color del Tema"
+                subtitle="Personaliza el color principal de la app"
+                options={themeColorOptions}
+                selectedValue={preferences.primaryColor}
+                onSelect={setPrimaryColor}
+                showColors
+            />
+
+            <SelectModal<string>
+                visible={activeModal === 'export'}
+                onClose={() => setActiveModal(null)}
+                title="Exportar Datos"
+                subtitle="Selecciona el formato de exportación"
+                options={exportOptions}
+                onSelect={handleExportSelect}
+            />
+
+            <SelectModal<string>
+                visible={activeModal === 'logout'}
+                onClose={() => setActiveModal(null)}
+                title="Cerrar Sesión"
+                subtitle="¿Estás seguro que deseas cerrar sesión?"
+                options={logoutOptions}
+                onSelect={handleLogoutSelect}
+            />
         </SafeAreaView>
     );
 }

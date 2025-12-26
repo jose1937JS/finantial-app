@@ -74,13 +74,15 @@ export interface Notification {
 
 // Settings types
 export type ThemeMode = 'light' | 'dark' | 'system';
-export type Language = 'es' | 'en';
+export type Language = 'es' | 'en' | 'pt';
 export type Currency = 'USD' | 'VES' | 'USDT';
+export type PrimaryColor = 'green' | 'blue' | 'purple' | 'orange' | 'pink' | 'teal' | 'red' | 'indigo';
 
 export interface UserPreferences {
     theme: ThemeMode;
     language: Language;
     mainCurrency: Currency;
+    primaryColor: PrimaryColor;
 }
 
 // Auth types

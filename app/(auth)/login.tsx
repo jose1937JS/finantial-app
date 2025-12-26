@@ -1,5 +1,5 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { Link } from 'expo-router';
+import { Link, useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -10,6 +10,7 @@ import { useAuthStore } from '@/store/auth-store';
 import { validateEmail, validatePassword } from '@/utils/validation';
 
 export default function LoginScreen() {
+    const router = useRouter();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
@@ -30,7 +31,10 @@ export default function LoginScreen() {
         }
 
         setErrors({});
-        await login(email, password);
+        const success = await login(email, password);
+        if (success) {
+            router.replace('/(tabs)');
+        }
     };
 
     return (

@@ -1,5 +1,5 @@
 import { defaultCategories } from '@/constants/categories';
-import type { Category, Currency, Language, ThemeMode, UserPreferences } from '@/types';
+import type { Category, Currency, Language, PrimaryColor, ThemeMode, UserPreferences } from '@/types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
@@ -12,6 +12,7 @@ interface SettingsStore {
     setTheme: (theme: ThemeMode) => void;
     setLanguage: (language: Language) => void;
     setCurrency: (currency: Currency) => void;
+    setPrimaryColor: (color: PrimaryColor) => void;
 
     // Category actions
     addCategory: (category: Omit<Category, 'id' | 'isDefault'>) => void;
@@ -28,6 +29,19 @@ const defaultPreferences: UserPreferences = {
     theme: 'system',
     language: 'es',
     mainCurrency: 'USD',
+    primaryColor: 'green',
+};
+
+// Primary color hex values
+export const primaryColors: Record<PrimaryColor, { hex: string; name: string }> = {
+    green: { hex: '#22c55e', name: 'Verde' },
+    blue: { hex: '#3b82f6', name: 'Azul' },
+    purple: { hex: '#a855f7', name: 'Morado' },
+    orange: { hex: '#f97316', name: 'Naranja' },
+    pink: { hex: '#ec4899', name: 'Rosa' },
+    teal: { hex: '#14b8a6', name: 'Verde Azulado' },
+    red: { hex: '#ef4444', name: 'Rojo' },
+    indigo: { hex: '#6366f1', name: 'Índigo' },
 };
 
 export const useSettingsStore = create<SettingsStore>()(
@@ -51,6 +65,12 @@ export const useSettingsStore = create<SettingsStore>()(
             setCurrency: (currency) => {
                 set((state) => ({
                     preferences: { ...state.preferences, mainCurrency: currency },
+                }));
+            },
+
+            setPrimaryColor: (primaryColor) => {
+                set((state) => ({
+                    preferences: { ...state.preferences, primaryColor },
                 }));
             },
 

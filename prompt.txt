@@ -1,0 +1,81 @@
+Personal Finance Mobile App (React Native + Expo + NativeWind)
+Contexto: Actúa como un Senior Full Stack Developer y Arquitecto de Software experto en Mobile. Tu tarea es generar la estructura base, los componentes de UI y la lógica de una aplicación de finanzas personales moderna y minimalista.
+
+Stack Tecnológico Requerido:
+
+Framework: React Native con Expo (Managed Workflow).
+
+Estilos: NativeWind (Tailwind CSS para React Native).
+
+Navegación: Expo Router (Bottom Tab Navigation para el flujo principal y Stack Navigation para el flujo de autenticación).
+
+Gráficos: react-native-gifted-charts.
+
+Iconos: Expo Vector Icons (MaterialCommunityIcons), que tenga soporte para mas iconos
+
+1. Arquitectura y Patrones de Diseño
+Estructura de Carpetas: Implementa un patrón basado en característica modulares. Carpetas: /components, /app, /hooks, /store (Zustand), /utils, /constants. Teniendo en cuenta la estructura actual que es el template por defecto de expo.
+
+Escalabilidad: Usa TypeScript para definición de interfaces (Transaction, User, ExchangeRate, Loan, Category, etc).
+
+Responsividad: El diseño debe usar unidades relativas y Flexbox para adaptarse a smartphones y tablets.
+
+2. Definición de Pantallas y Funcionalidad
+A. Flujo de Autenticación (Auth Stack)
+Login: Formulario con correo y contraseña. Validación de inputs.
+
+Registro: Captura de nombre completo, correo y contraseña.
+
+Recuperar Contraseña: Input de correo con flujo de recuperación simulado.
+
+B. Dashboard (Main Bottom Tab Stack)
+Home:
+
+Header con "Balance Total" resaltado en fuente grande.
+
+Acciones Rápidas: Botones flotantes o tarjetas para "+" y "-".
+
+Sección de "Transacciones Recientes" (FlatList optimizada).
+
+Historial:
+
+Barra de búsqueda funcional.
+
+Filtros segmentados (Chips) para: Todos, Ingresos, Egresos.
+
+Análisis (Estadísticas):
+
+Gráficos de pastel para categorías de gastos.
+
+Módulo de Divisas: Gráfico lineal que muestre la evolución de tasas de cambio (USD / VES / USDT). Filtros por fecha (7d, 1m, 1y).
+
+Notificaciones: Lista de alertas sobre vencimientos de préstamos o límites de presupuesto.
+
+C. Módulo "Agregar Operación" (Multimodal)
+Crea una vista de selección inicial con 4 opciones: Manual, Voz, Chat (NLP) y Foto (OCR).
+
+Lógica de Préstamo (Egreso Especial): Si el tipo es "Préstamo", desplegar un formulario extendido que incluya:
+
+Datos del deudor: Nombre, apellido, correo, teléfono.
+
+Financiero: Monto, fecha de vencimiento, tasa de interés (default 0), tasa de cambio aplicada vs USD.
+
+Descripción detallada.
+
+D. Ajustes (Settings)
+Perfil: Editar información del usuario.
+
+Preferencias: Toggle de Modo Oscuro, Selección de Idioma, Moneda Principal.
+
+Gestión: CRUD de categorías personalizadas.
+
+Data: Botones para "Exportar a CSV/PDF" e "Importar Datos".
+
+3. Requerimientos de Diseño (UI/UX)
+Estilo: Minimalista, con mucho espacio en blanco (o dark mode profundo), bordes redondeados (rounded-3xl) y sombras sutiles.
+
+NativeWind: Usa clases de Tailwind para asegurar consistencia visual.
+
+Interacciones: Feedback visual al presionar botones (Haptics sugerido).
+
+Instrucción Final: Genera el archivo _layout.tsx, la configuración de navegación y las pantallas antes mencionadas usando los patrones especificados.

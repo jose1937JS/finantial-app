@@ -6,6 +6,7 @@ import { LineChart } from '@/components/charts/line-chart';
 import { PieChart } from '@/components/charts/pie-chart';
 import { Card } from '@/components/ui/card';
 import { Chip } from '@/components/ui/chip';
+import { useThemeColor } from '@/hooks/use-theme-color';
 import { useTransactionStore } from '@/store/transaction-store';
 import type { PieChartData } from '@/types';
 
@@ -52,6 +53,7 @@ const categoryColors: Record<string, string> = {
 export default function AnalysisScreen() {
     const [dateFilter, setDateFilter] = useState<DateFilter>('7d');
     const { transactions } = useTransactionStore();
+    const primaryColor = useThemeColor({}, 'tint');
 
     // Calculate expense breakdown by category
     const categoryData = useMemo((): PieChartData[] => {
@@ -139,7 +141,7 @@ export default function AnalysisScreen() {
                         {/* Line Chart */}
                         <LineChart
                             data={exchangeData}
-                            color="#22c55e"
+                            color={primaryColor}
                             showArea
                         />
                     </Card>

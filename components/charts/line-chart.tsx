@@ -3,6 +3,8 @@ import React from 'react';
 import { Dimensions, Text, View } from 'react-native';
 import { LineChart as GiftedLineChart } from 'react-native-gifted-charts';
 
+import { useThemeColor } from '@/hooks/use-theme-color';
+
 interface LineChartProps {
     data: LineChartData[];
     title?: string;
@@ -13,9 +15,11 @@ interface LineChartProps {
 export function LineChart({
     data,
     title,
-    color = '#22c55e',
+    color,
     showArea = true
 }: LineChartProps) {
+    const primaryColor = useThemeColor({}, 'tint');
+    const chartColor = color || primaryColor;
     const screenWidth = Dimensions.get('window').width;
     const chartWidth = screenWidth - 80;
 
@@ -40,10 +44,10 @@ export function LineChart({
                     height={200}
                     spacing={chartWidth / (data.length - 1 || 1)}
                     initialSpacing={0}
-                    color={color}
+                    color={chartColor}
                     thickness={3}
-                    startFillColor={showArea ? `${color}40` : 'transparent'}
-                    endFillColor={showArea ? `${color}05` : 'transparent'}
+                    startFillColor={showArea ? `${chartColor}40` : 'transparent'}
+                    endFillColor={showArea ? `${chartColor}05` : 'transparent'}
                     startOpacity={0.9}
                     endOpacity={0.1}
                     noOfSections={4}
@@ -53,7 +57,7 @@ export function LineChart({
                     yAxisTextStyle={{ color: '#6b7280', fontSize: 10 }}
                     xAxisLabelTextStyle={{ color: '#6b7280', fontSize: 10 }}
                     hideDataPoints={false}
-                    dataPointsColor={color}
+                    dataPointsColor={chartColor}
                     dataPointsRadius={4}
                     curved
                     areaChart={showArea}

@@ -1,7 +1,12 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import React from 'react';
-import { Modal, Pressable, ScrollView, Text, TouchableWithoutFeedback, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+
+import { useThemeColor } from '@/hooks/use-theme-color';
+import { Dimensions, Modal, Pressable, ScrollView, Text, TouchableWithoutFeedback, View } from 'react-native';
+import Animated, { runOnJS, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
+
+const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 export interface SelectOption<T = string> {
     label: string;
@@ -31,23 +36,49 @@ export function SelectModal<T = string>({
     onSelect,
     showColors = false,
 }: SelectModalProps<T>) {
+    const primaryColor = useThemeColor({}, 'tint');
+    const [showModal, setShowModal] = useState(visible);
+    const translateY = useSharedValue(SCREEN_HEIGHT);
+
+    useEffect(() => {
+        if (visible) {
+            setShowModal(true);
+            translateY.value = withTiming(0, { duration: 300 });
+        } else {
+            translateY.value = withTiming(SCREEN_HEIGHT, { duration: 300 }, () => {
+                runOnJS(setShowModal)(false);
+            });
+        }
+    }, [visible]);
+
+    const animatedStyle = useAnimatedStyle(() => {
+        return {
+            transform: [{ translateY: translateY.value }],
+        };
+    });
+
     const handleSelect = (value: T) => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         onSelect(value);
         onClose();
     };
 
+    if (!showModal) return null;
+
     return (
         <Modal
-            visible={visible}
+            visible={showModal}
             transparent
-            animationType="fade"
+            animationType="none"
             onRequestClose={onClose}
         >
             <TouchableWithoutFeedback onPress={onClose}>
                 <View className="flex-1 bg-black/50 justify-end">
                     <TouchableWithoutFeedback>
-                        <View className="bg-white dark:bg-dark-card rounded-t-3xl max-h-[70%]">
+                        <Animated.View
+                            style={[animatedStyle]}
+                            className="bg-white dark:bg-dark-card rounded-t-3xl max-h-[70%]"
+                        >
                             {/* Header */}
                             <View className="px-6 pt-6 pb-4 border-b border-light-border dark:border-dark-border">
                                 <View className="flex-row items-center justify-between">
@@ -81,8 +112,8 @@ export function SelectModal<T = string>({
                                             >
                                                 <View
                                                     className={`w-16 h-16 rounded-2xl items-center justify-center ${selectedValue === option.value
-                                                            ? 'border-4 border-gray-900 dark:border-white'
-                                                            : 'border-2 border-transparent'
+                                                        ? 'border-4 border-gray-900 dark:border-white'
+                                                        : 'border-2 border-transparent'
                                                         }`}
                                                     style={{ backgroundColor: option.color }}
                                                 >
@@ -104,8 +135,8 @@ export function SelectModal<T = string>({
                                                 key={index}
                                                 onPress={() => handleSelect(option.value)}
                                                 className={`flex-row items-center py-4 px-4 rounded-2xl mb-2 ${selectedValue === option.value
-                                                        ? 'bg-primary-500/10'
-                                                        : 'bg-light-surface dark:bg-dark-surface'
+                                                    ? 'bg-primary-500/10'
+                                                    : 'bg-light-surface dark:bg-dark-surface'
                                                     }`}
                                             >
                                                 {option.icon && (
@@ -127,20 +158,20 @@ export function SelectModal<T = string>({
                                                     />
                                                 )}
                                                 <Text className={`flex-1 text-base ${selectedValue === option.value
-                                                        ? 'font-semibold text-primary-500'
-                                                        : 'text-gray-900 dark:text-white'
+                                                    ? 'font-semibold text-primary-500'
+                                                    : 'text-gray-900 dark:text-white'
                                                     }`}>
                                                     {option.label}
                                                 </Text>
                                                 {selectedValue === option.value && (
-                                                    <MaterialCommunityIcons name="check-circle" size={24} color="#22c55e" />
+                                                    <MaterialCommunityIcons name="check-circle" size={24} color={primaryColor} />
                                                 )}
                                             </Pressable>
                                         ))}
                                     </View>
                                 )}
                             </ScrollView>
-                        </View>
+                        </Animated.View>
                     </TouchableWithoutFeedback>
                 </View>
             </TouchableWithoutFeedback>

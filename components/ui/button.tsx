@@ -2,6 +2,9 @@ import * as Haptics from 'expo-haptics';
 import React from 'react';
 import { ActivityIndicator, Pressable, PressableProps, Text } from 'react-native';
 
+import { useThemeColor } from '@/hooks/use-theme-color';
+
+
 interface ButtonProps extends PressableProps {
     variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger';
     size?: 'sm' | 'md' | 'lg';
@@ -23,6 +26,8 @@ export function Button({
     onPress,
     ...props
 }: ButtonProps) {
+    const primaryColor = useThemeColor({}, 'tint');
+
     const handlePress = (e: any) => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         onPress?.(e);
@@ -70,7 +75,7 @@ export function Button({
             {isLoading ? (
                 <ActivityIndicator
                     size="small"
-                    color={variant === 'primary' || variant === 'danger' ? '#fff' : '#22c55e'}
+                    color={variant === 'primary' || variant === 'danger' ? '#fff' : primaryColor}
                 />
             ) : (
                 <Text className={`${textSizeClasses[size]} ${textVariantClasses[variant]} ${textClassName}`}>

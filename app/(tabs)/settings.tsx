@@ -81,7 +81,7 @@ export default function SettingsScreen() {
 
     // Currency options
     const currencyOptions: SelectOption<Currency>[] = [
-        { label: 'USD ($)', value: 'USD', icon: 'currency-usd', color: '#22c55e' },
+        { label: 'USD ($)', value: 'USD', icon: 'currency-usd', color: currentPrimaryColor },
         { label: 'VES (Bs.)', value: 'VES', icon: 'currency-usd', color: '#3b82f6' },
         { label: 'USDT', value: 'USDT', icon: 'currency-btc', color: '#14b8a6' },
     ];
@@ -97,7 +97,7 @@ export default function SettingsScreen() {
 
     // Export options
     const exportOptions: SelectOption<string>[] = [
-        { label: 'Exportar como CSV', value: 'csv', icon: 'file-delimited', color: '#22c55e' },
+        { label: 'Exportar como CSV', value: 'csv', icon: 'file-delimited', color: currentPrimaryColor },
         { label: 'Exportar como PDF', value: 'pdf', icon: 'file-pdf-box', color: '#ef4444' },
     ];
 
@@ -236,7 +236,7 @@ export default function SettingsScreen() {
 
                     <SettingItem
                         icon="currency-usd"
-                        iconColor="#22c55e"
+                        iconColor={currentPrimaryColor}
                         title="Moneda Principal"
                         subtitle={getCurrencyLabel(preferences.mainCurrency)}
                         onPress={() => setActiveModal('currency')}
@@ -253,7 +253,7 @@ export default function SettingsScreen() {
                         iconColor="#f97316"
                         title="Categorías"
                         subtitle="Administra tus categorías personalizadas"
-                        onPress={() => Alert.alert('Categorías', 'Gestión de categorías próximamente')}
+                        onPress={() => router.push('/categories')}
                     />
                 </Card>
 

@@ -1,6 +1,8 @@
+import { useThemeColor } from '@/hooks/use-theme-color';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { Tabs } from 'expo-router';
+import { Tabs, useRouter } from 'expo-router';
 import React from 'react';
+import { View } from 'react-native';
 
 import { HapticTab } from '@/components/haptic-tab';
 import { Colors } from '@/constants/theme';
@@ -10,6 +12,8 @@ type IconName = keyof typeof MaterialCommunityIcons.glyphMap;
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
+  const router = useRouter();
+  const tintColor = useThemeColor({}, 'tint');
 
   const getTabIcon = (name: IconName, color: string, size: number = 26) => (
     <MaterialCommunityIcons name={name} size={size} color={color} />
@@ -18,7 +22,7 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
+        tabBarActiveTintColor: tintColor,
         tabBarInactiveTintColor: Colors[colorScheme ?? 'light'].tabIconDefault,
         headerShown: false,
         tabBarButton: HapticTab,
@@ -50,11 +54,37 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="analysis"
+        name="add"
         options={{
-          title: 'Análisis',
-          tabBarIcon: ({ color }) => getTabIcon('chart-pie', color),
+          title: '',
+          tabBarIcon: ({ color }) => (
+            <View
+              style={{
+                top: -20,
+                width: 60,
+                height: 60,
+                borderRadius: 30,
+                backgroundColor: tintColor,
+                justifyContent: 'center',
+                alignItems: 'center',
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.3,
+                shadowRadius: 4,
+                elevation: 5,
+              }}
+            >
+              <MaterialCommunityIcons name="plus" size={32} color="#fff" />
+            </View>
+          ),
+          tabBarLabel: () => null,
         }}
+        listeners={() => ({
+          tabPress: (e) => {
+            e.preventDefault();
+            router.push('/modal');
+          },
+        })}
       />
       <Tabs.Screen
         name="notifications"
@@ -70,7 +100,14 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => getTabIcon('cog-outline', color),
         }}
       />
-      {/* Hide explore from tabs */}
+
+      {/* Hidden tabs */}
+      <Tabs.Screen
+        name="analysis"
+        options={{
+          href: null,
+        }}
+      />
       <Tabs.Screen
         name="explore"
         options={{

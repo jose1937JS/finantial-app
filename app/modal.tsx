@@ -87,7 +87,7 @@ export default function ModalScreen() {
             iconColor={currentPrimaryColor}
             bgColor={`${currentPrimaryColor}15`}
             title="Manual"
-            subtitle="Ingresa los datos de la operación manualmente"
+            subtitle="Ingresa los datos de la operación a través de un formulario."
             onPress={handleManual}
           />
 
@@ -96,7 +96,7 @@ export default function ModalScreen() {
             iconColor="#a855f7"
             bgColor="#a855f715"
             title="Dinámica (IA)"
-            subtitle="Usa texto, voz o foto para registrar con inteligencia artificial"
+            subtitle="Usa texto, voz o foto para registrar con inteligencia artificial."
             onPress={handleDynamic}
           />
         </View>
@@ -112,7 +112,7 @@ export default function ModalScreen() {
               <Text className="text-xs text-gray-500 dark:text-gray-400 mt-1">Texto</Text>
             </View>
             <View className="items-center">
-              <MaterialCommunityIcons name="microphone" size={24} color="#22c55e" />
+              <MaterialCommunityIcons name="microphone" size={24} color={currentPrimaryColor} />
               <Text className="text-xs text-gray-500 dark:text-gray-400 mt-1">Voz</Text>
             </View>
             <View className="items-center">

@@ -10,16 +10,17 @@ module.exports = {
       colors: {
         // Primary colors
         primary: {
-          50: '#f0fdf4',
-          100: '#dcfce7',
-          200: '#bbf7d0',
-          300: '#86efac',
-          400: '#4ade80',
-          500: '#22c55e',
-          600: '#16a34a',
-          700: '#15803d',
-          800: '#166534',
-          900: '#14532d',
+          DEFAULT: 'rgb(var(--color-primary) / <alpha-value>)',
+          50: 'rgb(var(--color-primary) / 0.1)',
+          100: 'rgb(var(--color-primary) / 0.2)',
+          200: 'rgb(var(--color-primary) / 0.3)',
+          300: 'rgb(var(--color-primary) / 0.4)',
+          400: 'rgb(var(--color-primary) / 0.5)',
+          500: 'rgb(var(--color-primary) / <alpha-value>)',
+          600: 'rgb(var(--color-primary) / 0.8)',
+          700: 'rgb(var(--color-primary) / 0.9)',
+          800: 'rgb(var(--color-primary) / 1.0)',
+          900: 'rgb(var(--color-primary) / 1.0)',
         },
         // Income (green tones)
         income: {

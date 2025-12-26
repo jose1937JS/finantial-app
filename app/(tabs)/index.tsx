@@ -25,8 +25,8 @@ export default function HomeScreen() {
   const income = getTotalIncome();
   const expenses = getTotalExpenses();
 
-  const handleAddOperation = () => {
-    router.push('/modal');
+  const handleAnalysis = () => {
+    router.push('/analysis');
   };
 
   return (
@@ -49,10 +49,10 @@ export default function HomeScreen() {
                 </Text>
               </View>
               <Pressable
-                onPress={handleAddOperation}
+                onPress={handleAnalysis}
                 className="w-12 h-12 bg-primary-500 rounded-full items-center justify-center shadow-lg"
               >
-                <MaterialCommunityIcons name="plus" size={28} color="#fff" />
+                <MaterialCommunityIcons name="chart-pie" size={28} color="#fff" />
               </Pressable>
             </View>
 
@@ -82,7 +82,7 @@ export default function HomeScreen() {
         renderItem={({ item }) => (
           <TransactionItem
             transaction={item}
-            onPress={() => {/* Navigate to transaction detail */ }}
+            onPress={() => router.push(`/transaction/${item.id}`)}
           />
         )}
         ListEmptyComponent={() => (

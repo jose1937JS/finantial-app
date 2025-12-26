@@ -7,10 +7,12 @@ import { TransactionItem } from '@/components/transaction-item';
 import { Chip } from '@/components/ui/chip';
 import { useTransactionStore } from '@/store/transaction-store';
 import type { TransactionType } from '@/types';
+import { useRouter } from 'expo-router';
 
 type FilterType = 'all' | TransactionType;
 
 export default function HistoryScreen() {
+    const router = useRouter();
     const [searchQuery, setSearchQuery] = useState('');
     const [activeFilter, setActiveFilter] = useState<FilterType>('all');
 
@@ -98,7 +100,7 @@ export default function HistoryScreen() {
                 renderItem={({ item }) => (
                     <TransactionItem
                         transaction={item}
-                        onPress={() => {/* Navigate to detail */ }}
+                        onPress={() => router.push(`/transaction/${item.id}`)}
                     />
                 )}
                 ListEmptyComponent={() => (

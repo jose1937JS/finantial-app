@@ -4,8 +4,10 @@ import React, { useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { useThemeColor } from '@/hooks/use-theme-color';
 import { validateEmail } from '@/utils/validation';
 
 export default function ForgotPasswordScreen() {
@@ -14,6 +16,7 @@ export default function ForgotPasswordScreen() {
     const [error, setError] = useState<string | undefined>();
     const [isLoading, setIsLoading] = useState(false);
     const [isSent, setIsSent] = useState(false);
+    const primaryColor = useThemeColor({}, 'tint');
 
     const handleResetPassword = async () => {
         const emailValidation = validateEmail(email);
@@ -38,7 +41,7 @@ export default function ForgotPasswordScreen() {
             <SafeAreaView className="flex-1 bg-light-bg dark:bg-dark-bg">
                 <View className="flex-1 items-center justify-center px-6">
                     <View className="w-20 h-20 rounded-full bg-primary-100 dark:bg-primary-900/30 items-center justify-center mb-6">
-                        <MaterialCommunityIcons name="email-check" size={40} color="#22c55e" />
+                        <MaterialCommunityIcons name="email-check" size={40} color={primaryColor} />
                     </View>
 
                     <Text className="text-2xl font-bold text-gray-900 dark:text-white mb-3 text-center">
@@ -93,7 +96,7 @@ export default function ForgotPasswordScreen() {
                     {/* Header */}
                     <View className="items-center mb-10">
                         <View className="w-20 h-20 rounded-full bg-primary-100 dark:bg-primary-900/30 items-center justify-center mb-6">
-                            <MaterialCommunityIcons name="lock-reset" size={40} color="#22c55e" />
+                            <MaterialCommunityIcons name="lock-reset" size={40} color={primaryColor} />
                         </View>
                         <Text className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
                             ¿Olvidaste tu contraseña?

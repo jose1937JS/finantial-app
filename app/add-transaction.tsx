@@ -1,9 +1,3 @@
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useState } from 'react';
-import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Chip } from '@/components/ui/chip';
@@ -12,6 +6,11 @@ import { useSettingsStore } from '@/store/settings-store';
 import { useTransactionStore } from '@/store/transaction-store';
 import type { LoanDetails, TransactionType } from '@/types';
 import { validateAmount, validateDate, validateEmail, validatePhone, validateRequired } from '@/utils/validation';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import React, { useState } from 'react';
+import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 type OperationType = TransactionType;
 
@@ -177,8 +176,8 @@ export default function AddTransactionScreen() {
                                         key={cat.id}
                                         onPress={() => setCategory(cat.name)}
                                         className={`items-center px-4 py-3 rounded-2xl ${category === cat.name
-                                                ? 'bg-primary-500'
-                                                : 'bg-light-surface dark:bg-dark-surface'
+                                            ? 'bg-primary-500'
+                                            : 'bg-light-surface dark:bg-dark-surface'
                                             }`}
                                     >
                                         <MaterialCommunityIcons
@@ -187,8 +186,8 @@ export default function AddTransactionScreen() {
                                             color={category === cat.name ? '#fff' : cat.color}
                                         />
                                         <Text className={`text-xs mt-1 ${category === cat.name
-                                                ? 'text-white font-semibold'
-                                                : 'text-gray-600 dark:text-gray-400'
+                                            ? 'text-white font-semibold'
+                                            : 'text-gray-600 dark:text-gray-400'
                                             }`}>
                                             {cat.name}
                                         </Text>

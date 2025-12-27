@@ -24,11 +24,13 @@ export function TransactionItem({ transaction, onPress }: TransactionItemProps) 
 
     const getIconColor = () => {
         if (transaction.type === 'income') return '#22c55e';
+        if (transaction.type === 'loan') return '#fcd525';
         return '#ef4444';
     };
 
     const getAmountColor = () => {
         if (transaction.type === 'income') return 'text-income';
+        if (transaction.type === 'loan') return 'text-loan';
         return 'text-expense';
     };
 
@@ -55,7 +57,7 @@ export function TransactionItem({ transaction, onPress }: TransactionItemProps) 
 
             {/* Details */}
             <View className="flex-1">
-                <Text className="text-base font-semibold text-gray-900 dark:text-white mb-1">
+                <Text className="text-base text-gray-900 dark:text-white mb-1">
                     {transaction.description || transaction.category}
                 </Text>
                 <Text className="text-sm text-gray-500 dark:text-gray-400">

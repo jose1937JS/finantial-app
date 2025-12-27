@@ -83,8 +83,9 @@ export default function HistoryScreen() {
                             onPress={() => setActiveFilter(filter.value)}
                             variant={
                                 filter.value === 'income' ? 'income' :
-                                    filter.value === 'expense' || filter.value === 'loan' ? 'expense' :
-                                        'default'
+                                    filter.value === 'expense' ? 'expense' :
+                                        filter.value === 'loan' ? 'loan' :
+                                            'default'
                             }
                         />
                     ))}

@@ -93,8 +93,8 @@ export default function ModalScreen() {
 
           <OperationOption
             icon="robot"
-            iconColor="#a855f7"
-            bgColor="#a855f715"
+            iconColor={currentPrimaryColor}
+            bgColor={`${currentPrimaryColor}15`}
             title="Dinámica (IA)"
             subtitle="Usa texto, voz o foto para registrar con inteligencia artificial."
             onPress={handleDynamic}
@@ -103,12 +103,12 @@ export default function ModalScreen() {
 
         {/* Features of Dynamic */}
         <View className="bg-light-surface dark:bg-dark-surface rounded-2xl p-4 mb-4">
-          <Text className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
+          <Text className="text-sm font-semibold text-center text-gray-700 dark:text-gray-300 mb-3">
             La opción Dinámica incluye:
           </Text>
           <View className="flex-row justify-around">
             <View className="items-center">
-              <MaterialCommunityIcons name="message-text" size={24} color="#3b82f6" />
+              <MaterialCommunityIcons name="message-text" size={24} color={currentPrimaryColor} />
               <Text className="text-xs text-gray-500 dark:text-gray-400 mt-1">Texto</Text>
             </View>
             <View className="items-center">
@@ -116,7 +116,7 @@ export default function ModalScreen() {
               <Text className="text-xs text-gray-500 dark:text-gray-400 mt-1">Voz</Text>
             </View>
             <View className="items-center">
-              <MaterialCommunityIcons name="camera" size={24} color="#f97316" />
+              <MaterialCommunityIcons name="camera" size={24} color={currentPrimaryColor} />
               <Text className="text-xs text-gray-500 dark:text-gray-400 mt-1">Foto</Text>
             </View>
           </View>

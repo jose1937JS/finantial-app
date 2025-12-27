@@ -34,7 +34,7 @@ const defaultPreferences: UserPreferences = {
 
 // Primary color hex values
 export const primaryColors: Record<PrimaryColor, { hex: string; name: string }> = {
-    green: { hex: '#22c55e', name: 'Verde' },
+    green: { hex: '#2ba654', name: 'Verde' },
     blue: { hex: '#3b82f6', name: 'Azul' },
     purple: { hex: '#a855f7', name: 'Morado' },
     orange: { hex: '#f97316', name: 'Naranja' },

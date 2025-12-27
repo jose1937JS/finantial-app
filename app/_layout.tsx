@@ -1,14 +1,24 @@
+import { useColorScheme } from '@/hooks/use-color-scheme';
+import { primaryColors, useSettingsStore } from '@/store/settings-store';
+import { hexToRgb } from '@/utils/colors';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { vars } from 'nativewind';
 import { View } from 'react-native';
 import 'react-native-reanimated';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import '../global.css';
 
-import { useColorScheme } from '@/hooks/use-color-scheme';
-import { primaryColors, useSettingsStore } from '@/store/settings-store';
-
 export default function RootLayout() {
+  return (
+    <SafeAreaProvider>
+      <RootLayoutContent />
+    </SafeAreaProvider>
+  );
+}
+
+function RootLayoutContent() {
   const colorScheme = useColorScheme();
   const { preferences } = useSettingsStore();
 
@@ -17,24 +27,31 @@ export default function RootLayout() {
     ? colorScheme
     : preferences.theme;
 
-  // Convert hex to rgb triplet for NativeWind
-  const hexToRgb = (hex: string) => {
-    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-    return result ? `${parseInt(result[1], 16)} ${parseInt(result[2], 16)} ${parseInt(result[3], 16)}` : '34 197 94';
-  };
-
-  const primaryColorHex = primaryColors[preferences.primaryColor]?.hex || '#22c55e';
+  const primaryColorHex = primaryColors[preferences.primaryColor]?.hex || '#2ba654';
   const primaryColorRgb = hexToRgb(primaryColorHex);
 
   const theme = effectiveTheme === 'dark' ? { ...DarkTheme } : { ...DefaultTheme };
   theme.colors.primary = primaryColorHex;
 
-  console.log({ primaryColorRgb, primaryColorHex, themeColors: theme.colors })
+  const themeVars = vars({
+    "--color-primary": primaryColorRgb,
+    "--color-primary-500": primaryColorRgb,
+
+    // Generar el resto de tonalidades en caso de ser necesarias en formato rgb (50, 100, 200, 300, 400, 600, 700, 800, 900)
+    // "--color-primary-50": primaryColorRgb,
+    // "--color-primary-100": primaryColorRgb,
+    // "--color-primary-200": primaryColorRgb,
+    // "--color-primary-300": primaryColorRgb,
+    // "--color-primary-400": primaryColorRgb,
+    // "--color-primary-600": primaryColorRgb,
+    // "--color-primary-700": primaryColorRgb,
+    // "--color-primary-800": primaryColorRgb,
+    // "--color-primary-900": primaryColorRgb
+  });
 
   return (
     <ThemeProvider value={theme}>
-      {/* <View style={{ flex: 1 }} vars={{ '--color-primary': primaryColorRgb }}> */}
-      <View style={{ flex: 1, '--color-primary': primaryColorRgb } as any}>
+      <View style={[themeVars, { flex: 1 }]}>
         <Stack screenOptions={{ headerShown: false }}>
           <Stack.Screen name="index" />
           <Stack.Screen name="(auth)" />
@@ -71,8 +88,20 @@ export default function RootLayout() {
               headerShown: true,
             }}
           />
+          <Stack.Screen
+            name="transaction/[id]"
+            options={{
+              presentation: 'modal',
+              title: 'Detalle de Transacción',
+              headerShown: true,
+            }}
+          />
         </Stack>
-        <StatusBar style={effectiveTheme === 'dark' ? 'light' : 'dark'} />
+        <StatusBar
+          style={effectiveTheme === 'dark' ? 'light' : 'dark'}
+          backgroundColor="transparent"
+          translucent={true}
+        />
       </View>
     </ThemeProvider>
   );

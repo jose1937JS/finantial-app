@@ -6,7 +6,7 @@ interface ChipProps {
     label: string;
     selected?: boolean;
     onPress?: () => void;
-    variant?: 'default' | 'income' | 'expense' | 'outline';
+    variant?: 'default' | 'income' | 'expense' | 'loan' | 'outline';
     size?: 'sm' | 'md';
     className?: string;
 }
@@ -41,6 +41,8 @@ export function Chip({
                     return 'bg-income';
                 case 'expense':
                     return 'bg-expense';
+                case 'loan':
+                    return 'bg-loan';
                 case 'outline':
                     return 'bg-primary-500';
                 default:

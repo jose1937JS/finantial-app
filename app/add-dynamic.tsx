@@ -2,7 +2,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Audio } from 'expo-av';
 import * as Haptics from 'expo-haptics';
 import * as ImagePicker from 'expo-image-picker';
-import { useRouter } from 'expo-router';
+// import { useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
 import {
     Alert,
@@ -45,7 +45,7 @@ const initialMessages: ChatMessage[] = [
 ];
 
 export default function AddDynamicScreen() {
-    const router = useRouter();
+    // const router = useRouter();
     const { preferences } = useSettingsStore();
     const currentPrimaryColor = primaryColors[preferences.primaryColor]?.hex || '#22c55e';
 

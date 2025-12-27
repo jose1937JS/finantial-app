@@ -1,5 +1,5 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import React from 'react';
 import { Alert, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -64,18 +64,7 @@ export default function TransactionDetailScreen() {
     };
 
     return (
-        <SafeAreaView className="flex-1 bg-light-bg dark:bg-dark-bg">
-            <Stack.Screen
-                options={{
-                    headerShown: true,
-                    title: 'Detalle de Transacción',
-                    headerBackTitle: 'Volver',
-                    // headerTintColor: primaryColor,
-                    headerStyle: { backgroundColor: 'transparent' },
-                    headerTransparent: true,
-                    headerBlurEffect: 'regular',
-                }}
-            />
+        <SafeAreaView className="flex-1 bg-light-bg dark:bg-dark-bg" edges={['bottom']}>
 
             <ScrollView
                 contentContainerStyle={{ padding: 24, paddingBottom: 100 }}
@@ -158,13 +147,13 @@ export default function TransactionDetailScreen() {
                 )}
 
                 {/* Actions */}
-                <TouchableOpacity
+                {/* <TouchableOpacity
                     onPress={handleDelete}
                     className="flex-row items-center justify-center p-4 rounded-xl bg-red-50 dark:bg-red-900/20 active:opacity-70"
                 >
                     <MaterialCommunityIcons name="trash-can-outline" size={24} color="#ef4444" />
                     <Text className="ml-2 text-red-500 font-semibold text-lg">Eliminar Transacción</Text>
-                </TouchableOpacity>
+                </TouchableOpacity> */}
 
             </ScrollView>
         </SafeAreaView>

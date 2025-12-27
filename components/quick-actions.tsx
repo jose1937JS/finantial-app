@@ -31,11 +31,11 @@ export function QuickActions({ onAddIncome, onAddExpense }: QuickActionsProps) {
     };
 
     return (
-        <View className="flex-row justify-center gap-4 mb-6">
+        <View className="flex-row justify-center gap-4 mb-6 -mt-[40px]">
             {/* Add Income */}
             <Pressable
                 onPress={handleAddIncome}
-                className="flex-1 flex-row items-center justify-center bg-income/15 rounded-2xl py-4 px-6 active:opacity-80"
+                className={`flex-1 flex-row items-center justify-center bg-white rounded-2xl py-4 px-6 active:opacity-80 shadow-sm shadow-slate-300`}
             >
                 <View className="w-10 h-10 rounded-full bg-income items-center justify-center mr-3">
                     <MaterialCommunityIcons
@@ -45,10 +45,10 @@ export function QuickActions({ onAddIncome, onAddExpense }: QuickActionsProps) {
                     />
                 </View>
                 <View>
-                    <Text className="text-sm font-semibold text-income">
+                    <Text className="text-md font-semibold text-income">
                         Ingreso
                     </Text>
-                    <Text className="text-xs text-gray-500 dark:text-gray-400">
+                    <Text className="text-xs text-gray-500 dark:text-white-400">
                         Agregar
                     </Text>
                 </View>
@@ -57,7 +57,7 @@ export function QuickActions({ onAddIncome, onAddExpense }: QuickActionsProps) {
             {/* Add Expense */}
             <Pressable
                 onPress={handleAddExpense}
-                className="flex-1 flex-row items-center justify-center bg-expense/15 rounded-2xl py-4 px-6 active:opacity-80"
+                className="flex-1 flex-row items-center justify-center bg-white rounded-2xl py-4 px-6 active:opacity-80 shadow-sm shadow-slate-300"
             >
                 <View className="w-10 h-10 rounded-full bg-expense items-center justify-center mr-3">
                     <MaterialCommunityIcons
@@ -67,10 +67,10 @@ export function QuickActions({ onAddIncome, onAddExpense }: QuickActionsProps) {
                     />
                 </View>
                 <View>
-                    <Text className="text-sm font-semibold text-expense">
+                    <Text className="text-md font-semibold text-expense">
                         Gasto
                     </Text>
-                    <Text className="text-xs text-gray-500 dark:text-gray-400">
+                    <Text className="text-xs text-gray-500 dark:text-white-400">
                         Agregar
                     </Text>
                 </View>

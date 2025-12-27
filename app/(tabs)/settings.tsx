@@ -193,7 +193,7 @@ export default function SettingsScreen() {
                 <Card variant="elevated" className="mb-6">
                     <SettingItem
                         icon="theme-light-dark"
-                        iconColor="#6366f1"
+                        iconColor={currentPrimaryColor}
                         title="Modo Oscuro"
                         subtitle={isDarkMode ? 'Activado' : 'Desactivado'}
                         rightElement={
@@ -227,7 +227,7 @@ export default function SettingsScreen() {
 
                     <SettingItem
                         icon="translate"
-                        iconColor="#3b82f6"
+                        iconColor={currentPrimaryColor}
                         title="Idioma"
                         subtitle={getLanguageLabel(preferences.language)}
                         onPress={() => setActiveModal('language')}
@@ -250,7 +250,7 @@ export default function SettingsScreen() {
                 <Card variant="elevated" className="mb-6">
                     <SettingItem
                         icon="shape"
-                        iconColor="#f97316"
+                        iconColor={currentPrimaryColor}
                         title="Categorías"
                         subtitle="Administra tus categorías personalizadas"
                         onPress={() => router.push('/categories')}
@@ -264,7 +264,7 @@ export default function SettingsScreen() {
                 <Card variant="elevated" className="mb-6">
                     <SettingItem
                         icon="export"
-                        iconColor="#14b8a6"
+                        iconColor={currentPrimaryColor}
                         title="Exportar Datos"
                         subtitle="CSV o PDF"
                         onPress={() => setActiveModal('export')}
@@ -273,7 +273,7 @@ export default function SettingsScreen() {
 
                     <SettingItem
                         icon="import"
-                        iconColor="#a855f7"
+                        iconColor={currentPrimaryColor}
                         title="Importar Datos"
                         subtitle="Restaurar desde backup"
                         onPress={() => Alert.alert('Importar Datos', 'Esta función estará disponible próximamente')}

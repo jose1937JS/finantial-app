@@ -1,4 +1,6 @@
+import { isAndroid } from '@/utils';
 import { formatCurrency } from '@/utils/format';
+import Icon from '@expo/vector-icons/MaterialCommunityIcons';
 import React from 'react';
 import { Text, View } from 'react-native';
 
@@ -16,7 +18,9 @@ export function BalanceHeader({
     currency = 'USD'
 }: BalanceHeaderProps) {
     return (
-        <View className="bg-primary-500 dark:bg-dark-card rounded-3xl p-6 mb-6 shadow-lg">
+        <View
+            className={`bg-white/15 dark:bg-dark-card rounded-3xl p-6 mb-6 ${isAndroid ? '' : 'shadow-lg'}`}
+        >
             {/* Total Balance */}
             <View className="items-center mb-6">
                 <Text className="text-base text-white dark:text-gray-400 mb-2">
@@ -30,9 +34,9 @@ export function BalanceHeader({
             {/* Income & Expenses */}
             <View className="flex-row justify-between">
                 {/* Income */}
-                <View className="flex-1 flex-row items-center bg-white/20 dark:bg-dark-surface rounded-2xl p-4 mr-2">
+                <View className="flex-1 flex-row items-center bg-white/5 dark:bg-dark-surface rounded-2xl p-4 mr-2">
                     <View className="w-10 h-10 rounded-full bg-white/30 items-center justify-center mr-3">
-                        <Text className="text-lg text-white">↓</Text>
+                        <Icon name="arrow-down" size={22} color="white" />
                     </View>
                     <View>
                         <Text className="text-xs text-white dark:text-gray-400">
@@ -45,9 +49,9 @@ export function BalanceHeader({
                 </View>
 
                 {/* Expenses */}
-                <View className="flex-1 flex-row items-center bg-white/20 dark:bg-dark-surface rounded-2xl p-4 ml-2">
+                <View className="flex-1 flex-row items-center bg-white/5 dark:bg-dark-surface rounded-2xl p-4 ml-2">
                     <View className="w-10 h-10 rounded-full bg-white/30 items-center justify-center mr-3">
-                        <Text className="text-lg text-white">↑</Text>
+                        <Icon name="arrow-up" size={22} color="white" />
                     </View>
                     <View>
                         <Text className="text-xs text-white dark:text-gray-400">

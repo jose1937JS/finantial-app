@@ -1,5 +1,5 @@
 import { defaultCategories } from '@/constants/categories';
-import type { Category, Currency, Language, PrimaryColor, ThemeMode, UserPreferences } from '@/types';
+import type { Category, Currency, ExchangeRates, Language, PrimaryColor, ThemeMode, UserPreferences } from '@/types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
@@ -7,12 +7,18 @@ import { createJSONStorage, persist } from 'zustand/middleware';
 interface SettingsStore {
     preferences: UserPreferences;
     categories: Category[];
+    exchangeRates: ExchangeRates;
+
+    // Preference actions
 
     // Preference actions
     setTheme: (theme: ThemeMode) => void;
     setLanguage: (language: Language) => void;
     setCurrency: (currency: Currency) => void;
     setPrimaryColor: (color: PrimaryColor) => void;
+    updateExchangeRate: (key: keyof ExchangeRates, value: number) => void;
+
+    // Category actions
 
     // Category actions
     addCategory: (category: Omit<Category, 'id' | 'isDefault'>) => void;
@@ -32,6 +38,14 @@ const defaultPreferences: UserPreferences = {
     primaryColor: 'green',
 };
 
+const defaultExchangeRates: ExchangeRates = {
+    BCV_USD: 60.50,
+    BCV_EUR: 65.20,
+    Binance: 72.00,
+};
+
+// Primary color hex values
+
 // Primary color hex values
 export const primaryColors: Record<PrimaryColor, { hex: string; name: string }> = {
     green: { hex: '#2ba654', name: 'Verde' },
@@ -49,6 +63,7 @@ export const useSettingsStore = create<SettingsStore>()(
         (set, get) => ({
             preferences: defaultPreferences,
             categories: defaultCategories,
+            exchangeRates: defaultExchangeRates,
 
             setTheme: (theme) => {
                 set((state) => ({
@@ -71,6 +86,12 @@ export const useSettingsStore = create<SettingsStore>()(
             setPrimaryColor: (primaryColor) => {
                 set((state) => ({
                     preferences: { ...state.preferences, primaryColor },
+                }));
+            },
+
+            updateExchangeRate: (key, value) => {
+                set((state) => ({
+                    exchangeRates: { ...state.exchangeRates, [key]: value },
                 }));
             },
 
@@ -124,6 +145,7 @@ export const useSettingsStore = create<SettingsStore>()(
                 set({
                     preferences: defaultPreferences,
                     categories: defaultCategories,
+                    exchangeRates: defaultExchangeRates,
                 });
             },
         }),

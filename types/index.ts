@@ -44,6 +44,14 @@ export interface ExchangeRate {
     source: string;
 }
 
+export type ExchangeRateSource = 'BCV_USD' | 'BCV_EUR' | 'Binance' | 'Custom';
+
+export interface ExchangeRates {
+    BCV_USD: number;
+    BCV_EUR: number;
+    Binance: number;
+}
+
 export interface ExchangeRateHistory {
     currency: string;
     data: { date: string; rate: number }[];

@@ -1,10 +1,11 @@
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Chip } from '@/components/ui/chip';
+import { DatePickerModal, DatePickerTrigger } from '@/components/ui/date-picker-modal';
 import { Input } from '@/components/ui/input';
 import { useSettingsStore } from '@/store/settings-store';
 import { useTransactionStore } from '@/store/transaction-store';
-import type { LoanDetails, TransactionType } from '@/types';
+import type { Currency, ExchangeRateSource, LoanDetails, TransactionType } from '@/types';
 import { validateAmount, validateDate, validateEmail, validatePhone, validateRequired } from '@/utils/validation';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -18,7 +19,7 @@ export default function AddTransactionScreen() {
     const router = useRouter();
     const params = useLocalSearchParams<{ type?: string }>();
     const { addTransaction } = useTransactionStore();
-    const { categories } = useSettingsStore();
+    const { categories, exchangeRates } = useSettingsStore();
 
     // Form state
     const [operationType, setOperationType] = useState<OperationType>(
@@ -28,6 +29,18 @@ export default function AddTransactionScreen() {
     const [category, setCategory] = useState('');
     const [description, setDescription] = useState('');
     const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+    const [currency, setCurrency] = useState<Currency>('USD');
+    const [rateSource, setRateSource] = useState<ExchangeRateSource>('BCV_USD');
+    const [customRate, setCustomRate] = useState('');
+
+    // Calculated fields
+    const exchangeRate = rateSource === 'Custom'
+        ? parseFloat(customRate) || 0
+        : exchangeRates[rateSource as keyof typeof exchangeRates] || 0;
+
+    const amountInUSD = currency === 'VES' && exchangeRate > 0
+        ? (parseFloat(amount) / exchangeRate).toFixed(2)
+        : amount;
 
     // Loan-specific state
     const [debtorName, setDebtorName] = useState('');
@@ -37,6 +50,9 @@ export default function AddTransactionScreen() {
     const [dueDate, setDueDate] = useState('');
     const [interestRate, setInterestRate] = useState('0');
     const [exchangeRateUSD, setExchangeRateUSD] = useState('1');
+
+    const [showDatePicker, setShowDatePicker] = useState(false);
+    const [showDueDatePicker, setShowDueDatePicker] = useState(false);
 
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [isLoading, setIsLoading] = useState(false);
@@ -95,15 +111,21 @@ export default function AddTransactionScreen() {
                 isPaid: false,
             } : undefined;
 
-            addTransaction({
+            const payload = {
                 type: operationType,
-                amount: parseFloat(amount),
+                amount: parseFloat(amountInUSD),
+                amountInVES: currency === 'VES' ? parseFloat(amount) : 0,
                 currency: 'USD',
                 category,
-                description,
+                description: currency === 'VES' ? `${description} (Tasa: ${exchangeRate})` : description,
                 date: new Date(date).toISOString(),
+                rate: exchangeRate,
                 loan: loanDetails,
-            });
+            };
+
+            console.log(JSON.stringify({ payload }, null, 4));
+
+            addTransaction(payload);
 
             Alert.alert('Éxito', 'Transacción agregada correctamente', [
                 { text: 'OK', onPress: () => router.back() }
@@ -152,6 +174,91 @@ export default function AddTransactionScreen() {
                             />
                         </View>
                     </View>
+                    {/* Currency Selector */}
+                    <View className="mb-6">
+                        <Text className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                            Moneda
+                        </Text>
+                        <View className="flex-row gap-2">
+                            <Chip
+                                label="USD (Efectivo)"
+                                selected={currency === 'USD'}
+                                onPress={() => setCurrency('USD')}
+                                variant={currency === 'USD' ? 'default' : 'outline'}
+                            />
+                            <Chip
+                                label="Bolívares"
+                                selected={currency === 'VES'}
+                                onPress={() => setCurrency('VES')}
+                                variant={currency === 'VES' ? 'default' : 'outline'}
+                            />
+                            <Chip
+                                label="USDT"
+                                selected={currency === 'USDT'}
+                                onPress={() => setCurrency('USDT')}
+                                variant={currency === 'USDT' ? 'default' : 'outline'}
+                            />
+                        </View>
+                    </View>
+
+                    {/* Exchange Rate Section - Only for VES */}
+                    {currency === 'VES' && (
+                        <View>
+                            <Text className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                                Tasa de Cambio
+                            </Text>
+                            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                                <View className="flex-row gap-2">
+                                    <Chip
+                                        label={`BCV ($${exchangeRates.BCV_USD})`}
+                                        selected={rateSource === 'BCV_USD'}
+                                        onPress={() => setRateSource('BCV_USD')}
+                                        variant={rateSource === 'BCV_USD' ? 'default' : 'outline'}
+                                    />
+                                    <Chip
+                                        label={`BCV EUR ($${exchangeRates.BCV_EUR})`}
+                                        selected={rateSource === 'BCV_EUR'}
+                                        onPress={() => setRateSource('BCV_EUR')}
+                                        variant={rateSource === 'BCV_EUR' ? 'default' : 'outline'}
+                                    />
+                                    <Chip
+                                        label={`Binance ($${exchangeRates.Binance})`}
+                                        selected={rateSource === 'Binance'}
+                                        onPress={() => setRateSource('Binance')}
+                                        variant={rateSource === 'Binance' ? 'default' : 'outline'}
+                                    />
+                                    <Chip
+                                        label="Custom"
+                                        selected={rateSource === 'Custom'}
+                                        onPress={() => setRateSource('Custom')}
+                                        variant={rateSource === 'Custom' ? 'default' : 'outline'}
+                                    />
+                                </View>
+                            </ScrollView>
+
+                            {rateSource === 'Custom' && (
+                                <View className="mt-4">
+                                    <Input
+                                        label="Tasa Personalizada"
+                                        placeholder="0.00"
+                                        leftIcon="calculator"
+                                        value={customRate}
+                                        onChangeText={setCustomRate}
+                                        keyboardType="decimal-pad"
+                                    />
+                                </View>
+                            )}
+
+                            <View className="mt-4">
+                                <Input
+                                    label="Monto en USD (Calculado)"
+                                    value={amount && !isNaN(parseFloat(amountInUSD)) ? `$${amountInUSD}` : '$0.00'}
+                                    editable={false}
+                                    leftIcon="currency-usd"
+                                />
+                            </View>
+                        </View>
+                    )}
 
                     {/* Amount */}
                     <Input
@@ -210,12 +317,19 @@ export default function AddTransactionScreen() {
                     />
 
                     {/* Date */}
-                    <Input
+                    <DatePickerTrigger
                         label="Fecha"
-                        placeholder="YYYY-MM-DD"
-                        leftIcon="calendar"
                         value={date}
-                        onChangeText={setDate}
+                        icon="calendar"
+                        onPress={() => setShowDatePicker(true)}
+                    />
+
+                    <DatePickerModal
+                        visible={showDatePicker}
+                        onClose={() => setShowDatePicker(false)}
+                        value={date}
+                        onChange={setDate}
+                        label="Seleccionar Fecha"
                     />
 
                     {/* Loan-specific fields */}
@@ -274,13 +388,21 @@ export default function AddTransactionScreen() {
                                 Datos Financieros
                             </Text>
 
-                            <Input
+                            <DatePickerTrigger
                                 label="Fecha de vencimiento"
-                                placeholder="YYYY-MM-DD"
-                                leftIcon="calendar-clock"
                                 value={dueDate}
-                                onChangeText={setDueDate}
+                                icon="calendar-clock"
+                                onPress={() => setShowDueDatePicker(true)}
                                 error={errors.dueDate}
+                            />
+
+                            <DatePickerModal
+                                visible={showDueDatePicker}
+                                onClose={() => setShowDueDatePicker(false)}
+                                value={dueDate || new Date().toISOString().split('T')[0]}
+                                onChange={setDueDate}
+                                label="Fecha de Vencimiento"
+                                minimumDate={new Date()}
                             />
 
                             <View className="flex-row gap-2">

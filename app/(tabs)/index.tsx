@@ -4,6 +4,7 @@ import { TransactionItem } from '@/components/transaction-item';
 import { useAuthStore } from '@/store/auth-store';
 import { primaryColors, useSettingsStore } from '@/store/settings-store';
 import { useTransactionStore } from '@/store/transaction-store';
+import { isAndroid } from '@/utils';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React from 'react';
@@ -83,8 +84,9 @@ export default function HomeScreen() {
                     </Text>
                   </View>
                   <Pressable
+                    style={{ elevation: isAndroid ? 20 : undefined }}
                     onPress={handleAnalysis}
-                    className="w-12 h-12 bg-primary-500 rounded-full items-center justify-center shadow-lg"
+                    className={`w-12 h-12 bg-primary-500 rounded-full items-center justify-center ${!isAndroid && 'shadow-lg'}`}
                   >
                     <MaterialCommunityIcons name="chart-pie" size={28} color="#fff" />
                   </Pressable>

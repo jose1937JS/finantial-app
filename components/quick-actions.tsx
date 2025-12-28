@@ -1,3 +1,4 @@
+import { isAndroid } from '@/utils';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
@@ -34,8 +35,11 @@ export function QuickActions({ onAddIncome, onAddExpense }: QuickActionsProps) {
         <View className="flex-row justify-center gap-4 mb-6 -mt-[40px]">
             {/* Add Income */}
             <Pressable
+                style={{ elevation: isAndroid ? 2 : undefined }}
                 onPress={handleAddIncome}
-                className={`flex-1 flex-row items-center justify-center bg-white rounded-2xl py-4 px-6 active:opacity-80 shadow-sm shadow-slate-300`}
+                className={
+                    `flex-1 flex-row items-center justify-center bg-white rounded-2xl py-4 px-6 active:opacity-80 ${!isAndroid && 'shadow-sm shadow-slate-300'}`
+                }
             >
                 <View className="w-10 h-10 rounded-full bg-income items-center justify-center mr-3">
                     <MaterialCommunityIcons
@@ -56,8 +60,11 @@ export function QuickActions({ onAddIncome, onAddExpense }: QuickActionsProps) {
 
             {/* Add Expense */}
             <Pressable
+                style={{ elevation: isAndroid ? 2 : undefined }}
                 onPress={handleAddExpense}
-                className="flex-1 flex-row items-center justify-center bg-white rounded-2xl py-4 px-6 active:opacity-80 shadow-sm shadow-slate-300"
+                className={
+                    `flex-1 flex-row items-center justify-center bg-white rounded-2xl py-4 px-6 active:opacity-80 ${!isAndroid && 'shadow-sm shadow-slate-300'}`
+                }
             >
                 <View className="w-10 h-10 rounded-full bg-expense items-center justify-center mr-3">
                     <MaterialCommunityIcons

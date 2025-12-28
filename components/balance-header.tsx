@@ -19,7 +19,7 @@ export function BalanceHeader({
 }: BalanceHeaderProps) {
     return (
         <View
-            className={`bg-white/15 dark:bg-dark-card rounded-3xl p-6 mb-6 ${isAndroid ? '' : 'shadow-lg'}`}
+            className={`bg-white/15 dark:bg-dark-card rounded-3xl p-6 mb-6 ${!isAndroid && 'shadow-lg'}`}
         >
             {/* Total Balance */}
             <View className="items-center mb-6">

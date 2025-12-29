@@ -1,8 +1,15 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { Audio } from 'expo-av';
+import {
+    RecordingPresets,
+    requestRecordingPermissionsAsync,
+    setAudioModeAsync,
+    useAudioPlayer,
+    useAudioPlayerStatus,
+    useAudioRecorder,
+    useAudioRecorderState
+} from 'expo-audio';
 import * as Haptics from 'expo-haptics';
 import * as ImagePicker from 'expo-image-picker';
-// import { useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
 import {
     Alert,
@@ -45,45 +52,71 @@ const initialMessages: ChatMessage[] = [
 ];
 
 export default function AddDynamicScreen() {
-    // const router = useRouter();
     const { preferences } = useSettingsStore();
     const currentPrimaryColor = primaryColors[preferences.primaryColor]?.hex || '#22c55e';
 
     const [messages, setMessages] = useState<ChatMessage[]>(initialMessages);
     const [inputText, setInputText] = useState('');
-    const [isRecording, setIsRecording] = useState(false);
     const [recordingDuration, setRecordingDuration] = useState(0);
     const [isProcessing, setIsProcessing] = useState(false);
+    const [isRecording, setIsRecording] = useState(false);
+    const [audioError, setAudioError] = useState<string | null>(null);
 
+    // Expo Audio Hooks
+    const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
+    const recorderStatus = useAudioRecorderState(recorder);
     const [recordedAudio, setRecordedAudio] = useState<{ uri: string; duration: number } | null>(null);
-    const [sound, setSound] = useState<Audio.Sound | null>(null);
-    const [isPlaying, setIsPlaying] = useState(false);
+
+    // Create player associated with the recorded audio URI
+    const player = useAudioPlayer(recordedAudio?.uri || '');
+    const playerStatus = useAudioPlayerStatus(player);
+
+    // Ensure player is updated when recordedAudio changes
+    useEffect(() => {
+        if (recordedAudio?.uri) {
+            player.replace(recordedAudio.uri);
+            setAudioError(null);
+        }
+    }, [recordedAudio?.uri]);
 
     const flatListRef = useRef<FlatList>(null);
-    const recordingRef = useRef<Audio.Recording | null>(null);
-    // Use 'any' type to handle both NodeJS.Timeout and number (RN) return types
-    const recordingTimerRef = useRef<any>(null);
 
     useEffect(() => {
-        // Request audio permissions on mount
+        // Request audio permissions and set initial mode
         (async () => {
-            await Audio.requestPermissionsAsync();
-            await Audio.setAudioModeAsync({
-                allowsRecordingIOS: true,
-                playsInSilentModeIOS: true,
-            });
+            try {
+                const { granted } = await requestRecordingPermissionsAsync();
+                if (granted) {
+                    await setAudioModeAsync({
+                        allowsRecording: true,
+                        playsInSilentMode: true,
+                    });
+                }
+            } catch (err) {
+                console.error('Error setting audio mode', err);
+            }
         })();
 
         return () => {
-            // Cleanup
-            if (recordingTimerRef.current) {
-                clearInterval(recordingTimerRef.current);
-            }
-            if (sound) {
-                sound.unloadAsync();
+            if (recorder.isRecording) {
+                recorder.stop();
             }
         };
-    }, [sound]);
+    }, []);
+
+    // Effect to handle duration timer during recording
+    useEffect(() => {
+        let interval: any;
+        if (isRecording) {
+            setRecordingDuration(0);
+            interval = setInterval(() => {
+                setRecordingDuration(prev => prev + 1);
+            }, 1000);
+        }
+        return () => {
+            if (interval) clearInterval(interval);
+        };
+    }, [isRecording]);
 
     const addMessage = (message: Omit<ChatMessage, 'id' | 'timestamp'>) => {
         const newMessage: ChatMessage = {
@@ -142,65 +175,63 @@ export default function AddDynamicScreen() {
     };
 
     const startRecording = async () => {
+        if (isRecording) return;
+
         try {
+            console.log('--- MIC START ---');
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
-            const { granted } = await Audio.requestPermissionsAsync();
+            const { granted } = await requestRecordingPermissionsAsync();
             if (!granted) {
                 Alert.alert('Permisos necesarios', 'Necesitamos acceso al micrófono para grabar audio');
                 return;
             }
 
-            await Audio.setAudioModeAsync({
-                allowsRecordingIOS: true,
-                playsInSilentModeIOS: true,
+            // Force audio mode for recording
+            await setAudioModeAsync({
+                allowsRecording: true,
+                playsInSilentMode: true,
+                shouldPlayInBackground: false,
             });
 
-            const recording = new Audio.Recording();
-            await recording.prepareToRecordAsync(Audio.RecordingOptionsPresets.HIGH_QUALITY);
-            await recording.startAsync();
-
-            recordingRef.current = recording;
             setIsRecording(true);
-            setRecordingDuration(0);
-
-            // Start duration timer
-            recordingTimerRef.current = setInterval(() => {
-                setRecordingDuration(prev => prev + 1);
-            }, 1000);
+            setAudioError(null);
+            await recorder.record();
+            console.log('Recorder.record() called');
         } catch (error) {
             console.error('Failed to start recording:', error);
-            Alert.alert('Error', 'No se pudo iniciar la grabación');
+            setIsRecording(false);
+            Alert.alert('Error', 'No se pudo iniciar la grabación: ' + (error as Error).message);
         }
     };
 
     const stopRecording = async () => {
-        try {
-            if (!recordingRef.current) return;
+        if (!isRecording) return;
 
+        try {
+            console.log('--- MIC STOP ---');
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
-            // Stop timer
-            if (recordingTimerRef.current) {
-                clearInterval(recordingTimerRef.current);
-                recordingTimerRef.current = null;
-            }
-
-            await recordingRef.current.stopAndUnloadAsync();
-            const uri = recordingRef.current.getURI();
+            await recorder.stop();
+            const uri = recorder.uri;
             const duration = recordingDuration;
 
-            recordingRef.current = null;
             setIsRecording(false);
             setRecordingDuration(0);
 
-            if (uri && duration > 0) {
-                // Instead of sending immediately, set to preview state
-                setRecordedAudio({ uri, duration });
+            if (uri && (duration > 0 || Platform.OS === 'ios')) {
+                setRecordedAudio({ uri, duration: duration || 1 });
+                console.log('Recording stopped, URI:', uri);
+            } else {
+                console.warn('No valid audio data received');
+                setAudioError('No se recibió audio válido. Intenta grabar de nuevo.');
+                setTimeout(() => setAudioError(null), 3000);
             }
         } catch (error) {
             console.error('Failed to stop recording:', error);
             setIsRecording(false);
+            setRecordingDuration(0);
+            setAudioError('Error al detener la grabación');
         }
     };
 
@@ -208,30 +239,14 @@ export default function AddDynamicScreen() {
         if (!recordedAudio) return;
 
         try {
-            if (sound) {
-                if (isPlaying) {
-                    await sound.pauseAsync();
-                    setIsPlaying(false);
-                } else {
-                    await sound.playAsync();
-                    setIsPlaying(true);
-                }
+            if (player.playing) {
+                player.pause();
             } else {
-                const { sound: newSound } = await Audio.Sound.createAsync(
-                    { uri: recordedAudio.uri },
-                    { shouldPlay: true }
-                );
-
-                setSound(newSound);
-                setIsPlaying(true);
-
-                newSound.setOnPlaybackStatusUpdate((status) => {
-                    if (status.isLoaded && status.didJustFinish) {
-                        setIsPlaying(false);
-                        // Reset position
-                        newSound.setPositionAsync(0);
-                    }
-                });
+                // expo-audio doesn't reset position automatically if finished
+                if (playerStatus.currentTime >= playerStatus.duration) {
+                    player.seekTo(0);
+                }
+                player.play();
             }
         } catch (error) {
             console.error('Error playing audio', error);
@@ -239,21 +254,11 @@ export default function AddDynamicScreen() {
     };
 
     const discardRecording = () => {
-        if (sound) {
-            sound.unloadAsync();
-            setSound(null);
-        }
         setRecordedAudio(null);
-        setIsPlaying(false);
     };
 
     const sendRecording = () => {
         if (!recordedAudio) return;
-
-        if (sound) {
-            sound.unloadAsync();
-            setSound(null);
-        }
 
         const userMessage = addMessage({
             type: 'audio',
@@ -263,9 +268,7 @@ export default function AddDynamicScreen() {
         });
 
         simulateAssistantResponse(userMessage);
-
         setRecordedAudio(null);
-        setIsPlaying(false);
     };
 
     const handlePickImage = async () => {
@@ -345,11 +348,10 @@ export default function AddDynamicScreen() {
 
     const formatDuration = (seconds: number) => {
         const mins = Math.floor(seconds / 60);
-        const secs = seconds % 60;
+        const secs = Math.round(seconds % 60);
         return `${mins}:${secs.toString().padStart(2, '0')}`;
     };
 
-    // ... renderMessage code matches existing ...
     const renderMessage = ({ item }: { item: ChatMessage }) => {
         const isUser = item.sender === 'user';
         const isSystem = item.type === 'system';
@@ -415,7 +417,7 @@ export default function AddDynamicScreen() {
             <KeyboardAvoidingView
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                 className="flex-1"
-                keyboardVerticalOffset={100}
+                keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 80}
             >
                 {/* Messages List */}
                 <FlatList
@@ -432,23 +434,25 @@ export default function AddDynamicScreen() {
                 {isProcessing && (
                     <View className="mx-4 mb-2 items-start">
                         <View className="bg-white dark:bg-dark-card rounded-2xl rounded-bl-sm p-3 flex-row items-center">
-                            <View className="flex-row gap-1">
-                                <View className="w-2 h-2 rounded-full bg-gray-400 animate-pulse" />
-                                <View className="w-2 h-2 rounded-full bg-gray-400 animate-pulse" />
-                                <View className="w-2 h-2 rounded-full bg-gray-400 animate-pulse" />
-                            </View>
-                            <Text className="text-sm text-gray-500 ml-2">Procesando...</Text>
+                            <Text className="text-sm text-gray-500">Procesando...</Text>
                         </View>
                     </View>
                 )}
 
                 {/* Recording Indicator */}
                 {isRecording && (
-                    <View className="mx-4 mb-2 p-4 bg-expense/10 rounded-2xl flex-row items-center justify-center">
-                        <View className="w-3 h-3 rounded-full bg-expense mr-3 animate-pulse" />
-                        <Text className="text-base font-semibold text-expense">
+                    <View className="mx-4 mb-2 p-4 bg-red-100 dark:bg-red-900/20 rounded-2xl flex-row items-center justify-center">
+                        <View className="w-3 h-3 rounded-full bg-red-500 mr-3" />
+                        <Text className="text-base font-semibold text-red-500">
                             Grabando... {formatDuration(recordingDuration)}
                         </Text>
+                    </View>
+                )}
+
+                {/* Error Indicator */}
+                {audioError && (
+                    <View className="mx-4 mb-2 p-2 bg-red-100 dark:bg-red-900/20 rounded-lg items-center">
+                        <Text className="text-xs font-medium text-red-500">{audioError}</Text>
                     </View>
                 )}
 
@@ -457,17 +461,17 @@ export default function AddDynamicScreen() {
                     {recordedAudio ? (
                         // Audio Preview UI
                         <View className="flex-row items-center justify-between py-1">
-                            <Pressable
+                            <TouchableOpacity
                                 onPress={discardRecording}
-                                className="w-10 h-10 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30"
+                                className="w-11 h-11 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30"
                             >
                                 <MaterialCommunityIcons name="delete" size={24} color="#ef4444" />
-                            </Pressable>
+                            </TouchableOpacity>
 
                             <View className="flex-1 flex-row items-center justify-center mx-4 bg-light-surface dark:bg-dark-surface rounded-full py-2 px-4 border border-light-border dark:border-dark-border">
                                 <Pressable onPress={playRecordedAudio} className="mr-3">
                                     <MaterialCommunityIcons
-                                        name={isPlaying ? "pause-circle" : "play-circle"}
+                                        name={player.playing ? "pause-circle" : "play-circle"}
                                         size={32}
                                         color={currentPrimaryColor}
                                     />
@@ -477,7 +481,7 @@ export default function AddDynamicScreen() {
                                         <View
                                             className="h-full rounded-full"
                                             style={{
-                                                width: isPlaying ? '100%' : '0%', // Simplified progress
+                                                width: `${Math.min((playerStatus.currentTime / playerStatus.duration) * 100, 100) || 0}%`,
                                                 backgroundColor: currentPrimaryColor
                                             }}
                                         />
@@ -488,29 +492,29 @@ export default function AddDynamicScreen() {
                                 </View>
                             </View>
 
-                            <Pressable
+                            <TouchableOpacity
                                 onPress={sendRecording}
                                 className="w-11 h-11 items-center justify-center rounded-full"
                                 style={{ backgroundColor: currentPrimaryColor }}
                             >
                                 <MaterialCommunityIcons name="send" size={22} color="#fff" />
-                            </Pressable>
+                            </TouchableOpacity>
                         </View>
                     ) : (
                         // Standard Input UI
                         <View className="flex-row items-end gap-2">
                             {/* Image Button */}
-                            <Pressable
+                            <TouchableOpacity
                                 onPress={handlePickImage}
                                 className="w-11 h-11 rounded-full bg-light-surface dark:bg-dark-surface items-center justify-center"
-                                disabled={isRecording}
+                                disabled={recorderStatus.isRecording}
                             >
                                 <MaterialCommunityIcons
                                     name="image"
                                     size={24}
-                                    color={isRecording ? '#9ca3af' : '#6b7280'}
+                                    color={recorderStatus.isRecording ? '#9ca3af' : '#6b7280'}
                                 />
-                            </Pressable>
+                            </TouchableOpacity>
 
                             {/* Text Input */}
                             <View className="flex-1 bg-light-surface dark:bg-dark-surface rounded-3xl px-4 py-2 min-h-[44px] max-h-[120px] justify-center">
@@ -521,40 +525,36 @@ export default function AddDynamicScreen() {
                                     value={inputText}
                                     onChangeText={setInputText}
                                     multiline
-                                    editable={!isRecording}
+                                    editable={!recorderStatus.isRecording}
                                 />
                             </View>
 
                             {/* Send / Mic Button */}
                             {inputText.trim() ? (
-                                <Pressable
+                                <TouchableOpacity
                                     onPress={handleSendText}
                                     className="w-11 h-11 rounded-full items-center justify-center"
                                     style={{ backgroundColor: currentPrimaryColor }}
                                 >
                                     <MaterialCommunityIcons name="send" size={22} color="#fff" />
-                                </Pressable>
+                                </TouchableOpacity>
                             ) : (
-                                <TouchableOpacity
-                                    onPressIn={startRecording}
-                                    onPressOut={stopRecording}
+                                <View
+                                    onStartShouldSetResponder={() => true}
+                                    onResponderGrant={startRecording}
+                                    onResponderRelease={stopRecording}
+                                    className="w-11 h-11 rounded-full items-center justify-center"
                                     style={{
-                                        width: 44,
-                                        height: 44,
-                                        borderRadius: 22,
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        transform: [{ scale: isRecording ? 1.25 : 1 }],
-                                        backgroundColor: isRecording ? '#ef4444' : currentPrimaryColor
+                                        backgroundColor: isRecording ? '#ef4444' : currentPrimaryColor,
+                                        transform: [{ scale: isRecording ? 1.25 : 1 }]
                                     }}
-                                    activeOpacity={0.8}
                                 >
                                     <MaterialCommunityIcons
                                         name={isRecording ? 'stop' : 'microphone'}
                                         size={22}
                                         color="#fff"
                                     />
-                                </TouchableOpacity>
+                                </View>
                             )}
                         </View>
                     )}

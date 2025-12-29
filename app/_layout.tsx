@@ -65,7 +65,7 @@ function RootLayoutContent() {
             }}
           />
           <Stack.Screen
-            name="add-transaction"
+            name="transaction/add-transaction"
             options={{
               presentation: 'modal',
               title: 'Nueva Transacción',

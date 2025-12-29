@@ -54,7 +54,7 @@ export default function ModalScreen() {
   const currentPrimaryColor = primaryColors[preferences.primaryColor]?.hex || '#22c55e';
 
   const handleManual = () => {
-    router.push('/add-transaction');
+    router.push('/transaction/add-transaction');
   };
 
   const handleDynamic = () => {

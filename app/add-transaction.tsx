@@ -49,7 +49,6 @@ export default function AddTransactionScreen() {
     const [debtorPhone, setDebtorPhone] = useState('');
     const [dueDate, setDueDate] = useState('');
     const [interestRate, setInterestRate] = useState('0');
-    const [exchangeRateUSD, setExchangeRateUSD] = useState('1');
 
     const [showDatePicker, setShowDatePicker] = useState(false);
     const [showDueDatePicker, setShowDueDatePicker] = useState(false);
@@ -105,9 +104,12 @@ export default function AddTransactionScreen() {
                 debtorLastName,
                 debtorEmail: debtorEmail || undefined,
                 debtorPhone: debtorPhone || undefined,
-                dueDate,
+                dueDate: (() => {
+                    const d = new Date(dueDate);
+                    d.setHours(12, 0, 0, 0);
+                    return d.toISOString();
+                })(),
                 interestRate: parseFloat(interestRate) || 0,
-                exchangeRateUSD: parseFloat(exchangeRateUSD) || 1,
                 isPaid: false,
             } : undefined;
 
@@ -118,7 +120,11 @@ export default function AddTransactionScreen() {
                 currency: 'USD',
                 category,
                 description: currency === 'VES' ? `${description} (Tasa: ${exchangeRate})` : description,
-                date: new Date(date).toISOString(),
+                date: (() => {
+                    const d = new Date(date);
+                    d.setHours(12, 0, 0, 0);
+                    return d.toISOString();
+                })(),
                 rate: exchangeRate,
                 loan: loanDetails,
             };
@@ -144,193 +150,195 @@ export default function AddTransactionScreen() {
                 className="flex-1"
             >
                 <ScrollView
-                    contentContainerStyle={{ padding: 20 }}
+                    contentContainerStyle={{ padding: 15 }}
                     keyboardShouldPersistTaps="handled"
                     showsVerticalScrollIndicator={false}
                 >
-                    {/* Type Selector */}
-                    <View className="mb-6">
-                        <Text className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                            Tipo de operación
-                        </Text>
-                        <View className="flex-row gap-2">
-                            <Chip
-                                label="Ingreso"
-                                selected={operationType === 'income'}
-                                onPress={() => { setOperationType('income'); setCategory(''); }}
-                                variant="income"
-                            />
-                            <Chip
-                                label="Gasto"
-                                selected={operationType === 'expense'}
-                                onPress={() => { setOperationType('expense'); setCategory(''); }}
-                                variant="expense"
-                            />
-                            <Chip
-                                label="Préstamo"
-                                selected={operationType === 'loan'}
-                                onPress={() => { setOperationType('loan'); setCategory('Préstamo'); }}
-                                variant="expense"
-                            />
-                        </View>
-                    </View>
-                    {/* Currency Selector */}
-                    <View className="mb-6">
-                        <Text className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                            Moneda
-                        </Text>
-                        <View className="flex-row gap-2">
-                            <Chip
-                                label="USD (Efectivo)"
-                                selected={currency === 'USD'}
-                                onPress={() => setCurrency('USD')}
-                                variant={currency === 'USD' ? 'default' : 'outline'}
-                            />
-                            <Chip
-                                label="Bolívares"
-                                selected={currency === 'VES'}
-                                onPress={() => setCurrency('VES')}
-                                variant={currency === 'VES' ? 'default' : 'outline'}
-                            />
-                            <Chip
-                                label="USDT"
-                                selected={currency === 'USDT'}
-                                onPress={() => setCurrency('USDT')}
-                                variant={currency === 'USDT' ? 'default' : 'outline'}
-                            />
-                        </View>
-                    </View>
-
-                    {/* Exchange Rate Section - Only for VES */}
-                    {currency === 'VES' && (
-                        <View>
+                    <Card variant="elevated">
+                        {/* Type Selector */}
+                        <View className="mb-6">
                             <Text className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                                Tasa de Cambio
+                                Tipo de operación
                             </Text>
-                            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                                <View className="flex-row gap-2">
-                                    <Chip
-                                        label={`BCV ($${exchangeRates.BCV_USD})`}
-                                        selected={rateSource === 'BCV_USD'}
-                                        onPress={() => setRateSource('BCV_USD')}
-                                        variant={rateSource === 'BCV_USD' ? 'default' : 'outline'}
-                                    />
-                                    <Chip
-                                        label={`BCV EUR ($${exchangeRates.BCV_EUR})`}
-                                        selected={rateSource === 'BCV_EUR'}
-                                        onPress={() => setRateSource('BCV_EUR')}
-                                        variant={rateSource === 'BCV_EUR' ? 'default' : 'outline'}
-                                    />
-                                    <Chip
-                                        label={`Binance ($${exchangeRates.Binance})`}
-                                        selected={rateSource === 'Binance'}
-                                        onPress={() => setRateSource('Binance')}
-                                        variant={rateSource === 'Binance' ? 'default' : 'outline'}
-                                    />
-                                    <Chip
-                                        label="Custom"
-                                        selected={rateSource === 'Custom'}
-                                        onPress={() => setRateSource('Custom')}
-                                        variant={rateSource === 'Custom' ? 'default' : 'outline'}
-                                    />
-                                </View>
-                            </ScrollView>
-
-                            {rateSource === 'Custom' && (
-                                <View className="mt-4">
-                                    <Input
-                                        label="Tasa Personalizada"
-                                        placeholder="0.00"
-                                        leftIcon="calculator"
-                                        value={customRate}
-                                        onChangeText={setCustomRate}
-                                        keyboardType="decimal-pad"
-                                    />
-                                </View>
-                            )}
-
-                            <View className="mt-4">
-                                <Input
-                                    label="Monto en USD (Calculado)"
-                                    value={amount && !isNaN(parseFloat(amountInUSD)) ? `$${amountInUSD}` : '$0.00'}
-                                    editable={false}
-                                    leftIcon="currency-usd"
+                            <View className="flex-row gap-2">
+                                <Chip
+                                    label="Ingreso"
+                                    selected={operationType === 'income'}
+                                    onPress={() => { setOperationType('income'); setCategory(''); }}
+                                    variant="income"
+                                />
+                                <Chip
+                                    label="Gasto"
+                                    selected={operationType === 'expense'}
+                                    onPress={() => { setOperationType('expense'); setCategory(''); }}
+                                    variant="expense"
+                                />
+                                <Chip
+                                    label="Préstamo"
+                                    selected={operationType === 'loan'}
+                                    onPress={() => { setOperationType('loan'); setCategory('Préstamo'); }}
+                                    variant="expense"
                                 />
                             </View>
                         </View>
-                    )}
-
-                    {/* Amount */}
-                    <Input
-                        label="Monto"
-                        placeholder="0.00"
-                        leftIcon="currency-usd"
-                        value={amount}
-                        onChangeText={setAmount}
-                        keyboardType="decimal-pad"
-                        error={errors.amount}
-                    />
-
-                    {/* Category Selector */}
-                    <View className="mb-4">
-                        <Text className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                            Categoría
-                        </Text>
-                        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                        {/* Currency Selector */}
+                        <View className="mb-6">
+                            <Text className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                                Moneda
+                            </Text>
                             <View className="flex-row gap-2">
-                                {filteredCategories.map((cat) => (
-                                    <Pressable
-                                        key={cat.id}
-                                        onPress={() => setCategory(cat.name)}
-                                        className={`items-center px-4 py-3 rounded-2xl ${category === cat.name
-                                            ? 'bg-primary-500'
-                                            : 'bg-light-surface dark:bg-dark-surface'
-                                            }`}
-                                    >
-                                        <MaterialCommunityIcons
-                                            name={cat.icon as any}
-                                            size={20}
-                                            color={category === cat.name ? '#fff' : cat.color}
-                                        />
-                                        <Text className={`text-xs mt-1 ${category === cat.name
-                                            ? 'text-white font-semibold'
-                                            : 'text-gray-600 dark:text-gray-400'
-                                            }`}>
-                                            {cat.name}
-                                        </Text>
-                                    </Pressable>
-                                ))}
+                                <Chip
+                                    label="USD (Efectivo)"
+                                    selected={currency === 'USD'}
+                                    onPress={() => setCurrency('USD')}
+                                    variant={currency === 'USD' ? 'default' : 'outline'}
+                                />
+                                <Chip
+                                    label="Bolívares"
+                                    selected={currency === 'VES'}
+                                    onPress={() => setCurrency('VES')}
+                                    variant={currency === 'VES' ? 'default' : 'outline'}
+                                />
+                                <Chip
+                                    label="USDT"
+                                    selected={currency === 'USDT'}
+                                    onPress={() => setCurrency('USDT')}
+                                    variant={currency === 'USDT' ? 'default' : 'outline'}
+                                />
                             </View>
-                        </ScrollView>
-                        {errors.category && (
-                            <Text className="text-sm text-expense mt-2">{errors.category}</Text>
+                        </View>
+
+                        {/* Exchange Rate Section - Only for VES */}
+                        {currency === 'VES' && (
+                            <View>
+                                <Text className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                                    Tasa de Cambio
+                                </Text>
+                                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                                    <View className="flex-row gap-2">
+                                        <Chip
+                                            label={`BCV ($${exchangeRates.BCV_USD})`}
+                                            selected={rateSource === 'BCV_USD'}
+                                            onPress={() => setRateSource('BCV_USD')}
+                                            variant={rateSource === 'BCV_USD' ? 'default' : 'outline'}
+                                        />
+                                        <Chip
+                                            label={`BCV EUR ($${exchangeRates.BCV_EUR})`}
+                                            selected={rateSource === 'BCV_EUR'}
+                                            onPress={() => setRateSource('BCV_EUR')}
+                                            variant={rateSource === 'BCV_EUR' ? 'default' : 'outline'}
+                                        />
+                                        <Chip
+                                            label={`Binance ($${exchangeRates.Binance})`}
+                                            selected={rateSource === 'Binance'}
+                                            onPress={() => setRateSource('Binance')}
+                                            variant={rateSource === 'Binance' ? 'default' : 'outline'}
+                                        />
+                                        <Chip
+                                            label="Custom"
+                                            selected={rateSource === 'Custom'}
+                                            onPress={() => setRateSource('Custom')}
+                                            variant={rateSource === 'Custom' ? 'default' : 'outline'}
+                                        />
+                                    </View>
+                                </ScrollView>
+
+                                {rateSource === 'Custom' && (
+                                    <View className="mt-4">
+                                        <Input
+                                            label="Tasa Personalizada"
+                                            placeholder="0.00"
+                                            leftIcon="calculator"
+                                            value={customRate}
+                                            onChangeText={setCustomRate}
+                                            keyboardType="decimal-pad"
+                                        />
+                                    </View>
+                                )}
+
+                                <View className="mt-4">
+                                    <Input
+                                        label="Monto en USD (Calculado)"
+                                        value={amount && !isNaN(parseFloat(amountInUSD)) ? `$${amountInUSD}` : '$0.00'}
+                                        editable={false}
+                                        leftIcon="currency-usd"
+                                    />
+                                </View>
+                            </View>
                         )}
-                    </View>
 
-                    {/* Description */}
-                    <Input
-                        label="Descripción"
-                        placeholder="Descripción de la transacción"
-                        leftIcon="text"
-                        value={description}
-                        onChangeText={setDescription}
-                    />
+                        {/* Amount */}
+                        <Input
+                            label="Monto"
+                            placeholder="0.00"
+                            leftIcon="currency-usd"
+                            value={amount}
+                            onChangeText={setAmount}
+                            keyboardType="decimal-pad"
+                            error={errors.amount}
+                        />
 
-                    {/* Date */}
-                    <DatePickerTrigger
-                        label="Fecha"
-                        value={date}
-                        icon="calendar"
-                        onPress={() => setShowDatePicker(true)}
-                    />
+                        {/* Category Selector */}
+                        <View className="mb-4">
+                            <Text className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                                Categoría
+                            </Text>
+                            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                                <View className="flex-row gap-2">
+                                    {filteredCategories.map((cat) => (
+                                        <Pressable
+                                            key={cat.id}
+                                            onPress={() => setCategory(cat.name)}
+                                            className={`items-center px-4 py-3 rounded-2xl ${category === cat.name
+                                                ? 'bg-primary-500'
+                                                : 'bg-light-surface dark:bg-dark-surface'
+                                                }`}
+                                        >
+                                            <MaterialCommunityIcons
+                                                name={cat.icon as any}
+                                                size={20}
+                                                color={category === cat.name ? '#fff' : cat.color}
+                                            />
+                                            <Text className={`text-xs mt-1 ${category === cat.name
+                                                ? 'text-white font-semibold'
+                                                : 'text-gray-600 dark:text-gray-400'
+                                                }`}>
+                                                {cat.name}
+                                            </Text>
+                                        </Pressable>
+                                    ))}
+                                </View>
+                            </ScrollView>
+                            {errors.category && (
+                                <Text className="text-sm text-expense mt-2">{errors.category}</Text>
+                            )}
+                        </View>
 
-                    <DatePickerModal
-                        visible={showDatePicker}
-                        onClose={() => setShowDatePicker(false)}
-                        value={date}
-                        onChange={setDate}
-                        label="Seleccionar Fecha"
-                    />
+                        {/* Description */}
+                        <Input
+                            label="Descripción"
+                            placeholder="Descripción de la transacción"
+                            leftIcon="text"
+                            value={description}
+                            onChangeText={setDescription}
+                        />
+
+                        {/* Date */}
+                        <DatePickerTrigger
+                            label="Fecha"
+                            value={date}
+                            icon="calendar"
+                            onPress={() => setShowDatePicker(true)}
+                        />
+
+                        <DatePickerModal
+                            visible={showDatePicker}
+                            onClose={() => setShowDatePicker(false)}
+                            value={date}
+                            onChange={setDate}
+                            label="Seleccionar Fecha"
+                        />
+                    </Card>
 
                     {/* Loan-specific fields */}
                     {operationType === 'loan' && (
@@ -413,17 +421,6 @@ export default function AddTransactionScreen() {
                                         leftIcon="percent"
                                         value={interestRate}
                                         onChangeText={setInterestRate}
-                                        keyboardType="decimal-pad"
-                                        containerClassName="mb-0"
-                                    />
-                                </View>
-                                <View className="flex-1">
-                                    <Input
-                                        label="Tasa USD"
-                                        placeholder="1.00"
-                                        leftIcon="currency-usd"
-                                        value={exchangeRateUSD}
-                                        onChangeText={setExchangeRateUSD}
                                         keyboardType="decimal-pad"
                                         containerClassName="mb-0"
                                     />

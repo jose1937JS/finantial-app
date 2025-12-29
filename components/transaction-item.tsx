@@ -38,6 +38,13 @@ export function TransactionItem({ transaction, onPress }: TransactionItemProps) 
         return transaction.type === 'income' ? '+' : '-';
     };
 
+    const mainText = transaction.description || transaction.category;
+    const title = mainText.length > 20 ? mainText.substring(0, 20) + '...' : mainText;
+    const hasLongDescription = transaction.description && transaction.description.length > 20;
+    const subtitle = hasLongDescription
+        ? '...' + transaction.description.substring(20, 70) + (transaction.description.length > 70 ? '...' : '')
+        : null;
+
     return (
         <Pressable
             onPress={handlePress}
@@ -57,10 +64,26 @@ export function TransactionItem({ transaction, onPress }: TransactionItemProps) 
 
             {/* Details */}
             <View className="flex-1">
-                <Text className="text-base text-gray-900 dark:text-white mb-1">
-                    {transaction.description || transaction.category}
-                </Text>
-                <Text className="text-sm text-gray-500 dark:text-gray-400">
+                <View className="flex-row items-center mb-0.5">
+                    <Text className="text-base font-semibold text-gray-900 dark:text-white mr-2">
+                        {title}
+                    </Text>
+                    {transaction.type === 'loan' && transaction.loan && (
+                        <View className={`px-2 py-0.5 rounded-md ${transaction.loan.isPaid ? 'bg-green-100 dark:bg-green-900/30' : 'bg-orange-100 dark:bg-orange-900/30'}`}>
+                            <Text className={`text-[8px] font-semibold ${transaction.loan.isPaid ? 'text-green-600 dark:text-green-400' : 'text-orange-600 dark:text-orange-400'}`}>
+                                {transaction.loan.isPaid ? 'Pagado' : 'Pendiente'}
+                            </Text>
+                        </View>
+                    )}
+                </View>
+
+                {subtitle && (
+                    <Text className="text-xs text-gray-500 dark:text-gray-400 mb-1 italic">
+                        {subtitle}
+                    </Text>
+                )}
+
+                <Text className="text-[11px] text-gray-400 dark:text-gray-500">
                     {transaction.category} • {formatDate(transaction.date, 'relative')}
                 </Text>
             </View>

@@ -27,17 +27,38 @@ export const formatDate = (
     format: 'short' | 'long' | 'relative' = 'short',
     locale: string = 'es-ES'
 ): string => {
-    const d = typeof date === 'string' ? new Date(date) : date;
+    let d: Date;
+
+    if (typeof date === 'string') {
+        // Handle ISO strings and plain date strings
+        if (date.includes('T')) {
+            d = new Date(date);
+            // If it has a time, adjust it to noon local time as requested
+            d.setHours(12, 0, 0, 0);
+        } else {
+            // If it's just a date YYYY-MM-DD, parse as local to avoid UTC shift
+            const [year, month, day] = date.split('-').map(Number);
+            d = new Date(year, month - 1, day, 12, 0, 0);
+        }
+    } else {
+        d = new Date(date.getTime());
+        d.setHours(12, 0, 0, 0);
+    }
 
     if (format === 'relative') {
         const now = new Date();
+        now.setHours(12, 0, 0, 0);
+
         const diffMs = now.getTime() - d.getTime();
-        const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+        const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
+        const absDiffDays = Math.abs(diffDays);
 
         if (diffDays === 0) return 'Hoy';
         if (diffDays === 1) return 'Ayer';
-        if (diffDays < 7) return `Hace ${diffDays} días`;
-        if (diffDays < 30) return `Hace ${Math.floor(diffDays / 7)} semanas`;
+
+        // Use absolute value to avoid "hace -X dias" as requested
+        if (absDiffDays < 7) return `Hace ${absDiffDays} días`;
+        if (absDiffDays < 30) return `Hace ${Math.floor(absDiffDays / 7)} semanas`;
 
         return d.toLocaleDateString(locale, { day: 'numeric', month: 'short' });
     }

@@ -1,4 +1,4 @@
-import type { Transaction, TransactionFilters } from '@/types';
+import type { Payment, Transaction, TransactionFilters } from '@/types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
@@ -10,6 +10,7 @@ interface TransactionStore {
     // Actions
     addTransaction: (transaction: Omit<Transaction, 'id' | 'createdAt'>) => void;
     updateTransaction: (id: string, data: Partial<Transaction>) => void;
+    addLoanPayment: (transactionId: string, payment: Payment) => void;
     deleteTransaction: (id: string) => void;
     setFilters: (filters: TransactionFilters) => void;
     clearFilters: () => void;
@@ -131,7 +132,6 @@ const mockTransactions: Transaction[] = [
             debtorPhone: '+58 412 1234567',
             dueDate: new Date(Date.now() + 604800000).toISOString(),
             interestRate: 0,
-            exchangeRateUSD: 1,
             isPaid: false,
         },
     },
@@ -151,7 +151,6 @@ const mockTransactions: Transaction[] = [
             debtorPhone: '+58 412 1234567',
             dueDate: new Date(Date.now() + 605900000).toISOString(),
             interestRate: 0,
-            exchangeRateUSD: 1,
             isPaid: true,
         },
     },
@@ -272,6 +271,37 @@ export const useTransactionStore = create<TransactionStore>()(
                 }));
             },
 
+            addLoanPayment: (transactionId, payment) => {
+                set((state) => ({
+                    transactions: state.transactions.map((t) => {
+                        if (t.id !== transactionId || t.type !== 'loan' || !t.loan) return t;
+
+                        const currentPayments = t.loan.payments || [];
+                        const newPayments = [...currentPayments, payment];
+
+                        // Calculate totals to auto-update isPaid
+                        // Note: Assuming payment amount is in the same currency basis as the debt (USD)
+                        // If payment is in VES, the UI should probably convert it to USD before sending here,
+                        // or we store the USD equivalent in payment.amount
+                        const interestAmount = t.amount * (t.loan.interestRate / 100);
+                        const totalDebt = t.amount + interestAmount;
+                        const totalPaid = newPayments.reduce((acc, p) => acc + p.amount, 0);
+
+                        // Allow small float epsilon, or strict >=
+                        const isPaid = totalPaid >= totalDebt - 0.01;
+
+                        return {
+                            ...t,
+                            loan: {
+                                ...t.loan!,
+                                payments: newPayments,
+                                isPaid,
+                            },
+                        };
+                    }),
+                }));
+            },
+
             deleteTransaction: (id) => {
                 set((state) => ({
                     transactions: state.transactions.filter((t) => t.id !== id),
@@ -355,13 +385,15 @@ export const useTransactionStore = create<TransactionStore>()(
             getLoansDue: () => {
                 const { transactions } = get();
                 const now = new Date();
-                return transactions.filter(
-                    (t) =>
-                        t.type === 'loan' &&
-                        t.loan &&
-                        !t.loan.isPaid &&
-                        new Date(t.loan.dueDate) <= new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)
-                );
+                return transactions
+                    .filter(
+                        (t) =>
+                            t.type === 'loan' &&
+                            t.loan &&
+                            !t.loan.isPaid &&
+                            new Date(t.loan.dueDate) <= new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)
+                    )
+                    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()); // For due dates, we might want soonest first?
             },
         }),
         {

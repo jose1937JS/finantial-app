@@ -10,6 +10,9 @@ export interface Transaction {
     description: string;
     date: string;
     createdAt: string;
+    // Optional currency details
+    amountInVES?: number;
+    rate?: number;
     // Loan-specific fields
     loan?: LoanDetails;
 }
@@ -21,8 +24,16 @@ export interface LoanDetails {
     debtorPhone?: string;
     dueDate: string;
     interestRate: number;
-    exchangeRateUSD: number;
     isPaid: boolean;
+    payments?: Payment[];
+}
+
+export interface Payment {
+    id: string;
+    amount: number;
+    currency: string;
+    rate?: number;
+    date: string;
 }
 
 // User types

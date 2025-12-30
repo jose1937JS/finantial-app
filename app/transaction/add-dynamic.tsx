@@ -45,7 +45,7 @@ const initialMessages: ChatMessage[] = [
     {
         id: '1',
         type: 'system',
-        content: '¡Hola! Soy tu asistente financiero. Puedes registrar una operación de las siguientes formas:\n\n📝 **Texto**: Escribe algo como "Gasté $50 en comida"\n\n🎤 **Voz**: Mantén presionado el micrófono y dicta tu operación\n\n📷 **Foto**: Envía una foto de tu recibo o factura',
+        content: '¡Hola! Soy tu asistente financiero. Puedes registrar una operación de las siguientes formas:\n\n📝 **Texto**: Escribe algo como "Gasté $50 en comida"\n\n🎤 **Voz**: Presiona el micrófono y dicta tu operación\n\n📷 **Foto**: Envía una foto de tu recibo o factura',
         sender: 'assistant',
         timestamp: new Date(),
     },

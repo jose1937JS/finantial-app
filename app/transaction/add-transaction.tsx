@@ -177,10 +177,11 @@ export default function AddTransactionScreen() {
                                     label="Préstamo"
                                     selected={operationType === 'loan'}
                                     onPress={() => { setOperationType('loan'); setCategory('Préstamo'); }}
-                                    variant="expense"
+                                    variant="loan"
                                 />
                             </View>
                         </View>
+
                         {/* Currency Selector */}
                         <View className="mb-6">
                             <Text className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">

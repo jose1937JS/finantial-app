@@ -18,7 +18,7 @@ export function QuickActions({ onAddIncome, onAddExpense }: QuickActionsProps) {
         if (onAddIncome) {
             onAddIncome();
         } else {
-            router.push('/add-transaction?type=income');
+            router.push('/transaction/add-transaction?type=income');
         }
     };
 
@@ -27,7 +27,7 @@ export function QuickActions({ onAddIncome, onAddExpense }: QuickActionsProps) {
         if (onAddExpense) {
             onAddExpense();
         } else {
-            router.push('/add-transaction?type=expense');
+            router.push('/transaction/add-transaction?type=expense');
         }
     };
 

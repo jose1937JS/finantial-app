@@ -1,11 +1,12 @@
+import { useAlert } from '@/hooks/alert-context';
+import { useThemeColor } from '@/hooks/use-theme-color';
+import { useSettingsStore } from '@/store/settings-store';
+import { useTransactionStore } from '@/store/transaction-store';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React from 'react';
-import { Alert, Image, Pressable, ScrollView, Text, View } from 'react-native';
+import { Image, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
-import { useSettingsStore } from '@/store/settings-store';
-import { useTransactionStore } from '@/store/transaction-store';
 
 export default function CategoryDetailScreen() {
     const router = useRouter();
@@ -13,6 +14,8 @@ export default function CategoryDetailScreen() {
     const { categories, deleteCategory } = useSettingsStore();
     const { transactions } = useTransactionStore();
 
+    const primaryColor = useThemeColor({}, 'tint');
+    const { showAlert } = useAlert();
     const category = categories.find((c) => c.id === id);
 
     if (!category) {
@@ -31,19 +34,21 @@ export default function CategoryDetailScreen() {
 
     const handleDelete = () => {
         if (category.isDefault) {
-            Alert.alert('No permitido', 'Las categorías por defecto no pueden eliminarse.');
+            showAlert({ title: 'No permitido', message: 'Las categorías por defecto no pueden eliminarse.', icon: 'block-helper', iconColor: '#ef4444' });
             return;
         }
 
         if (usageCount > 0) {
-            Alert.alert('Atención', 'Esta categoría tiene transacciones asociadas. Elimínelas primero o edite la categoría.');
+            showAlert({ title: 'Atención', message: 'Esta categoría tiene transacciones asociadas. Elimínelas primero o edite la categoría.', icon: 'alert', iconColor: '#f59e0b' });
             return;
         }
 
-        Alert.alert(
-            'Eliminar Categoría',
-            '¿Estás seguro de que deseas eliminar esta categoría?',
-            [
+        showAlert({
+            title: 'Eliminar Categoría',
+            message: '¿Estás seguro de que deseas eliminar esta categoría?',
+            icon: 'trash-can-outline',
+            iconColor: '#ef4444',
+            buttons: [
                 { text: 'Cancelar', style: 'cancel' },
                 {
                     text: 'Eliminar',
@@ -54,7 +59,7 @@ export default function CategoryDetailScreen() {
                     }
                 }
             ]
-        );
+        });
     };
 
     const handleEdit = () => {
@@ -70,7 +75,7 @@ export default function CategoryDetailScreen() {
                 </Pressable>
                 <View className="flex-row gap-2">
                     <Pressable onPress={handleEdit} className="p-2">
-                        <MaterialCommunityIcons name="pencil" size={24} color="#3b82f6" />
+                        <MaterialCommunityIcons name="pencil" size={24} color={primaryColor} />
                     </Pressable>
                     {!category.isDefault && (
                         <Pressable onPress={handleDelete} className="p-2">

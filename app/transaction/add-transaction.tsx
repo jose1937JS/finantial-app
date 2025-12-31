@@ -1,8 +1,10 @@
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Chip } from '@/components/ui/chip';
+import { CustomHeader } from '@/components/ui/custom-header';
 import { DatePickerModal, DatePickerTrigger } from '@/components/ui/date-picker-modal';
 import { Input } from '@/components/ui/input';
+import { useAlert } from '@/hooks/alert-context';
 import { useSettingsStore } from '@/store/settings-store';
 import { useTransactionStore } from '@/store/transaction-store';
 import type { Currency, ExchangeRateSource, LoanDetails, TransactionType } from '@/types';
@@ -10,7 +12,7 @@ import { validateAmount, validateDate, validateEmail, validatePhone, validateReq
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 type OperationType = TransactionType;
@@ -20,7 +22,7 @@ export default function AddTransactionScreen() {
     const params = useLocalSearchParams<{ type?: string }>();
     const { addTransaction } = useTransactionStore();
     const { categories, exchangeRates } = useSettingsStore();
-
+    const { showAlert } = useAlert();
     // Form state
     const [operationType, setOperationType] = useState<OperationType>(
         (params.type as OperationType) || 'expense'
@@ -134,317 +136,324 @@ export default function AddTransactionScreen() {
 
             addTransaction(payload);
 
-            Alert.alert('Éxito', 'Transacción agregada correctamente', [
-                { text: 'OK', onPress: () => router.back() }
-            ]);
+            showAlert({
+                title: 'Éxito',
+                message: 'Transacción agregada correctamente',
+                icon: 'check-circle',
+                iconColor: '#22c55e',
+                buttons: [{ text: 'OK', onPress: () => router.back() }]
+            });
         } catch (error) {
-            Alert.alert('Error', 'No se pudo agregar la transacción');
+            showAlert({ title: 'Error', message: 'No se pudo agregar la transacción', icon: 'alert-circle', iconColor: '#ef4444' });
         } finally {
             setIsLoading(false);
         }
     };
 
     return (
-        <SafeAreaView className="flex-1 bg-light-bg dark:bg-dark-bg" edges={['bottom']}>
-            <KeyboardAvoidingView
-                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                className="flex-1"
-            >
-                <ScrollView
-                    contentContainerStyle={{ padding: 15 }}
-                    keyboardShouldPersistTaps="handled"
-                    showsVerticalScrollIndicator={false}
+        <>
+            <CustomHeader title="Nueva Transacción" />
+            <SafeAreaView className="flex-1 bg-light-bg dark:bg-dark-bg" edges={['bottom']}>
+                <KeyboardAvoidingView
+                    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                    className="flex-1"
                 >
-                    <Card variant="elevated">
-                        {/* Type Selector */}
-                        <View className="mb-6">
-                            <Text className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                                Tipo de operación
-                            </Text>
-                            <View className="flex-row gap-2">
-                                <Chip
-                                    label="Ingreso"
-                                    selected={operationType === 'income'}
-                                    onPress={() => { setOperationType('income'); setCategory(''); }}
-                                    variant="income"
-                                />
-                                <Chip
-                                    label="Gasto"
-                                    selected={operationType === 'expense'}
-                                    onPress={() => { setOperationType('expense'); setCategory(''); }}
-                                    variant="expense"
-                                />
-                                <Chip
-                                    label="Préstamo"
-                                    selected={operationType === 'loan'}
-                                    onPress={() => { setOperationType('loan'); setCategory('Préstamo'); }}
-                                    variant="loan"
-                                />
-                            </View>
-                        </View>
-
-                        {/* Currency Selector */}
-                        <View className="mb-6">
-                            <Text className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                                Moneda
-                            </Text>
-                            <View className="flex-row gap-2">
-                                <Chip
-                                    label="USD (Efectivo)"
-                                    selected={currency === 'USD'}
-                                    onPress={() => setCurrency('USD')}
-                                    variant={currency === 'USD' ? 'default' : 'outline'}
-                                />
-                                <Chip
-                                    label="Bolívares"
-                                    selected={currency === 'VES'}
-                                    onPress={() => setCurrency('VES')}
-                                    variant={currency === 'VES' ? 'default' : 'outline'}
-                                />
-                                <Chip
-                                    label="USDT"
-                                    selected={currency === 'USDT'}
-                                    onPress={() => setCurrency('USDT')}
-                                    variant={currency === 'USDT' ? 'default' : 'outline'}
-                                />
-                            </View>
-                        </View>
-
-                        {/* Exchange Rate Section - Only for VES */}
-                        {currency === 'VES' && (
-                            <View>
+                    <ScrollView
+                        contentContainerStyle={{ padding: 15 }}
+                        keyboardShouldPersistTaps="handled"
+                        showsVerticalScrollIndicator={false}
+                    >
+                        <Card variant="elevated">
+                            {/* Type Selector */}
+                            <View className="mb-6">
                                 <Text className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                                    Tasa de Cambio
+                                    Tipo de operación
+                                </Text>
+                                <View className="flex-row gap-2">
+                                    <Chip
+                                        label="Ingreso"
+                                        selected={operationType === 'income'}
+                                        onPress={() => { setOperationType('income'); setCategory(''); }}
+                                        variant="income"
+                                    />
+                                    <Chip
+                                        label="Gasto"
+                                        selected={operationType === 'expense'}
+                                        onPress={() => { setOperationType('expense'); setCategory(''); }}
+                                        variant="expense"
+                                    />
+                                    <Chip
+                                        label="Préstamo"
+                                        selected={operationType === 'loan'}
+                                        onPress={() => { setOperationType('loan'); setCategory('Préstamo'); }}
+                                        variant="loan"
+                                    />
+                                </View>
+                            </View>
+
+                            {/* Currency Selector */}
+                            <View className="mb-6">
+                                <Text className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                                    Moneda
+                                </Text>
+                                <View className="flex-row gap-2">
+                                    <Chip
+                                        label="USD (Efectivo)"
+                                        selected={currency === 'USD'}
+                                        onPress={() => setCurrency('USD')}
+                                        variant={currency === 'USD' ? 'default' : 'outline'}
+                                    />
+                                    <Chip
+                                        label="Bolívares"
+                                        selected={currency === 'VES'}
+                                        onPress={() => setCurrency('VES')}
+                                        variant={currency === 'VES' ? 'default' : 'outline'}
+                                    />
+                                    <Chip
+                                        label="USDT"
+                                        selected={currency === 'USDT'}
+                                        onPress={() => setCurrency('USDT')}
+                                        variant={currency === 'USDT' ? 'default' : 'outline'}
+                                    />
+                                </View>
+                            </View>
+
+                            {/* Exchange Rate Section - Only for VES */}
+                            {currency === 'VES' && (
+                                <View>
+                                    <Text className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                                        Tasa de Cambio
+                                    </Text>
+                                    <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                                        <View className="flex-row gap-2">
+                                            <Chip
+                                                label={`BCV ($${exchangeRates.BCV_USD})`}
+                                                selected={rateSource === 'BCV_USD'}
+                                                onPress={() => setRateSource('BCV_USD')}
+                                                variant={rateSource === 'BCV_USD' ? 'default' : 'outline'}
+                                            />
+                                            <Chip
+                                                label={`BCV EUR ($${exchangeRates.BCV_EUR})`}
+                                                selected={rateSource === 'BCV_EUR'}
+                                                onPress={() => setRateSource('BCV_EUR')}
+                                                variant={rateSource === 'BCV_EUR' ? 'default' : 'outline'}
+                                            />
+                                            <Chip
+                                                label={`Binance ($${exchangeRates.Binance})`}
+                                                selected={rateSource === 'Binance'}
+                                                onPress={() => setRateSource('Binance')}
+                                                variant={rateSource === 'Binance' ? 'default' : 'outline'}
+                                            />
+                                            <Chip
+                                                label="Custom"
+                                                selected={rateSource === 'Custom'}
+                                                onPress={() => setRateSource('Custom')}
+                                                variant={rateSource === 'Custom' ? 'default' : 'outline'}
+                                            />
+                                        </View>
+                                    </ScrollView>
+
+                                    {rateSource === 'Custom' && (
+                                        <View className="mt-4">
+                                            <Input
+                                                label="Tasa Personalizada"
+                                                placeholder="0.00"
+                                                leftIcon="calculator"
+                                                value={customRate}
+                                                onChangeText={setCustomRate}
+                                                keyboardType="decimal-pad"
+                                            />
+                                        </View>
+                                    )}
+
+                                    <View className="mt-4">
+                                        <Input
+                                            label="Monto en USD (Calculado)"
+                                            value={amount && !isNaN(parseFloat(amountInUSD)) ? `$${amountInUSD}` : '$0.00'}
+                                            editable={false}
+                                            leftIcon="currency-usd"
+                                        />
+                                    </View>
+                                </View>
+                            )}
+
+                            {/* Amount */}
+                            <Input
+                                label="Monto"
+                                placeholder="0.00"
+                                leftIcon="currency-usd"
+                                value={amount}
+                                onChangeText={setAmount}
+                                keyboardType="decimal-pad"
+                                error={errors.amount}
+                            />
+
+                            {/* Category Selector */}
+                            <View className="mb-4">
+                                <Text className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                                    Categoría
                                 </Text>
                                 <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                                     <View className="flex-row gap-2">
-                                        <Chip
-                                            label={`BCV ($${exchangeRates.BCV_USD})`}
-                                            selected={rateSource === 'BCV_USD'}
-                                            onPress={() => setRateSource('BCV_USD')}
-                                            variant={rateSource === 'BCV_USD' ? 'default' : 'outline'}
-                                        />
-                                        <Chip
-                                            label={`BCV EUR ($${exchangeRates.BCV_EUR})`}
-                                            selected={rateSource === 'BCV_EUR'}
-                                            onPress={() => setRateSource('BCV_EUR')}
-                                            variant={rateSource === 'BCV_EUR' ? 'default' : 'outline'}
-                                        />
-                                        <Chip
-                                            label={`Binance ($${exchangeRates.Binance})`}
-                                            selected={rateSource === 'Binance'}
-                                            onPress={() => setRateSource('Binance')}
-                                            variant={rateSource === 'Binance' ? 'default' : 'outline'}
-                                        />
-                                        <Chip
-                                            label="Custom"
-                                            selected={rateSource === 'Custom'}
-                                            onPress={() => setRateSource('Custom')}
-                                            variant={rateSource === 'Custom' ? 'default' : 'outline'}
-                                        />
+                                        {filteredCategories.map((cat) => (
+                                            <Pressable
+                                                key={cat.id}
+                                                onPress={() => setCategory(cat.name)}
+                                                className={`items-center px-4 py-3 rounded-2xl ${category === cat.name
+                                                    ? 'bg-primary-500'
+                                                    : 'bg-light-surface dark:bg-dark-surface'
+                                                    }`}
+                                            >
+                                                <MaterialCommunityIcons
+                                                    name={cat.icon as any}
+                                                    size={20}
+                                                    color={category === cat.name ? '#fff' : cat.color}
+                                                />
+                                                <Text className={`text-xs mt-1 ${category === cat.name
+                                                    ? 'text-white font-semibold'
+                                                    : 'text-gray-600 dark:text-gray-400'
+                                                    }`}>
+                                                    {cat.name}
+                                                </Text>
+                                            </Pressable>
+                                        ))}
                                     </View>
                                 </ScrollView>
-
-                                {rateSource === 'Custom' && (
-                                    <View className="mt-4">
-                                        <Input
-                                            label="Tasa Personalizada"
-                                            placeholder="0.00"
-                                            leftIcon="calculator"
-                                            value={customRate}
-                                            onChangeText={setCustomRate}
-                                            keyboardType="decimal-pad"
-                                        />
-                                    </View>
+                                {errors.category && (
+                                    <Text className="text-sm text-expense mt-2">{errors.category}</Text>
                                 )}
-
-                                <View className="mt-4">
-                                    <Input
-                                        label="Monto en USD (Calculado)"
-                                        value={amount && !isNaN(parseFloat(amountInUSD)) ? `$${amountInUSD}` : '$0.00'}
-                                        editable={false}
-                                        leftIcon="currency-usd"
-                                    />
-                                </View>
-                            </View>
-                        )}
-
-                        {/* Amount */}
-                        <Input
-                            label="Monto"
-                            placeholder="0.00"
-                            leftIcon="currency-usd"
-                            value={amount}
-                            onChangeText={setAmount}
-                            keyboardType="decimal-pad"
-                            error={errors.amount}
-                        />
-
-                        {/* Category Selector */}
-                        <View className="mb-4">
-                            <Text className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                                Categoría
-                            </Text>
-                            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                                <View className="flex-row gap-2">
-                                    {filteredCategories.map((cat) => (
-                                        <Pressable
-                                            key={cat.id}
-                                            onPress={() => setCategory(cat.name)}
-                                            className={`items-center px-4 py-3 rounded-2xl ${category === cat.name
-                                                ? 'bg-primary-500'
-                                                : 'bg-light-surface dark:bg-dark-surface'
-                                                }`}
-                                        >
-                                            <MaterialCommunityIcons
-                                                name={cat.icon as any}
-                                                size={20}
-                                                color={category === cat.name ? '#fff' : cat.color}
-                                            />
-                                            <Text className={`text-xs mt-1 ${category === cat.name
-                                                ? 'text-white font-semibold'
-                                                : 'text-gray-600 dark:text-gray-400'
-                                                }`}>
-                                                {cat.name}
-                                            </Text>
-                                        </Pressable>
-                                    ))}
-                                </View>
-                            </ScrollView>
-                            {errors.category && (
-                                <Text className="text-sm text-expense mt-2">{errors.category}</Text>
-                            )}
-                        </View>
-
-                        {/* Description */}
-                        <Input
-                            label="Descripción"
-                            placeholder="Descripción de la transacción"
-                            leftIcon="text"
-                            value={description}
-                            onChangeText={setDescription}
-                        />
-
-                        {/* Date */}
-                        <DatePickerTrigger
-                            label="Fecha"
-                            value={date}
-                            icon="calendar"
-                            onPress={() => setShowDatePicker(true)}
-                        />
-
-                        <DatePickerModal
-                            visible={showDatePicker}
-                            onClose={() => setShowDatePicker(false)}
-                            value={date}
-                            onChange={setDate}
-                            label="Seleccionar Fecha"
-                        />
-                    </Card>
-
-                    {/* Loan-specific fields */}
-                    {operationType === 'loan' && (
-                        <Card variant="elevated" className="mt-4">
-                            <Text className="text-lg font-bold text-gray-900 dark:text-white mb-4">
-                                Datos del Deudor
-                            </Text>
-
-                            <View className="flex-row gap-2">
-                                <View className="flex-1">
-                                    <Input
-                                        label="Nombre"
-                                        placeholder="Juan"
-                                        leftIcon="account"
-                                        value={debtorName}
-                                        onChangeText={setDebtorName}
-                                        error={errors.debtorName}
-                                        containerClassName="mb-0"
-                                    />
-                                </View>
-                                <View className="flex-1">
-                                    <Input
-                                        label="Apellido"
-                                        placeholder="Pérez"
-                                        value={debtorLastName}
-                                        onChangeText={setDebtorLastName}
-                                        error={errors.debtorLastName}
-                                        containerClassName="mb-0"
-                                    />
-                                </View>
                             </View>
 
+                            {/* Description */}
                             <Input
-                                label="Correo (opcional)"
-                                placeholder="correo@ejemplo.com"
-                                leftIcon="email-outline"
-                                value={debtorEmail}
-                                onChangeText={setDebtorEmail}
-                                keyboardType="email-address"
-                                autoCapitalize="none"
-                                error={errors.debtorEmail}
+                                label="Descripción"
+                                placeholder="Descripción de la transacción"
+                                leftIcon="text"
+                                value={description}
+                                onChangeText={setDescription}
                             />
 
-                            <Input
-                                label="Teléfono (opcional)"
-                                placeholder="+58 412 1234567"
-                                leftIcon="phone-outline"
-                                value={debtorPhone}
-                                onChangeText={setDebtorPhone}
-                                keyboardType="phone-pad"
-                                error={errors.debtorPhone}
-                            />
-
-                            <Text className="text-lg font-bold text-gray-900 dark:text-white mb-4 mt-2">
-                                Datos Financieros
-                            </Text>
-
+                            {/* Date */}
                             <DatePickerTrigger
-                                label="Fecha de vencimiento"
-                                value={dueDate}
-                                icon="calendar-clock"
-                                onPress={() => setShowDueDatePicker(true)}
-                                error={errors.dueDate}
+                                label="Fecha"
+                                value={date}
+                                icon="calendar"
+                                onPress={() => setShowDatePicker(true)}
                             />
 
                             <DatePickerModal
-                                visible={showDueDatePicker}
-                                onClose={() => setShowDueDatePicker(false)}
-                                value={dueDate || new Date().toISOString().split('T')[0]}
-                                onChange={setDueDate}
-                                label="Fecha de Vencimiento"
-                                minimumDate={new Date()}
+                                visible={showDatePicker}
+                                onClose={() => setShowDatePicker(false)}
+                                value={date}
+                                onChange={setDate}
+                                label="Seleccionar Fecha"
                             />
-
-                            <View className="flex-row gap-2">
-                                <View className="flex-1">
-                                    <Input
-                                        label="Tasa de interés (%)"
-                                        placeholder="0"
-                                        leftIcon="percent"
-                                        value={interestRate}
-                                        onChangeText={setInterestRate}
-                                        keyboardType="decimal-pad"
-                                        containerClassName="mb-0"
-                                    />
-                                </View>
-                            </View>
                         </Card>
-                    )}
 
-                    {/* Submit Button */}
-                    <View className="mt-6 mb-4">
-                        <Button
-                            onPress={handleSubmit}
-                            isLoading={isLoading}
-                            size="lg"
-                        >
-                            {operationType === 'income' ? 'Agregar Ingreso' :
-                                operationType === 'loan' ? 'Registrar Préstamo' :
-                                    'Agregar Gasto'}
-                        </Button>
-                    </View>
-                </ScrollView>
-            </KeyboardAvoidingView>
-        </SafeAreaView>
+                        {/* Loan-specific fields */}
+                        {operationType === 'loan' && (
+                            <Card variant="elevated" className="mt-4">
+                                <Text className="text-lg font-bold text-gray-900 dark:text-white mb-4">
+                                    Datos del Deudor
+                                </Text>
+
+                                <View className="flex-row gap-2">
+                                    <View className="flex-1">
+                                        <Input
+                                            label="Nombre"
+                                            placeholder="Juan"
+                                            leftIcon="account"
+                                            value={debtorName}
+                                            onChangeText={setDebtorName}
+                                            error={errors.debtorName}
+                                            containerClassName="mb-0"
+                                        />
+                                    </View>
+                                    <View className="flex-1">
+                                        <Input
+                                            label="Apellido"
+                                            placeholder="Pérez"
+                                            value={debtorLastName}
+                                            onChangeText={setDebtorLastName}
+                                            error={errors.debtorLastName}
+                                            containerClassName="mb-0"
+                                        />
+                                    </View>
+                                </View>
+
+                                <Input
+                                    label="Correo (opcional)"
+                                    placeholder="correo@ejemplo.com"
+                                    leftIcon="email-outline"
+                                    value={debtorEmail}
+                                    onChangeText={setDebtorEmail}
+                                    keyboardType="email-address"
+                                    autoCapitalize="none"
+                                    error={errors.debtorEmail}
+                                />
+
+                                <Input
+                                    label="Teléfono (opcional)"
+                                    placeholder="+58 412 1234567"
+                                    leftIcon="phone-outline"
+                                    value={debtorPhone}
+                                    onChangeText={setDebtorPhone}
+                                    keyboardType="phone-pad"
+                                    error={errors.debtorPhone}
+                                />
+
+                                <Text className="text-lg font-bold text-gray-900 dark:text-white mb-4 mt-2">
+                                    Datos Financieros
+                                </Text>
+
+                                <DatePickerTrigger
+                                    label="Fecha de vencimiento"
+                                    value={dueDate}
+                                    icon="calendar-clock"
+                                    onPress={() => setShowDueDatePicker(true)}
+                                    error={errors.dueDate}
+                                />
+
+                                <DatePickerModal
+                                    visible={showDueDatePicker}
+                                    onClose={() => setShowDueDatePicker(false)}
+                                    value={dueDate || new Date().toISOString().split('T')[0]}
+                                    onChange={setDueDate}
+                                    label="Fecha de Vencimiento"
+                                    minimumDate={new Date()}
+                                />
+
+                                <View className="flex-row gap-2">
+                                    <View className="flex-1">
+                                        <Input
+                                            label="Tasa de interés (%)"
+                                            placeholder="0"
+                                            leftIcon="percent"
+                                            value={interestRate}
+                                            onChangeText={setInterestRate}
+                                            keyboardType="decimal-pad"
+                                            containerClassName="mb-0"
+                                        />
+                                    </View>
+                                </View>
+                            </Card>
+                        )}
+
+                        {/* Submit Button */}
+                        <View className="mt-6 mb-4">
+                            <Button
+                                onPress={handleSubmit}
+                                isLoading={isLoading}
+                                size="lg"
+                            >
+                                {operationType === 'income' ? 'Agregar Ingreso' :
+                                    operationType === 'loan' ? 'Registrar Préstamo' :
+                                        'Agregar Gasto'}
+                            </Button>
+                        </View>
+                    </ScrollView>
+                </KeyboardAvoidingView>
+            </SafeAreaView>
+        </>
     );
 }

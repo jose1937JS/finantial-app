@@ -1,14 +1,16 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React from 'react';
-import { Alert, Modal, Pressable, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { Modal, Pressable, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Chip } from '@/components/ui/chip';
+import { CustomHeader } from '@/components/ui/custom-header';
 import { DatePickerModal, DatePickerTrigger } from '@/components/ui/date-picker-modal';
 import { Input } from '@/components/ui/input';
+import { useAlert } from '@/hooks/alert-context';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { useSettingsStore } from '@/store/settings-store';
 import { useTransactionStore } from '@/store/transaction-store';
@@ -21,7 +23,7 @@ export default function TransactionDetailScreen() {
     const { transactions, deleteTransaction, addLoanPayment, updateTransaction } = useTransactionStore();
     const { exchangeRates } = useSettingsStore();
     const primaryColor = useThemeColor({}, 'tint');
-
+    const { showAlert } = useAlert();
     // Payment Form State
     const [showPaymentModal, setShowPaymentModal] = React.useState(false);
     const [paymentAmount, setPaymentAmount] = React.useState('');
@@ -51,21 +53,23 @@ export default function TransactionDetailScreen() {
     }
 
     const handleDelete = () => {
-        Alert.alert(
-            "Eliminar Transacción",
-            "¿Estás seguro de que deseas eliminar esta transacción? Esta acción no se puede deshacer.",
-            [
-                { text: "Cancelar", style: "cancel" },
+        showAlert({
+            title: 'Eliminar Transacción',
+            message: '¿Estás seguro de que deseas eliminar esta transacción? Esta acción no se puede deshacer.',
+            icon: 'trash-can-outline',
+            iconColor: '#ef4444',
+            buttons: [
+                { text: 'Cancelar', style: 'cancel' },
                 {
-                    text: "Eliminar",
-                    style: "destructive",
-                    onPress: async () => {
+                    text: 'Eliminar',
+                    style: 'destructive',
+                    onPress: () => {
                         deleteTransaction(id);
                         router.back();
                     }
                 }
             ]
-        );
+        });
     };
 
     const getIcon = () => {
@@ -117,12 +121,12 @@ export default function TransactionDetailScreen() {
         const amountVAL = paymentCurrency === 'VES' ? parseFloat(calculatedUSD) : parseFloat(paymentAmount);
 
         if (isNaN(amountVAL) || amountVAL <= 0) {
-            Alert.alert('Error', 'Por favor ingresa un monto válido');
+            showAlert({ title: 'Error', message: 'Por favor ingresa un monto válido', icon: 'alert-circle', iconColor: '#ef4444' });
             return;
         }
 
         if (amountVAL > remainingBalanceUSD + 0.01) {
-            Alert.alert('Error', `El pago excede la deuda restante (${formatCurrency(remainingBalanceUSD, 'USD')})`);
+            showAlert({ title: 'Error', message: `El pago excede la deuda restante (${formatCurrency(remainingBalanceUSD, 'USD')})`, icon: 'alert-circle', iconColor: '#ef4444' });
             return;
         }
 
@@ -146,7 +150,7 @@ export default function TransactionDetailScreen() {
 
     const handleMarkAsPaid = () => {
         if (!isFullyPaid) {
-            Alert.alert('Aviso', 'El préstamo aún no ha sido pagado en su totalidad');
+            showAlert({ title: 'Aviso', message: 'El préstamo aún no ha sido pagado en su totalidad', icon: 'information' });
             return;
         }
         updateTransaction(transaction.id, {
@@ -158,370 +162,372 @@ export default function TransactionDetailScreen() {
     };
 
     return (
-        <SafeAreaView className="flex-1 bg-light-bg dark:bg-dark-bg" edges={['bottom']}>
+        <>
+            <CustomHeader title="Detalle de Transacción" />
+            <SafeAreaView className="flex-1 bg-light-bg dark:bg-dark-bg" edges={['bottom']}>
 
-            <ScrollView
-                contentContainerStyle={{ padding: 24, paddingBottom: 100 }}
-                showsVerticalScrollIndicator={false}
-                className="mt-14"
-            >
-                {/* Header Card */}
-                <View className="items-center mb-8">
-                    <View
-                        className="w-20 h-20 rounded-full items-center justify-center mb-4 shadow-sm"
-                        style={{ backgroundColor: `${getColor()}15` }}
-                    >
-                        <MaterialCommunityIcons name={getIcon()} size={40} color={getColor()} />
-                    </View>
-                    <Text className="text-3xl font-bold text-gray-900 dark:text-white mb-1">
-                        {formatCurrency(transaction.amount, transaction.currency)}
-                    </Text>
-                    <Text className="text-base text-gray-500 dark:text-gray-400 font-medium uppercase tracking-wider">
-                        {transaction.type === 'income' ? 'Ingreso' : transaction.type === 'expense' ? 'Gasto' : 'Préstamo'}
-                    </Text>
-                </View>
-
-                {/* Main Details */}
-                <View className="bg-white dark:bg-dark-card rounded-3xl p-6 shadow-sm mb-6">
-                    <DetailItem
-                        icon="calendar"
-                        label="Fecha"
-                        value={formatDate(transaction.date, 'long')}
-                    />
-                    <View className="h-[1px] bg-gray-100 dark:bg-gray-800 my-4" />
-                    <DetailItem
-                        icon="tag-outline"
-                        label="Categoría"
-                        value={transaction.category}
-                    />
-                    <View className="h-[1px] bg-gray-100 dark:bg-gray-800 my-4" />
-                    <DetailItem
-                        icon="text-short"
-                        label="Descripción"
-                        value={transaction.description || 'Sin descripción'}
-                    />
-                </View>
-
-                {/* Loan Specific Details */}
-                {transaction.type === 'loan' && transaction.loan && (
-                    <View className="bg-white dark:bg-dark-card rounded-3xl p-6 shadow-sm mb-6">
-                        <Text className="text-lg font-bold text-gray-900 dark:text-white mb-4">
-                            Información del Préstamo
+                <ScrollView
+                    contentContainerStyle={{ padding: 24, paddingBottom: 100 }}
+                    showsVerticalScrollIndicator={false}
+                >
+                    {/* Header Card */}
+                    <View className="items-center mb-8">
+                        <View
+                            className="w-20 h-20 rounded-full items-center justify-center mb-4 shadow-sm"
+                            style={{ backgroundColor: `${getColor()}15` }}
+                        >
+                            <MaterialCommunityIcons name={getIcon()} size={40} color={getColor()} />
+                        </View>
+                        <Text className="text-3xl font-bold text-gray-900 dark:text-white mb-1">
+                            {formatCurrency(transaction.amount, transaction.currency)}
                         </Text>
-
-                        <DetailItem
-                            icon="account-outline"
-                            label="Deudor"
-                            value={`${transaction.loan.debtorName} ${transaction.loan.debtorLastName}`}
-                        />
-                        <View className="h-[1px] bg-gray-100 dark:bg-gray-800 my-4" />
-
-                        <DetailItem
-                            icon="calendar-clock"
-                            label="Fecha de Vencimiento"
-                            value={formatDate(transaction.loan.dueDate, 'short')}
-                            valueStyle={new Date(transaction.loan.dueDate) < new Date() && !transaction.loan.isPaid ? 'text-red-500 font-bold' : ''}
-                        />
-                        <View className="h-[1px] bg-gray-100 dark:bg-gray-800 my-4" />
-
-                        <DetailItem
-                            icon="percent-outline"
-                            label="Tasa de Interés"
-                            value={`${transaction.loan.interestRate}%`}
-                        />
-                        <View className="h-[1px] bg-gray-100 dark:bg-gray-800 my-4" />
-
-                        <DetailItem
-                            icon="checkbox-marked-circle-outline"
-                            label="Estado"
-                            value={transaction.loan.isPaid ? 'Pagado' : 'Pendiente'}
-                            valueStyle={transaction.loan.isPaid ? 'text-green-500 font-bold' : 'text-orange-500 font-bold'}
-                        />
-                    </View>
-                )}
-
-                {/* Financial Details (Interest & Totals) */}
-                {transaction.type === 'loan' && transaction.loan && (
-                    <View className="bg-white dark:bg-dark-card rounded-3xl p-6 shadow-sm mb-6">
-                        <Text className="text-lg font-bold text-gray-900 dark:text-white mb-4">
-                            Desglose Financiero ({isVES ? 'VES & USD' : 'USD'})
+                        <Text className="text-base text-gray-500 dark:text-gray-400 font-medium uppercase tracking-wider">
+                            {transaction.type === 'income' ? 'Ingreso' : transaction.type === 'expense' ? 'Gasto' : 'Préstamo'}
                         </Text>
-
-                        {/* USD Calculations */}
-                        <DetailItem
-                            icon="cash"
-                            label="Monto Prestado (USD)"
-                            value={formatCurrency(transaction.amount, 'USD')}
-                        />
-                        <View className="h-[1px] bg-gray-100 dark:bg-gray-800 my-4" />
-                        <DetailItem
-                            icon="trending-up"
-                            label={`Interés (${transaction.loan.interestRate}%)`}
-                            value={formatCurrency(interestAmount, 'USD')}
-                            valueStyle="text-expense font-medium"
-                        />
-                        <View className="h-[1px] bg-gray-100 dark:bg-gray-800 my-4" />
-                        <DetailItem
-                            icon="sigma"
-                            label="Total a Pagar (USD)"
-                            value={formatCurrency(totalAmount, 'USD')}
-                            valueStyle="text-primary font-bold text-xl"
-                        />
-                        <View className="h-[1px] bg-gray-100 dark:bg-gray-800 my-4" />
-                        <DetailItem
-                            icon="account-cash-outline"
-                            label="Saldo Pendiente (USD)"
-                            value={formatCurrency(remainingBalanceUSD, 'USD')}
-                            valueStyle={remainingBalanceUSD > 0 ? "text-orange-500 font-bold text-xl" : "text-green-500 font-bold"}
-                        />
-
-                        {/* VES Calculations */}
-                        {isVES && (
-                            <>
-                                <View className="h-[1px] bg-gray-200 dark:bg-gray-700 my-6" />
-                                <Text className="text-sm font-bold text-gray-500 dark:text-gray-400 mb-4 uppercase tracking-wider">
-                                    Detalles en Bolívares
-                                </Text>
-                                <DetailItem
-                                    icon="cash-multiple"
-                                    label="Monto Original"
-                                    value={formatCurrency(amountVES, 'VES')}
-                                />
-                                <View className="h-[1px] bg-gray-100 dark:bg-gray-800 my-4" />
-                                <DetailItem
-                                    icon="swap-horizontal"
-                                    label="Tasa de Cambio"
-                                    value={formatCurrency(transaction.rate || 0, 'VES')}
-                                />
-                                <View className="h-[1px] bg-gray-100 dark:bg-gray-800 my-4" />
-                                <DetailItem
-                                    icon="trending-up"
-                                    label="Interés (VES)"
-                                    value={formatCurrency(interestAmountVES, 'VES')}
-                                    valueStyle="text-expense font-medium"
-                                />
-                                <View className="h-[1px] bg-gray-100 dark:bg-gray-800 my-4" />
-                                <DetailItem
-                                    icon="sigma"
-                                    label="Total a Pagar (VES)"
-                                    value={formatCurrency(totalAmountVES, 'VES')}
-                                    valueStyle="text-primary font-bold text-xl"
-                                />
-                                <View className="h-[1px] bg-gray-100 dark:bg-gray-800 my-4" />
-                                <DetailItem
-                                    icon="account-cash-outline"
-                                    label="Saldo Pendiente (VES est.)"
-                                    value={formatCurrency(estimatedRemainingVES, 'VES')}
-                                    valueStyle={estimatedRemainingVES > 0 ? "text-orange-500 font-bold text-xl" : "text-green-500 font-bold"}
-                                />
-                            </>
-                        )}
                     </View>
-                )}
 
-                {/* Actions */}
-                {transaction.type === 'loan' && transaction.loan && (
-                    <View className="gap-4">
-                        {!transaction.loan.isPaid && (
+                    {/* Main Details */}
+                    <View className="bg-white dark:bg-dark-card rounded-3xl p-6 shadow-sm mb-6">
+                        <DetailItem
+                            icon="calendar"
+                            label="Fecha"
+                            value={formatDate(transaction.date, 'long')}
+                        />
+                        <View className="h-[1px] bg-gray-100 dark:bg-gray-800 my-4" />
+                        <DetailItem
+                            icon="tag-outline"
+                            label="Categoría"
+                            value={transaction.category}
+                        />
+                        <View className="h-[1px] bg-gray-100 dark:bg-gray-800 my-4" />
+                        <DetailItem
+                            icon="text-short"
+                            label="Descripción"
+                            value={transaction.description || 'Sin descripción'}
+                        />
+                    </View>
+
+                    {/* Loan Specific Details */}
+                    {transaction.type === 'loan' && transaction.loan && (
+                        <View className="bg-white dark:bg-dark-card rounded-3xl p-6 shadow-sm mb-6">
+                            <Text className="text-lg font-bold text-gray-900 dark:text-white mb-4">
+                                Información del Préstamo
+                            </Text>
+
+                            <DetailItem
+                                icon="account-outline"
+                                label="Deudor"
+                                value={`${transaction.loan.debtorName} ${transaction.loan.debtorLastName}`}
+                            />
+                            <View className="h-[1px] bg-gray-100 dark:bg-gray-800 my-4" />
+
+                            <DetailItem
+                                icon="calendar-clock"
+                                label="Fecha de Vencimiento"
+                                value={formatDate(transaction.loan.dueDate, 'short')}
+                                valueStyle={new Date(transaction.loan.dueDate) < new Date() && !transaction.loan.isPaid ? 'text-red-500 font-bold' : ''}
+                            />
+                            <View className="h-[1px] bg-gray-100 dark:bg-gray-800 my-4" />
+
+                            <DetailItem
+                                icon="percent-outline"
+                                label="Tasa de Interés"
+                                value={`${transaction.loan.interestRate}%`}
+                            />
+                            <View className="h-[1px] bg-gray-100 dark:bg-gray-800 my-4" />
+
+                            <DetailItem
+                                icon="checkbox-marked-circle-outline"
+                                label="Estado"
+                                value={transaction.loan.isPaid ? 'Pagado' : 'Pendiente'}
+                                valueStyle={transaction.loan.isPaid ? 'text-green-500 font-bold' : 'text-orange-500 font-bold'}
+                            />
+                        </View>
+                    )}
+
+                    {/* Financial Details (Interest & Totals) */}
+                    {transaction.type === 'loan' && transaction.loan && (
+                        <View className="bg-white dark:bg-dark-card rounded-3xl p-6 shadow-sm mb-6">
+                            <Text className="text-lg font-bold text-gray-900 dark:text-white mb-4">
+                                Desglose Financiero ({isVES ? 'VES & USD' : 'USD'})
+                            </Text>
+
+                            {/* USD Calculations */}
+                            <DetailItem
+                                icon="cash"
+                                label="Monto Prestado (USD)"
+                                value={formatCurrency(transaction.amount, 'USD')}
+                            />
+                            <View className="h-[1px] bg-gray-100 dark:bg-gray-800 my-4" />
+                            <DetailItem
+                                icon="trending-up"
+                                label={`Interés (${transaction.loan.interestRate}%)`}
+                                value={formatCurrency(interestAmount, 'USD')}
+                                valueStyle="text-expense font-medium"
+                            />
+                            <View className="h-[1px] bg-gray-100 dark:bg-gray-800 my-4" />
+                            <DetailItem
+                                icon="sigma"
+                                label="Total a Pagar (USD)"
+                                value={formatCurrency(totalAmount, 'USD')}
+                                valueStyle="text-primary font-bold text-xl"
+                            />
+                            <View className="h-[1px] bg-gray-100 dark:bg-gray-800 my-4" />
+                            <DetailItem
+                                icon="account-cash-outline"
+                                label="Saldo Pendiente (USD)"
+                                value={formatCurrency(remainingBalanceUSD, 'USD')}
+                                valueStyle={remainingBalanceUSD > 0 ? "text-orange-500 font-bold text-xl" : "text-green-500 font-bold"}
+                            />
+
+                            {/* VES Calculations */}
+                            {isVES && (
+                                <>
+                                    <View className="h-[1px] bg-gray-200 dark:bg-gray-700 my-6" />
+                                    <Text className="text-sm font-bold text-gray-500 dark:text-gray-400 mb-4 uppercase tracking-wider">
+                                        Detalles en Bolívares
+                                    </Text>
+                                    <DetailItem
+                                        icon="cash-multiple"
+                                        label="Monto Original"
+                                        value={formatCurrency(amountVES, 'VES')}
+                                    />
+                                    <View className="h-[1px] bg-gray-100 dark:bg-gray-800 my-4" />
+                                    <DetailItem
+                                        icon="swap-horizontal"
+                                        label="Tasa de Cambio"
+                                        value={formatCurrency(transaction.rate || 0, 'VES')}
+                                    />
+                                    <View className="h-[1px] bg-gray-100 dark:bg-gray-800 my-4" />
+                                    <DetailItem
+                                        icon="trending-up"
+                                        label="Interés (VES)"
+                                        value={formatCurrency(interestAmountVES, 'VES')}
+                                        valueStyle="text-expense font-medium"
+                                    />
+                                    <View className="h-[1px] bg-gray-100 dark:bg-gray-800 my-4" />
+                                    <DetailItem
+                                        icon="sigma"
+                                        label="Total a Pagar (VES)"
+                                        value={formatCurrency(totalAmountVES, 'VES')}
+                                        valueStyle="text-primary font-bold text-xl"
+                                    />
+                                    <View className="h-[1px] bg-gray-100 dark:bg-gray-800 my-4" />
+                                    <DetailItem
+                                        icon="account-cash-outline"
+                                        label="Saldo Pendiente (VES est.)"
+                                        value={formatCurrency(estimatedRemainingVES, 'VES')}
+                                        valueStyle={estimatedRemainingVES > 0 ? "text-orange-500 font-bold text-xl" : "text-green-500 font-bold"}
+                                    />
+                                </>
+                            )}
+                        </View>
+                    )}
+
+                    {/* Actions */}
+                    {transaction.type === 'loan' && transaction.loan && (
+                        <View className="gap-4">
+                            {!transaction.loan.isPaid && (
+                                <Button
+                                    onPress={() => setShowPaymentModal(true)}
+                                    variant="outline"
+                                >
+                                    <View className="flex-row items-center">
+                                        <MaterialCommunityIcons name="plus" size={20} color={primaryColor} />
+                                        <Text className="ml-2 text-primary-500 font-semibold">Registrar Pago</Text>
+                                    </View>
+                                </Button>
+                            )}
+
                             <Button
-                                onPress={() => setShowPaymentModal(true)}
-                                variant="outline"
+                                onPress={handleMarkAsPaid}
+                                disabled={!isFullyPaid || transaction.loan.isPaid}
+                                variant={transaction.loan.isPaid ? 'secondary' : 'primary'}
                             >
                                 <View className="flex-row items-center">
-                                    <MaterialCommunityIcons name="plus" size={20} color={primaryColor} />
-                                    <Text className="ml-2 text-primary-500 font-semibold">Registrar Pago</Text>
+                                    <MaterialCommunityIcons
+                                        name={transaction.loan.isPaid ? 'check-circle' : 'check-all'}
+                                        size={20}
+                                        color={transaction.loan.isPaid ? '#6b7280' : '#fff'}
+                                    />
+                                    <Text className={`ml-2 font-semibold ${transaction.loan.isPaid ? 'text-gray-500' : 'text-white'}`}>
+                                        {transaction.loan.isPaid ? 'Préstamo Finalizado' : 'Marcar como Pagado'}
+                                    </Text>
                                 </View>
                             </Button>
-                        )}
+                        </View>
+                    )}
 
-                        <Button
-                            onPress={handleMarkAsPaid}
-                            disabled={!isFullyPaid || transaction.loan.isPaid}
-                            variant={transaction.loan.isPaid ? 'secondary' : 'primary'}
-                        >
-                            <View className="flex-row items-center">
-                                <MaterialCommunityIcons
-                                    name={transaction.loan.isPaid ? 'check-circle' : 'check-all'}
-                                    size={20}
-                                    color={transaction.loan.isPaid ? '#6b7280' : '#fff'}
-                                />
-                                <Text className={`ml-2 font-semibold ${transaction.loan.isPaid ? 'text-gray-500' : 'text-white'}`}>
-                                    {transaction.loan.isPaid ? 'Préstamo Finalizado' : 'Marcar como Pagado'}
-                                </Text>
-                            </View>
-                        </Button>
-                    </View>
-                )}
-
-                {/* Payments History List */}
-                {transaction.type === 'loan' && payments.length > 0 && (
-                    <View className="mt-8">
-                        <Text className="text-xl font-bold text-gray-900 dark:text-white mb-4">
-                            Historial de Pagos
-                        </Text>
-                        <View className="bg-white dark:bg-dark-card rounded-3xl p-6 shadow-sm">
-                            {payments.map((p, index) => (
-                                <View key={p.id}>
-                                    <View className="flex-row justify-between items-center py-2">
-                                        <View>
-                                            <Text className="text-gray-900 dark:text-white font-semibold">
-                                                {formatCurrency(p.amount, 'USD')}
-                                            </Text>
-                                            <Text className="text-xs text-gray-500 dark:text-gray-400">
-                                                {formatDate(p.date)}
-                                            </Text>
-                                        </View>
-                                        {p.currency === 'VES' && (
-                                            <View className="items-end">
-                                                <Text className="text-xs text-gray-500 dark:text-gray-400">
-                                                    Original: {formatCurrency(p.amount * (p.rate || 1), 'VES')}
+                    {/* Payments History List */}
+                    {transaction.type === 'loan' && payments.length > 0 && (
+                        <View className="mt-8">
+                            <Text className="text-xl font-bold text-gray-900 dark:text-white mb-4">
+                                Historial de Pagos
+                            </Text>
+                            <View className="bg-white dark:bg-dark-card rounded-3xl p-6 shadow-sm">
+                                {payments.map((p, index) => (
+                                    <View key={p.id}>
+                                        <View className="flex-row justify-between items-center py-2">
+                                            <View>
+                                                <Text className="text-gray-900 dark:text-white font-semibold">
+                                                    {formatCurrency(p.amount, 'USD')}
                                                 </Text>
-                                                <Text className="text-[10px] text-gray-400">
-                                                    Tasa: {p.rate}
+                                                <Text className="text-xs text-gray-500 dark:text-gray-400">
+                                                    {formatDate(p.date)}
                                                 </Text>
                                             </View>
+                                            {p.currency === 'VES' && (
+                                                <View className="items-end">
+                                                    <Text className="text-xs text-gray-500 dark:text-gray-400">
+                                                        Original: {formatCurrency(p.amount * (p.rate || 1), 'VES')}
+                                                    </Text>
+                                                    <Text className="text-[10px] text-gray-400">
+                                                        Tasa: {p.rate}
+                                                    </Text>
+                                                </View>
+                                            )}
+                                        </View>
+                                        {index < payments.length - 1 && (
+                                            <View className="h-[1px] bg-gray-100 dark:bg-gray-800 my-2" />
                                         )}
                                     </View>
-                                    {index < payments.length - 1 && (
-                                        <View className="h-[1px] bg-gray-100 dark:bg-gray-800 my-2" />
-                                    )}
-                                </View>
-                            ))}
+                                ))}
+                            </View>
                         </View>
-                    </View>
-                )}
+                    )}
 
-                {/* Payment Modal */}
-                <Modal
-                    visible={showPaymentModal}
-                    transparent
-                    animationType="fade"
-                    onRequestClose={() => setShowPaymentModal(false)}
-                >
-                    <TouchableOpacity
-                        className="flex-1 bg-black/50 justify-center p-4"
-                        activeOpacity={1}
-                        onPress={() => setShowPaymentModal(false)}
+                    {/* Payment Modal */}
+                    <Modal
+                        visible={showPaymentModal}
+                        transparent
+                        animationType="fade"
+                        onRequestClose={() => setShowPaymentModal(false)}
                     >
-                        <Pressable onPress={(e: any) => e.stopPropagation()}>
-                            <Card variant="elevated">
-                                <View className="p-4">
-                                    <Text className="text-xl font-bold text-gray-900 dark:text-white mb-4">
-                                        Registrar Devolución
-                                    </Text>
-
-                                    <View className="bg-orange-50 dark:bg-orange-900/10 p-4 rounded-2xl mb-6">
-                                        <Text className="text-orange-700 dark:text-orange-400 font-bold text-center">
-                                            Deuda Restante: {formatCurrency(remainingBalanceUSD, 'USD')}
+                        <TouchableOpacity
+                            className="flex-1 bg-black/50 justify-center p-4"
+                            activeOpacity={1}
+                            onPress={() => setShowPaymentModal(false)}
+                        >
+                            <Pressable onPress={(e: any) => e.stopPropagation()}>
+                                <Card variant="elevated">
+                                    <View className="p-4">
+                                        <Text className="text-xl font-bold text-gray-900 dark:text-white mb-4">
+                                            Registrar Devolución
                                         </Text>
-                                    </View>
 
-                                    <Input
-                                        label={paymentCurrency === 'VES' ? "Monto (VES)" : "Monto (USD)"}
-                                        placeholder="0.00"
-                                        value={paymentAmount}
-                                        onChangeText={setPaymentAmount}
-                                        keyboardType="decimal-pad"
-                                        leftIcon="cash"
-                                    />
-
-                                    <Text className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                        Moneda
-                                    </Text>
-                                    <View className="flex-row gap-2 mb-6">
-                                        {['USD', 'VES'].map((c) => (
-                                            <Chip
-                                                key={c}
-                                                label={c}
-                                                selected={paymentCurrency === c}
-                                                onPress={() => setPaymentCurrency(c as Currency)}
-                                            />
-                                        ))}
-                                    </View>
-
-                                    {paymentCurrency === 'VES' && (
-                                        <>
-                                            <Text className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                                Tasa de Cambio
+                                        <View className="bg-orange-50 dark:bg-orange-900/10 p-4 rounded-2xl mb-6">
+                                            <Text className="text-orange-700 dark:text-orange-400 font-bold text-center">
+                                                Deuda Restante: {formatCurrency(remainingBalanceUSD, 'USD')}
                                             </Text>
-                                            <View className="flex-row gap-2 mb-4">
-                                                {(['BCV_USD', 'Binance', 'Custom'] as ExchangeRateSource[]).map((source) => (
-                                                    <Chip
-                                                        key={source}
-                                                        label={source === 'BCV_USD' ? 'BCV' : source}
-                                                        selected={rateSource === source}
-                                                        onPress={() => setRateSource(source)}
-                                                    />
-                                                ))}
-                                            </View>
+                                        </View>
 
-                                            {rateSource === 'Custom' && (
-                                                <Input
-                                                    label="Tasa Personalizada"
-                                                    placeholder="0.00"
-                                                    value={customRate}
-                                                    onChangeText={setCustomRate}
-                                                    keyboardType="decimal-pad"
-                                                    leftIcon="swap-horizontal"
+                                        <Input
+                                            label={paymentCurrency === 'VES' ? "Monto (VES)" : "Monto (USD)"}
+                                            placeholder="0.00"
+                                            value={paymentAmount}
+                                            onChangeText={setPaymentAmount}
+                                            keyboardType="decimal-pad"
+                                            leftIcon="cash"
+                                        />
+
+                                        <Text className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                            Moneda
+                                        </Text>
+                                        <View className="flex-row gap-2 mb-6">
+                                            {['USD', 'VES'].map((c) => (
+                                                <Chip
+                                                    key={c}
+                                                    label={c}
+                                                    selected={paymentCurrency === c}
+                                                    onPress={() => setPaymentCurrency(c as Currency)}
                                                 />
-                                            )}
+                                            ))}
+                                        </View>
 
-                                            <Input
-                                                label="Monto Equivalente (USD)"
-                                                value={calculatedUSD}
-                                                editable={false}
-                                                leftIcon="calculator"
-                                                containerClassName="opacity-70"
-                                            />
-                                        </>
-                                    )}
+                                        {paymentCurrency === 'VES' && (
+                                            <>
+                                                <Text className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                                    Tasa de Cambio
+                                                </Text>
+                                                <View className="flex-row gap-2 mb-4">
+                                                    {(['BCV_USD', 'Binance', 'Custom'] as ExchangeRateSource[]).map((source) => (
+                                                        <Chip
+                                                            key={source}
+                                                            label={source === 'BCV_USD' ? 'BCV' : source}
+                                                            selected={rateSource === source}
+                                                            onPress={() => setRateSource(source)}
+                                                        />
+                                                    ))}
+                                                </View>
 
-                                    <DatePickerTrigger
-                                        label="Fecha de Pago"
-                                        value={paymentDate}
-                                        onPress={() => setShowDatePicker(true)}
-                                        icon="calendar"
-                                    />
+                                                {rateSource === 'Custom' && (
+                                                    <Input
+                                                        label="Tasa Personalizada"
+                                                        placeholder="0.00"
+                                                        value={customRate}
+                                                        onChangeText={setCustomRate}
+                                                        keyboardType="decimal-pad"
+                                                        leftIcon="swap-horizontal"
+                                                    />
+                                                )}
 
-                                    <View className="flex-row gap-2 mt-4">
-                                        <Button
-                                            onPress={() => setShowPaymentModal(false)}
-                                            variant="outline"
-                                            className="flex-1"
-                                        >
-                                            Cancelar
-                                        </Button>
-                                        <Button
-                                            onPress={handleAddPayment}
-                                            className="flex-1"
-                                        >
-                                            Guardar
-                                        </Button>
+                                                <Input
+                                                    label="Monto Equivalente (USD)"
+                                                    value={calculatedUSD}
+                                                    editable={false}
+                                                    leftIcon="calculator"
+                                                    containerClassName="opacity-70"
+                                                />
+                                            </>
+                                        )}
+
+                                        <DatePickerTrigger
+                                            label="Fecha de Pago"
+                                            value={paymentDate}
+                                            onPress={() => setShowDatePicker(true)}
+                                            icon="calendar"
+                                        />
+
+                                        <View className="flex-row gap-2 mt-4">
+                                            <Button
+                                                onPress={() => setShowPaymentModal(false)}
+                                                variant="outline"
+                                                className="flex-1"
+                                            >
+                                                Cancelar
+                                            </Button>
+                                            <Button
+                                                onPress={handleAddPayment}
+                                                className="flex-1"
+                                            >
+                                                Guardar
+                                            </Button>
+                                        </View>
                                     </View>
-                                </View>
-                            </Card>
-                        </Pressable>
+                                </Card>
+                            </Pressable>
+                        </TouchableOpacity>
+
+                        <DatePickerModal
+                            visible={showDatePicker}
+                            onClose={() => setShowDatePicker(false)}
+                            value={paymentDate}
+                            onChange={setPaymentDate}
+                            label="Seleccionar Fecha de Pago"
+                        />
+                    </Modal>
+
+                    <TouchableOpacity
+                        onPress={handleDelete}
+                        className="flex-row items-center justify-center p-4 rounded-xl bg-red-50 dark:bg-red-900/20 active:opacity-70 mt-12"
+                    >
+                        <MaterialCommunityIcons name="trash-can-outline" size={24} color="#ef4444" />
+                        <Text className="ml-2 text-red-500 font-semibold text-lg">Eliminar Transacción</Text>
                     </TouchableOpacity>
 
-                    <DatePickerModal
-                        visible={showDatePicker}
-                        onClose={() => setShowDatePicker(false)}
-                        value={paymentDate}
-                        onChange={setPaymentDate}
-                        label="Seleccionar Fecha de Pago"
-                    />
-                </Modal>
-
-                <TouchableOpacity
-                    onPress={handleDelete}
-                    className="flex-row items-center justify-center p-4 rounded-xl bg-red-50 dark:bg-red-900/20 active:opacity-70 mt-12"
-                >
-                    <MaterialCommunityIcons name="trash-can-outline" size={24} color="#ef4444" />
-                    <Text className="ml-2 text-red-500 font-semibold text-lg">Eliminar Transacción</Text>
-                </TouchableOpacity>
-
-            </ScrollView>
-        </SafeAreaView>
+                </ScrollView>
+            </SafeAreaView>
+        </>
     );
 }
 

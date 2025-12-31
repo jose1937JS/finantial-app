@@ -12,7 +12,6 @@ import * as ImagePicker from 'expo-image-picker';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
     ActivityIndicator,
-    Alert,
     FlatList,
     Image,
     KeyboardAvoidingView,
@@ -25,6 +24,8 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { CustomHeader } from '@/components/ui/custom-header';
+import { useAlert } from '@/hooks/alert-context';
 import { primaryColors, useSettingsStore } from '@/store/settings-store';
 
 // Message types
@@ -54,7 +55,7 @@ const initialMessages: ChatMessage[] = [
 export default function AddDynamicScreen() {
     const { preferences } = useSettingsStore();
     const currentPrimaryColor = primaryColors[preferences.primaryColor]?.hex || '#22c55e';
-
+    const { showAlert } = useAlert();
     const [messages, setMessages] = useState<ChatMessage[]>(initialMessages);
     const [inputText, setInputText] = useState('');
     const [recordingDuration, setRecordingDuration] = useState(0);
@@ -219,7 +220,7 @@ export default function AddDynamicScreen() {
             const { granted } = await requestRecordingPermissionsAsync();
             if (!granted) {
                 setIsPreparing(false);
-                Alert.alert('Permisos necesarios', 'Necesitamos acceso al micrófono para grabar audio');
+                showAlert({ title: 'Permisos necesarios', message: 'Necesitamos acceso al micrófono para grabar audio', icon: 'microphone-off', iconColor: '#f59e0b' });
                 return;
             }
 
@@ -248,7 +249,7 @@ export default function AddDynamicScreen() {
             setIsPreparing(false);
             setIsRecording(false);
             isRecordingRef.current = false;
-            Alert.alert('Error', 'No se pudo iniciar la grabación: ' + (error as Error).message);
+            showAlert({ title: 'Error', message: 'No se pudo iniciar la grabación: ' + (error as Error).message, icon: 'alert-circle', iconColor: '#ef4444' });
         }
     };
 
@@ -399,16 +400,17 @@ export default function AddDynamicScreen() {
     const handlePickImage = async () => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
-        Alert.alert(
-            'Enviar Imagen',
-            'Selecciona una opción',
-            [
+        showAlert({
+            title: 'Enviar Imagen',
+            message: 'Selecciona una opción',
+            icon: 'image',
+            buttons: [
                 {
                     text: 'Cámara',
                     onPress: async () => {
                         const { status } = await ImagePicker.requestCameraPermissionsAsync();
                         if (status !== 'granted') {
-                            Alert.alert('Permisos necesarios', 'Necesitamos acceso a tu cámara');
+                            showAlert({ title: 'Permisos necesarios', message: 'Necesitamos acceso a tu cámara', icon: 'camera-off', iconColor: '#f59e0b' });
                             return;
                         }
 
@@ -439,7 +441,7 @@ export default function AddDynamicScreen() {
                     onPress: async () => {
                         const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
                         if (status !== 'granted') {
-                            Alert.alert('Permisos necesarios', 'Necesitamos acceso a tu galería');
+                            showAlert({ title: 'Permisos necesarios', message: 'Necesitamos acceso a tu galería', icon: 'image-off', iconColor: '#f59e0b' });
                             return;
                         }
 
@@ -466,9 +468,8 @@ export default function AddDynamicScreen() {
                         }
                     }
                 },
-                { text: 'Cancelar', style: 'cancel' },
             ]
-        );
+        });
     };
 
     const formatDuration = (seconds: number) => {
@@ -538,210 +539,213 @@ export default function AddDynamicScreen() {
     };
 
     return (
-        <SafeAreaView className="flex-1 bg-light-bg dark:bg-dark-bg" edges={['bottom']}>
-            <KeyboardAvoidingView
-                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                className="flex-1"
-                keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 80}
-            >
-                {/* Messages List */}
-                <FlatList
-                    ref={flatListRef}
-                    data={messages}
-                    keyExtractor={(item) => item.id}
-                    renderItem={renderMessage}
-                    contentContainerStyle={{ paddingVertical: 16 }}
-                    showsVerticalScrollIndicator={false}
-                    onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: false })}
-                />
+        <>
+            <CustomHeader title="Asistente IA" />
+            <SafeAreaView className="flex-1 bg-light-bg dark:bg-dark-bg" edges={['bottom']}>
+                <KeyboardAvoidingView
+                    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                    className="flex-1"
+                    keyboardVerticalOffset={Platform.OS === 'ios' ? 60 : 80}
+                >
+                    {/* Messages List */}
+                    <FlatList
+                        ref={flatListRef}
+                        data={messages}
+                        keyExtractor={(item) => item.id}
+                        renderItem={renderMessage}
+                        contentContainerStyle={{ paddingVertical: 16 }}
+                        showsVerticalScrollIndicator={false}
+                        onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: false })}
+                    />
 
-                {/* Processing Indicator */}
-                {isProcessing && (
-                    <View className="mx-4 mb-2 items-start">
-                        <View className="bg-white dark:bg-dark-card rounded-2xl rounded-bl-sm p-3 flex-row items-center">
-                            <Text className="text-sm text-gray-500">Procesando...</Text>
+                    {/* Processing Indicator */}
+                    {isProcessing && (
+                        <View className="mx-4 mb-2 items-start">
+                            <View className="bg-white dark:bg-dark-card rounded-2xl rounded-bl-sm p-3 flex-row items-center">
+                                <Text className="text-sm text-gray-500">Procesando...</Text>
+                            </View>
                         </View>
-                    </View>
-                )}
+                    )}
 
-                {/* Error Indicator */}
-                {audioError && (
-                    <View className="mx-4 mb-2 p-2 bg-red-100 dark:bg-red-900/20 rounded-lg items-center">
-                        <Text className="text-xs font-medium text-red-500">{audioError}</Text>
-                    </View>
-                )}
+                    {/* Error Indicator */}
+                    {audioError && (
+                        <View className="mx-4 mb-2 p-2 bg-red-100 dark:bg-red-900/20 rounded-lg items-center">
+                            <Text className="text-xs font-medium text-red-500">{audioError}</Text>
+                        </View>
+                    )}
 
-                {/* Input Area */}
-                <View className="px-4 py-4 bg-white dark:bg-dark-card border-t border-light-border dark:border-dark-border">
-                    {recordedAudio ? (
-                        // Audio Preview UI
-                        <View className="flex-row items-center justify-between py-1">
-                            <TouchableOpacity
-                                onPress={discardRecording}
-                                className="w-11 h-11 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30"
-                            >
-                                <MaterialCommunityIcons name="delete" size={24} color="#ef4444" />
-                            </TouchableOpacity>
+                    {/* Input Area */}
+                    <View className="px-4 py-4 bg-white dark:bg-dark-card border-t border-light-border dark:border-dark-border">
+                        {recordedAudio ? (
+                            // Audio Preview UI
+                            <View className="flex-row items-center justify-between py-1">
+                                <TouchableOpacity
+                                    onPress={discardRecording}
+                                    className="w-11 h-11 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30"
+                                >
+                                    <MaterialCommunityIcons name="delete" size={24} color="#ef4444" />
+                                </TouchableOpacity>
 
-                            <View className="flex-1 flex-row items-center justify-center mx-4 bg-light-surface dark:bg-dark-surface rounded-full py-2 px-4 border border-light-border dark:border-dark-border">
-                                <Pressable onPress={playRecordedAudio} className="mr-3" disabled={isLoadingAudio}>
-                                    {isLoadingAudio ? (
-                                        <ActivityIndicator size={28} color={currentPrimaryColor} />
-                                    ) : (
-                                        <MaterialCommunityIcons
-                                            name={isPlaying ? "pause-circle" : "play-circle"}
-                                            size={32}
-                                            color={currentPrimaryColor}
-                                        />
-                                    )}
-                                </Pressable>
-                                <View className="flex-row items-center">
-                                    <View className="w-24 h-1 bg-gray-200 dark:bg-gray-700 rounded-full mx-2 overflow-hidden">
-                                        <View
-                                            className="h-full rounded-full"
-                                            style={{
-                                                width: `${playbackProgress}%`,
-                                                backgroundColor: currentPrimaryColor
-                                            }}
-                                        />
+                                <View className="flex-1 flex-row items-center justify-center mx-4 bg-light-surface dark:bg-dark-surface rounded-full py-2 px-4 border border-light-border dark:border-dark-border">
+                                    <Pressable onPress={playRecordedAudio} className="mr-3" disabled={isLoadingAudio}>
+                                        {isLoadingAudio ? (
+                                            <ActivityIndicator size={28} color={currentPrimaryColor} />
+                                        ) : (
+                                            <MaterialCommunityIcons
+                                                name={isPlaying ? "pause-circle" : "play-circle"}
+                                                size={32}
+                                                color={currentPrimaryColor}
+                                            />
+                                        )}
+                                    </Pressable>
+                                    <View className="flex-row items-center">
+                                        <View className="w-24 h-1 bg-gray-200 dark:bg-gray-700 rounded-full mx-2 overflow-hidden">
+                                            <View
+                                                className="h-full rounded-full"
+                                                style={{
+                                                    width: `${playbackProgress}%`,
+                                                    backgroundColor: currentPrimaryColor
+                                                }}
+                                            />
+                                        </View>
+                                        <Text className="text-sm font-medium text-gray-700 dark:text-gray-300 ml-2">
+                                            {formatDuration(recordedAudio.duration)}
+                                        </Text>
                                     </View>
-                                    <Text className="text-sm font-medium text-gray-700 dark:text-gray-300 ml-2">
-                                        {formatDuration(recordedAudio.duration)}
-                                    </Text>
                                 </View>
-                            </View>
-
-                            <TouchableOpacity
-                                onPress={sendRecording}
-                                className="w-11 h-11 items-center justify-center rounded-full"
-                                style={{ backgroundColor: currentPrimaryColor }}
-                            >
-                                <MaterialCommunityIcons name="send" size={22} color="#fff" />
-                            </TouchableOpacity>
-                        </View>
-                    ) : inputMode === 'voice' ? (
-                        // Voice Mode UI - Centered Record Button
-                        <View className="items-center py-2">
-                            {/* Top row: Image button (left) and Text mode button (right) */}
-                            <View className="flex-row justify-between w-full px-4 mb-4">
-                                <TouchableOpacity
-                                    onPress={handlePickImage}
-                                    className="w-11 h-11 rounded-full bg-light-surface dark:bg-dark-surface items-center justify-center"
-                                    disabled={isRecording || isPreparing}
-                                >
-                                    <MaterialCommunityIcons
-                                        name="image"
-                                        size={24}
-                                        color={isRecording || isPreparing ? '#9ca3af' : '#6b7280'}
-                                    />
-                                </TouchableOpacity>
 
                                 <TouchableOpacity
-                                    onPress={() => setInputMode('text')}
-                                    className="w-11 h-11 rounded-full bg-light-surface dark:bg-dark-surface items-center justify-center"
-                                    disabled={isRecording || isPreparing}
-                                >
-                                    <MaterialCommunityIcons
-                                        name="keyboard"
-                                        size={24}
-                                        color={isRecording || isPreparing ? '#9ca3af' : '#6b7280'}
-                                    />
-                                </TouchableOpacity>
-                            </View>
-
-                            {/* Center: Large Record Button */}
-                            <TouchableOpacity
-                                onPress={isRecording ? stopRecording : startRecording}
-                                disabled={isPreparing}
-                                className="w-20 h-20 rounded-full items-center justify-center mb-3"
-                                style={{
-                                    backgroundColor: isPreparing
-                                        ? '#9ca3af'
-                                        : isRecording
-                                            ? '#ef4444'
-                                            : currentPrimaryColor,
-                                    transform: [{ scale: isRecording ? 1.1 : 1 }],
-                                    shadowColor: isRecording ? '#ef4444' : currentPrimaryColor,
-                                    shadowOffset: { width: 0, height: 4 },
-                                    shadowOpacity: 0.3,
-                                    shadowRadius: 8,
-                                    elevation: 8,
-                                }}
-                                activeOpacity={0.8}
-                            >
-                                {isPreparing ? (
-                                    <ActivityIndicator size={36} color="#fff" />
-                                ) : (
-                                    <MaterialCommunityIcons
-                                        name={isRecording ? 'stop' : 'microphone'}
-                                        size={36}
-                                        color="#fff"
-                                    />
-                                )}
-                            </TouchableOpacity>
-
-                            {/* Status Text */}
-                            <Text className="text-sm text-gray-500 dark:text-gray-400">
-                                {isPreparing
-                                    ? 'Preparando...'
-                                    : isRecording
-                                        ? `Grabando ${formatDuration(recordingDuration)}`
-                                        : 'Toca para grabar'}
-                            </Text>
-                        </View>
-                    ) : (
-                        // Text Mode UI
-                        <View className="flex-row items-end gap-2">
-                            {/* Back to Voice Mode Button */}
-                            <TouchableOpacity
-                                onPress={() => setInputMode('voice')}
-                                className="w-11 h-11 rounded-full bg-light-surface dark:bg-dark-surface items-center justify-center"
-                            >
-                                <MaterialCommunityIcons
-                                    name="microphone"
-                                    size={24}
-                                    color="#6b7280"
-                                />
-                            </TouchableOpacity>
-
-                            {/* Text Input */}
-                            <View className="flex-1 bg-light-surface dark:bg-dark-surface rounded-3xl px-4 py-2 min-h-[44px] max-h-[120px] justify-center">
-                                <TextInput
-                                    className="text-base text-gray-900 dark:text-white"
-                                    placeholder="Escribe un mensaje..."
-                                    placeholderTextColor="#9ca3af"
-                                    value={inputText}
-                                    onChangeText={setInputText}
-                                    multiline
-                                    autoFocus
-                                />
-                            </View>
-
-                            {/* Send Button or Image Button */}
-                            {inputText.trim() ? (
-                                <TouchableOpacity
-                                    onPress={handleSendText}
-                                    className="w-11 h-11 rounded-full items-center justify-center"
+                                    onPress={sendRecording}
+                                    className="w-11 h-11 items-center justify-center rounded-full"
                                     style={{ backgroundColor: currentPrimaryColor }}
                                 >
                                     <MaterialCommunityIcons name="send" size={22} color="#fff" />
                                 </TouchableOpacity>
-                            ) : (
+                            </View>
+                        ) : inputMode === 'voice' ? (
+                            // Voice Mode UI - Centered Record Button
+                            <View className="items-center py-2">
+                                {/* Top row: Image button (left) and Text mode button (right) */}
+                                <View className="flex-row justify-between w-full px-4 mb-4">
+                                    <TouchableOpacity
+                                        onPress={handlePickImage}
+                                        className="w-11 h-11 rounded-full bg-light-surface dark:bg-dark-surface items-center justify-center"
+                                        disabled={isRecording || isPreparing}
+                                    >
+                                        <MaterialCommunityIcons
+                                            name="image"
+                                            size={24}
+                                            color={isRecording || isPreparing ? '#9ca3af' : '#6b7280'}
+                                        />
+                                    </TouchableOpacity>
+
+                                    <TouchableOpacity
+                                        onPress={() => setInputMode('text')}
+                                        className="w-11 h-11 rounded-full bg-light-surface dark:bg-dark-surface items-center justify-center"
+                                        disabled={isRecording || isPreparing}
+                                    >
+                                        <MaterialCommunityIcons
+                                            name="keyboard"
+                                            size={24}
+                                            color={isRecording || isPreparing ? '#9ca3af' : '#6b7280'}
+                                        />
+                                    </TouchableOpacity>
+                                </View>
+
+                                {/* Center: Large Record Button */}
                                 <TouchableOpacity
-                                    onPress={handlePickImage}
+                                    onPress={isRecording ? stopRecording : startRecording}
+                                    disabled={isPreparing}
+                                    className="w-20 h-20 rounded-full items-center justify-center mb-3"
+                                    style={{
+                                        backgroundColor: isPreparing
+                                            ? '#9ca3af'
+                                            : isRecording
+                                                ? '#ef4444'
+                                                : currentPrimaryColor,
+                                        transform: [{ scale: isRecording ? 1.1 : 1 }],
+                                        shadowColor: isRecording ? '#ef4444' : currentPrimaryColor,
+                                        shadowOffset: { width: 0, height: 4 },
+                                        shadowOpacity: 0.3,
+                                        shadowRadius: 8,
+                                        elevation: 8,
+                                    }}
+                                    activeOpacity={0.8}
+                                >
+                                    {isPreparing ? (
+                                        <ActivityIndicator size={36} color="#fff" />
+                                    ) : (
+                                        <MaterialCommunityIcons
+                                            name={isRecording ? 'stop' : 'microphone'}
+                                            size={36}
+                                            color="#fff"
+                                        />
+                                    )}
+                                </TouchableOpacity>
+
+                                {/* Status Text */}
+                                <Text className="text-sm text-gray-500 dark:text-gray-400">
+                                    {isPreparing
+                                        ? 'Preparando...'
+                                        : isRecording
+                                            ? `Grabando ${formatDuration(recordingDuration)}`
+                                            : 'Toca para grabar'}
+                                </Text>
+                            </View>
+                        ) : (
+                            // Text Mode UI
+                            <View className="flex-row items-end gap-2">
+                                {/* Back to Voice Mode Button */}
+                                <TouchableOpacity
+                                    onPress={() => setInputMode('voice')}
                                     className="w-11 h-11 rounded-full bg-light-surface dark:bg-dark-surface items-center justify-center"
                                 >
                                     <MaterialCommunityIcons
-                                        name="image"
+                                        name="microphone"
                                         size={24}
                                         color="#6b7280"
                                     />
                                 </TouchableOpacity>
-                            )}
-                        </View>
-                    )}
-                </View>
-            </KeyboardAvoidingView>
-        </SafeAreaView>
+
+                                {/* Text Input */}
+                                <View className="flex-1 bg-light-surface dark:bg-dark-surface rounded-3xl px-4 py-2 min-h-[44px] max-h-[120px] justify-center">
+                                    <TextInput
+                                        className="text-base text-gray-900 dark:text-white"
+                                        placeholder="Escribe un mensaje..."
+                                        placeholderTextColor="#9ca3af"
+                                        value={inputText}
+                                        onChangeText={setInputText}
+                                        multiline
+                                        autoFocus
+                                    />
+                                </View>
+
+                                {/* Send Button or Image Button */}
+                                {inputText.trim() ? (
+                                    <TouchableOpacity
+                                        onPress={handleSendText}
+                                        className="w-11 h-11 rounded-full items-center justify-center"
+                                        style={{ backgroundColor: currentPrimaryColor }}
+                                    >
+                                        <MaterialCommunityIcons name="send" size={22} color="#fff" />
+                                    </TouchableOpacity>
+                                ) : (
+                                    <TouchableOpacity
+                                        onPress={handlePickImage}
+                                        className="w-11 h-11 rounded-full bg-light-surface dark:bg-dark-surface items-center justify-center"
+                                    >
+                                        <MaterialCommunityIcons
+                                            name="image"
+                                            size={24}
+                                            color="#6b7280"
+                                        />
+                                    </TouchableOpacity>
+                                )}
+                            </View>
+                        )}
+                    </View>
+                </KeyboardAvoidingView>
+            </SafeAreaView>
+        </>
     );
 }

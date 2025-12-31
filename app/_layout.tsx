@@ -1,3 +1,4 @@
+import { AlertProvider } from '@/hooks/alert-context';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { primaryColors, useSettingsStore } from '@/store/settings-store';
 import { hexToRgb } from '@/utils/colors';
@@ -52,51 +53,48 @@ function RootLayoutContent() {
 	return (
 		<ThemeProvider value={theme}>
 			<View style={[themeVars, { flex: 1 }]}>
-				<Stack screenOptions={{ headerShown: false }}>
-					<Stack.Screen name="index" />
-					<Stack.Screen name="(auth)" />
-					<Stack.Screen name="(tabs)" />
-					<Stack.Screen
-						name="modal"
-						options={{
-							presentation: 'modal',
-							title: 'Agregar Operación',
-							headerShown: true,
-						}}
-					/>
-					<Stack.Screen
-						name="transaction/add-transaction"
-						options={{
-							presentation: 'modal',
-							title: 'Nueva Transacción',
-							headerShown: true,
-						}}
-					/>
-					<Stack.Screen
-						name="profile-edit"
-						options={{
-							presentation: 'modal',
-							title: 'Editar Perfil',
-							headerShown: true,
-						}}
-					/>
-					<Stack.Screen
-						name="transaction/add-dynamic"
-						options={{
-							presentation: 'modal',
-							title: 'Asistente IA',
-							headerShown: true,
-						}}
-					/>
-					<Stack.Screen
-						name="transaction/[id]"
-						options={{
-							presentation: 'modal',
-							title: 'Detalle de Transacción',
-							headerShown: true,
-						}}
-					/>
-				</Stack>
+				<AlertProvider>
+					<Stack screenOptions={{ headerShown: false, headerBackTitle: '' }}>
+						<Stack.Screen name="index" />
+						<Stack.Screen name="(auth)" />
+						<Stack.Screen name="(tabs)" />
+						<Stack.Screen
+							name="modal"
+							options={{
+								presentation: 'card',
+								headerShown: false,
+							}}
+						/>
+						<Stack.Screen
+							name="transaction/add-transaction"
+							options={{
+								presentation: 'card',
+								headerShown: false,
+							}}
+						/>
+						<Stack.Screen
+							name="profile-edit"
+							options={{
+								presentation: 'card',
+								headerShown: false,
+							}}
+						/>
+						<Stack.Screen
+							name="transaction/add-dynamic"
+							options={{
+								presentation: 'card',
+								headerShown: false,
+							}}
+						/>
+						<Stack.Screen
+							name="transaction/[id]"
+							options={{
+								presentation: 'card',
+								headerShown: false,
+							}}
+						/>
+					</Stack>
+				</AlertProvider>
 				<StatusBar
 					style={effectiveTheme === 'dark' ? 'light' : 'dark'}
 					backgroundColor="transparent"

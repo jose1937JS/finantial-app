@@ -1,15 +1,17 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { Alert, Image, Pressable, ScrollView, Switch, Text, View } from 'react-native';
+import { Image, Pressable, ScrollView, Switch, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { SelectModal, SelectOption } from '@/components/ui/select-modal';
+import { useAlert } from '@/hooks/alert-context';
 import { useAuthStore } from '@/store/auth-store';
 import { primaryColors, useSettingsStore } from '@/store/settings-store';
 import type { Currency, Language, PrimaryColor } from '@/types';
+
 
 interface SettingItemProps {
     icon: keyof typeof MaterialCommunityIcons.glyphMap;
@@ -57,7 +59,7 @@ export default function SettingsScreen() {
     const router = useRouter();
     const { user, logout } = useAuthStore();
     const { preferences, setTheme, setLanguage, setCurrency, setPrimaryColor } = useSettingsStore();
-
+    const { showAlert } = useAlert();
     const [activeModal, setActiveModal] = useState<ModalType>(null);
 
     const isDarkMode = preferences.theme === 'dark';
@@ -109,9 +111,9 @@ export default function SettingsScreen() {
 
     const handleExportSelect = (value: string) => {
         if (value === 'csv') {
-            Alert.alert('Éxito', 'Datos exportados en CSV');
+            showAlert({ title: 'Éxito', message: 'Datos exportados en CSV', icon: 'check-circle', iconColor: '#22c55e' });
         } else if (value === 'pdf') {
-            Alert.alert('Éxito', 'Datos exportados en PDF');
+            showAlert({ title: 'Éxito', message: 'Datos exportados en PDF', icon: 'check-circle', iconColor: '#22c55e' });
         }
     };
 
@@ -276,7 +278,7 @@ export default function SettingsScreen() {
                         iconColor={currentPrimaryColor}
                         title="Importar Datos"
                         subtitle="Restaurar desde backup"
-                        onPress={() => Alert.alert('Importar Datos', 'Esta función estará disponible próximamente')}
+                        onPress={() => showAlert({ title: 'Importar Datos', message: 'Esta función estará disponible próximamente', icon: 'information' })}
                     />
                 </Card>
 

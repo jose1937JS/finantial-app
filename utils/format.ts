@@ -79,9 +79,15 @@ export const formatDate = (
     });
 };
 
-export const formatTime = (date: string | Date, locale: string = 'es-ES'): string => {
-    const d = typeof date === 'string' ? new Date(date) : date;
-    return d.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
+export const formatTime = (date: string | Date | undefined | null, locale: string = 'es-ES'): string => {
+    if (!date) return '';
+    try {
+        const d = typeof date === 'string' ? new Date(date) : date;
+        if (isNaN(d.getTime())) return '';
+        return d.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
+    } catch (e) {
+        return '';
+    }
 };
 
 export const formatNumber = (num: number, decimals: number = 2): string => {

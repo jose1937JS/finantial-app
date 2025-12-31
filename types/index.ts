@@ -10,6 +10,7 @@ export interface Transaction {
     description: string;
     date: string;
     createdAt: string;
+    created_at: string;
     // Optional currency details
     amountInVES?: number;
     rate?: number;

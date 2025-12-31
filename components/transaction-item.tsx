@@ -1,5 +1,5 @@
 import type { Transaction } from '@/types';
-import { formatCurrency, formatDate } from '@/utils/format';
+import { formatCurrency, formatDate, formatTime } from '@/utils/format';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import React from 'react';
@@ -84,7 +84,7 @@ export function TransactionItem({ transaction, onPress }: TransactionItemProps) 
                 )}
 
                 <Text className="text-[11px] text-gray-400 dark:text-gray-500">
-                    {transaction.category} • {formatDate(transaction.date, 'relative')}
+                    {transaction.category} • {formatDate(transaction.date)} {transaction.created_at ? formatTime(transaction.created_at) : formatTime(transaction.date)}
                 </Text>
             </View>
 

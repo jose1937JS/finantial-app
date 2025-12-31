@@ -125,6 +125,7 @@ export default function AddTransactionScreen() {
                     d.setHours(12, 0, 0, 0);
                     return d.toISOString();
                 })(),
+                created_at: new Date().toISOString(),
                 rate: exchangeRate,
                 loan: loanDetails,
             };

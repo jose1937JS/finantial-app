@@ -8,7 +8,7 @@ interface TransactionStore {
     filters: TransactionFilters;
 
     // Actions
-    addTransaction: (transaction: Omit<Transaction, 'id' | 'createdAt'>) => void;
+    addTransaction: (transaction: Omit<Transaction, 'id' | 'createdAt' | 'created_at'>) => void;
     updateTransaction: (id: string, data: Partial<Transaction>) => void;
     addLoanPayment: (transactionId: string, payment: Payment) => void;
     deleteTransaction: (id: string) => void;
@@ -35,6 +35,7 @@ const mockTransactions: Transaction[] = [
         description: 'Pago mensual',
         date: new Date().toISOString(),
         createdAt: new Date().toISOString(),
+        created_at: new Date().toISOString(),
     },
     {
         id: '2',
@@ -45,6 +46,7 @@ const mockTransactions: Transaction[] = [
         description: 'Supermercado semanal',
         date: new Date().toISOString(),
         createdAt: new Date().toISOString(),
+        created_at: new Date().toISOString(),
     },
     {
         id: '3',
@@ -55,6 +57,7 @@ const mockTransactions: Transaction[] = [
         description: 'Gasolina',
         date: new Date(Date.now() - 86400000).toISOString(),
         createdAt: new Date(Date.now() - 86400000).toISOString(),
+        created_at: new Date(Date.now() - 86400000).toISOString(),
     },
     {
         id: '4',
@@ -65,6 +68,7 @@ const mockTransactions: Transaction[] = [
         description: 'Pago mensual',
         date: new Date(Date.now() - 86400000).toISOString(),
         createdAt: new Date(Date.now() - 86400000).toISOString(),
+        created_at: new Date(Date.now() - 86400000).toISOString(),
     },
     {
         id: '5',
@@ -75,6 +79,7 @@ const mockTransactions: Transaction[] = [
         description: 'Gasolina',
         date: new Date(Date.now() - 86400000).toISOString(),
         createdAt: new Date(Date.now() - 86400000).toISOString(),
+        created_at: new Date(Date.now() - 86400000).toISOString(),
     },
     {
         id: '6',
@@ -85,6 +90,7 @@ const mockTransactions: Transaction[] = [
         description: 'Gasolina',
         date: new Date(Date.now() - 86400000).toISOString(),
         createdAt: new Date(Date.now() - 86400000).toISOString(),
+        created_at: new Date(Date.now() - 86400000).toISOString(),
     },
     {
         id: '7',
@@ -95,6 +101,7 @@ const mockTransactions: Transaction[] = [
         description: 'Gasolina',
         date: new Date(Date.now() - 86400000).toISOString(),
         createdAt: new Date(Date.now() - 86400000).toISOString(),
+        created_at: new Date(Date.now() - 86400000).toISOString(),
     },
     {
         id: '8',
@@ -105,6 +112,7 @@ const mockTransactions: Transaction[] = [
         description: 'Gasolina',
         date: new Date(Date.now() - 86400000).toISOString(),
         createdAt: new Date(Date.now() - 86400000).toISOString(),
+        created_at: new Date(Date.now() - 86400000).toISOString(),
     },
     {
         id: '9',
@@ -115,6 +123,7 @@ const mockTransactions: Transaction[] = [
         description: 'Gasolina',
         date: new Date(Date.now() - 86400000).toISOString(),
         createdAt: new Date(Date.now() - 86400000).toISOString(),
+        created_at: new Date(Date.now() - 86400000).toISOString(),
     },
     {
         id: '10',
@@ -125,6 +134,7 @@ const mockTransactions: Transaction[] = [
         description: 'Préstamo a Juan',
         date: new Date(Date.now() - 172800000).toISOString(),
         createdAt: new Date(Date.now() - 172800000).toISOString(),
+        created_at: new Date(Date.now() - 172800000).toISOString(),
         loan: {
             debtorName: 'Juan',
             debtorLastName: 'Pérez',
@@ -144,6 +154,7 @@ const mockTransactions: Transaction[] = [
         description: 'Préstamo a Pedro',
         date: new Date(Date.now() - 259200000).toISOString(),
         createdAt: new Date(Date.now() - 259200000).toISOString(),
+        created_at: new Date(Date.now() - 259200000).toISOString(),
         loan: {
             debtorName: 'Pedro',
             debtorLastName: 'Pérez',
@@ -163,6 +174,7 @@ const mockTransactions: Transaction[] = [
         description: 'Suscripción Netflix/Spotify',
         date: new Date(Date.now() - 345600000).toISOString(),
         createdAt: new Date(Date.now() - 345600000).toISOString(),
+        created_at: new Date(Date.now() - 345600000).toISOString(),
     },
     {
         id: '13',
@@ -173,6 +185,7 @@ const mockTransactions: Transaction[] = [
         description: 'Farmacia',
         date: new Date(Date.now() - 432000000).toISOString(),
         createdAt: new Date(Date.now() - 432000000).toISOString(),
+        created_at: new Date(Date.now() - 432000000).toISOString(),
     },
     {
         id: '14',
@@ -183,6 +196,7 @@ const mockTransactions: Transaction[] = [
         description: 'Regalo cumpleaños',
         date: new Date(Date.now() - 518400000).toISOString(),
         createdAt: new Date(Date.now() - 518400000).toISOString(),
+        created_at: new Date(Date.now() - 518400000).toISOString(),
     },
     {
         id: '15',
@@ -193,6 +207,7 @@ const mockTransactions: Transaction[] = [
         description: 'Reparación tubería',
         date: new Date(Date.now() - 604800000).toISOString(),
         createdAt: new Date(Date.now() - 604800000).toISOString(),
+        created_at: new Date(Date.now() - 604800000).toISOString(),
     },
     {
         id: '16',
@@ -203,6 +218,7 @@ const mockTransactions: Transaction[] = [
         description: 'Cena restaurante',
         date: new Date(Date.now() - 691200000).toISOString(),
         createdAt: new Date(Date.now() - 691200000).toISOString(),
+        created_at: new Date(Date.now() - 691200000).toISOString(),
     },
     {
         id: '17',
@@ -213,6 +229,7 @@ const mockTransactions: Transaction[] = [
         description: 'Corte de cabello',
         date: new Date(Date.now() - 777600000).toISOString(),
         createdAt: new Date(Date.now() - 777600000).toISOString(),
+        created_at: new Date(Date.now() - 777600000).toISOString(),
     },
     {
         id: '18',
@@ -223,6 +240,7 @@ const mockTransactions: Transaction[] = [
         description: 'Dividendos acciones',
         date: new Date(Date.now() - 864000000).toISOString(),
         createdAt: new Date(Date.now() - 864000000).toISOString(),
+        created_at: new Date(Date.now() - 864000000).toISOString(),
     },
     {
         id: '19',
@@ -233,6 +251,7 @@ const mockTransactions: Transaction[] = [
         description: 'Libro programación',
         date: new Date(Date.now() - 950400000).toISOString(),
         createdAt: new Date(Date.now() - 950400000).toISOString(),
+        created_at: new Date(Date.now() - 950400000).toISOString(),
     },
     {
         id: '20',
@@ -243,6 +262,7 @@ const mockTransactions: Transaction[] = [
         description: 'Gimnasio mensual',
         date: new Date(Date.now() - 1036800000).toISOString(),
         createdAt: new Date(Date.now() - 1036800000).toISOString(),
+        created_at: new Date(Date.now() - 1036800000).toISOString(),
     },
 ];
 
@@ -257,6 +277,7 @@ export const useTransactionStore = create<TransactionStore>()(
                     ...transactionData,
                     id: Date.now().toString(),
                     createdAt: new Date().toISOString(),
+                    created_at: new Date().toISOString(),
                 };
                 set((state) => ({
                     transactions: [newTransaction, ...state.transactions],

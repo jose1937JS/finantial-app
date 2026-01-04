@@ -234,15 +234,15 @@ export default function SettingsScreen() {
                         subtitle={getLanguageLabel(preferences.language)}
                         onPress={() => setActiveModal('language')}
                     />
-                    <View className="h-px bg-light-border dark:bg-dark-border" />
 
-                    <SettingItem
+                    {/*<View className="h-px bg-light-border dark:bg-dark-border" />
+                     <SettingItem
                         icon="currency-usd"
                         iconColor={currentPrimaryColor}
                         title="Moneda Principal"
                         subtitle={getCurrencyLabel(preferences.mainCurrency)}
                         onPress={() => setActiveModal('currency')}
-                    />
+                    /> */}
                 </Card>
 
                 {/* Categories Section */}

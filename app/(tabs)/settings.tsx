@@ -142,7 +142,7 @@ export default function SettingsScreen() {
     };
 
     return (
-        <SafeAreaView className="flex-1 bg-light-bg dark:bg-dark-bg">
+        <SafeAreaView edges={['top']} className="flex-1 bg-light-bg dark:bg-dark-bg">
             <ScrollView
                 contentContainerStyle={{ padding: 20 }}
                 showsVerticalScrollIndicator={false}

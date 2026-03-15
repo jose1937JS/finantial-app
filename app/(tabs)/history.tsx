@@ -49,9 +49,9 @@ export default function HistoryScreen() {
     ];
 
     return (
-        <SafeAreaView className="flex-1 bg-light-bg dark:bg-dark-bg">
+        <SafeAreaView edges={['top']} className="flex-1 bg-light-bg dark:bg-dark-bg">
             {/* Header */}
-            <View className="px-5 pt-4 pb-2">
+            <View className="px-5 pt-4 pb-5">
                 <Text className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
                     Historial
                 </Text>
@@ -74,7 +74,7 @@ export default function HistoryScreen() {
                 </View>
 
                 {/* Filter Chips */}
-                <View className="flex-row gap-2 mb-2">
+                <View className="flex-row gap-2">
                     {filters.map((filter) => (
                         <Chip
                             key={filter.value}
@@ -96,7 +96,7 @@ export default function HistoryScreen() {
             <FlatList
                 data={filteredTransactions}
                 keyExtractor={(item) => item.id}
-                contentContainerStyle={{ padding: 20, paddingTop: 10 }}
+                contentContainerStyle={{ paddingHorizontal: 20, flexGrow: 1 }}
                 showsVerticalScrollIndicator={false}
                 renderItem={({ item }) => (
                     <TransactionItem

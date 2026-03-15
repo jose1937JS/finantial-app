@@ -210,7 +210,7 @@ export default function CategoryFormScreen() {
                 </ScrollView>
 
                 {/* Fixed Bottom Button */}
-                <View className="px-4 pb-4 bg-light-bg dark:bg-dark-bg">
+                <View className="px-4 bg-light-bg dark:bg-dark-bg">
                     <Button
                         onPress={handleSave}
                         isLoading={isLoading}

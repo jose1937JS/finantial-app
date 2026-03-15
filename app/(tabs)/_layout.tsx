@@ -15,7 +15,7 @@ export default function TabLayout() {
 	const router = useRouter();
 	const tintColor = useThemeColor({}, 'tint');
 
-	const getTabIcon = (name: IconName, color: string, size: number = 26) => (
+	const getTabIcon = (name: IconName, color: string, size: number = 24) => (
 		<MaterialCommunityIcons name={name} size={size} color={color} />
 	);
 
@@ -29,13 +29,11 @@ export default function TabLayout() {
 				tabBarStyle: {
 					backgroundColor: colorScheme === 'dark' ? '#0f0f0f' : '#ffffff',
 					borderTopColor: colorScheme === 'dark' ? '#2a2a2a' : '#e2e8f0',
-					paddingTop: 8,
-					height: 85,
+					height: 60,
 				},
 				tabBarLabelStyle: {
-					fontSize: 11,
-					fontWeight: '600',
-					marginTop: 4,
+					fontSize: 10,
+					fontWeight: '500',
 				},
 			}}
 		>
@@ -60,21 +58,21 @@ export default function TabLayout() {
 					tabBarIcon: ({ color }) => (
 						<View
 							style={{
-								top: -20,
-								width: 60,
-								height: 60,
-								borderRadius: 30,
+								top: -19,
+								width: 50,
+								height: 50,
+								borderRadius: 25,
 								backgroundColor: tintColor,
 								justifyContent: 'center',
 								alignItems: 'center',
-								shadowColor: '#000',
+								shadowColor: '#2c2c2cff',
 								shadowOffset: { width: 0, height: 4 },
 								shadowOpacity: 0.3,
 								shadowRadius: 4,
 								elevation: 5,
 							}}
 						>
-							<MaterialCommunityIcons name="plus" size={32} color="#fff" />
+							<MaterialCommunityIcons name="plus" size={28} color="#fff" />
 						</View>
 					),
 					tabBarLabel: () => null,

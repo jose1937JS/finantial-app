@@ -12,7 +12,6 @@ import { Pressable, Text, View } from 'react-native';
 import Animated, { useAnimatedScrollHandler, useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-
 export default function HomeScreen() {
 	const router = useRouter();
 	const { user } = useAuthStore();

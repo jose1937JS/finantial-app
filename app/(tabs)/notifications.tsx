@@ -62,7 +62,7 @@ export default function NotificationsScreen() {
     };
 
     return (
-        <SafeAreaView className="flex-1 bg-light-bg dark:bg-dark-bg">
+        <SafeAreaView edges={['top']} className="flex-1 bg-light-bg dark:bg-dark-bg">
             {/* Header */}
             <View className="px-5 pt-4 pb-2 flex-row items-center justify-between">
                 <Text className="text-2xl font-bold text-gray-900 dark:text-white">

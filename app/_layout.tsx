@@ -11,11 +11,17 @@ import 'react-native-reanimated';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import '../global.css';
 
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
+const queryClient = new QueryClient();
+
 export default function RootLayout() {
 	return (
-		<SafeAreaProvider>
-			<RootLayoutContent />
-		</SafeAreaProvider>
+		<QueryClientProvider client={queryClient}>
+			<SafeAreaProvider>
+				<RootLayoutContent />
+			</SafeAreaProvider>
+		</QueryClientProvider>
 	);
 }
 

@@ -1,3 +1,4 @@
+// DEPRECATED
 import type { Category } from '@/types';
 
 export const defaultCategories: Category[] = [

@@ -11,7 +11,7 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 type IconName = keyof typeof MaterialCommunityIcons.glyphMap;
 
 export default function TabLayout() {
-	const colorScheme = useColorScheme();
+	const { colorScheme } = useColorScheme();
 	const router = useRouter();
 	const tintColor = useThemeColor({}, 'tint');
 
@@ -102,12 +102,6 @@ export default function TabLayout() {
 			{/* Hidden tabs */}
 			<Tabs.Screen
 				name="analysis"
-				options={{
-					href: null,
-				}}
-			/>
-			<Tabs.Screen
-				name="explore"
 				options={{
 					href: null,
 				}}

@@ -1,0 +1,3 @@
+1. Implementar la logica de ApiResponse a el resto de endpoints. Ya se ha implementado en el login. (auth-store@login)
+2. Para el balance total calcular las transacciones en ves a usd y hacer el calculo para que todo quede centralizado en usd, de la misma forma con los ingresos y gastos. (hecho en frontend)
+3. 

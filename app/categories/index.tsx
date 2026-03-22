@@ -4,12 +4,15 @@ import React from 'react';
 import { FlatList, Image, Pressable, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useSettingsStore } from '@/store/settings-store';
 import { Category } from '@/types';
 
 export default function CategoriesScreen() {
     const router = useRouter();
     const { categories, deleteCategory } = useSettingsStore();
+    const { colorScheme } = useColorScheme();
+    const iconColor = colorScheme === 'dark' ? '#ffffff' : '#000000';
 
     const handleAdd = () => {
         router.push('/categories/form');
@@ -43,11 +46,11 @@ export default function CategoriesScreen() {
                 )}
             </View>
             <View className="flex-1">
-                <Text className="text-base font-semibold text-gray-900 dark:text-white">
+                <Text className="text-base font-semibold text-gray-700 dark:text-white">
                     {item.name}
                 </Text>
                 <Text className="text-sm text-gray-500 dark:text-gray-400 capitalize">
-                    {item.type === 'both' ? 'Ingreso / Gasto' : item.type === 'income' ? 'Ingreso' : 'Gasto'}
+                    {item.type === 'loan' ? 'Préstamo' : item.type === 'income' ? 'Ingreso' : 'Gasto'}
                 </Text>
             </View>
             <MaterialCommunityIcons name="chevron-right" size={24} color="#9ca3af" />
@@ -58,9 +61,9 @@ export default function CategoriesScreen() {
         <SafeAreaView className="flex-1 bg-light-bg dark:bg-dark-bg" edges={['top']}>
             <View className="flex-row items-center justify-between px-4 py-4">
                 <Pressable onPress={() => router.back()} className="p-2">
-                    <MaterialCommunityIcons name="arrow-left" size={24} color="#000" className="dark:text-white" />
+                    <MaterialCommunityIcons name="arrow-left" size={24} color={iconColor} />
                 </Pressable>
-                <Text className="text-xl font-bold text-gray-900 dark:text-white">
+                <Text className="text-xl font-bold text-gray-700 dark:text-white">
                     Categorías
                 </Text>
                 <View className="w-10" />

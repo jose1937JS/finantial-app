@@ -82,7 +82,7 @@ export function SelectModal<T = string>({
                             {/* Header */}
                             <View className="px-6 pt-6 pb-4 border-b border-light-border dark:border-dark-border">
                                 <View className="flex-row items-center justify-between">
-                                    <Text className="text-xl font-bold text-gray-900 dark:text-white">
+                                    <Text className="text-xl font-bold text-gray-700 dark:text-white">
                                         {title}
                                     </Text>
                                     <Pressable
@@ -159,7 +159,7 @@ export function SelectModal<T = string>({
                                                 )}
                                                 <Text className={`flex-1 text-base ${selectedValue === option.value
                                                     ? 'font-semibold text-primary-500'
-                                                    : 'text-gray-900 dark:text-white'
+                                                    : 'text-gray-700 dark:text-white'
                                                     }`}>
                                                     {option.label}
                                                 </Text>

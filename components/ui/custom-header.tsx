@@ -15,7 +15,7 @@ interface CustomHeaderProps {
 export function CustomHeader({ title, onBack, rightAction }: CustomHeaderProps) {
     const router = useRouter();
     const insets = useSafeAreaInsets();
-    const colorScheme = useColorScheme();
+    const { colorScheme } = useColorScheme();
 
     const iconColor = colorScheme === 'dark' ? '#ffffff' : '#000000';
     const backgroundColor = colorScheme === 'dark' ? '#0f0f0f' : '#f8fafc';

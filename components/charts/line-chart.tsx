@@ -45,7 +45,7 @@ export function LineChart({
     return (
         <View className="bg-white dark:bg-dark-card rounded-3xl p-6">
             {title && (
-                <Text className="text-lg font-bold text-gray-900 dark:text-white mb-4">
+                <Text className="text-lg font-bold text-gray-700 dark:text-white mb-4">
                     {title}
                 </Text>
             )}

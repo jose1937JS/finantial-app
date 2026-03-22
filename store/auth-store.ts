@@ -1,14 +1,16 @@
+import { AuthService } from '@/api/services/auth.service';
 import type { AuthState, User } from '@/types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
 interface AuthStore extends AuthState {
-    login: (email: string, password: string) => Promise<boolean>;
+    login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
     register: (fullName: string, email: string, password: string) => Promise<boolean>;
     logout: () => void;
     setLoading: (loading: boolean) => void;
     updateUser: (user: Partial<User>) => void;
+    token: string | null;
 }
 
 export const useAuthStore = create<AuthStore>()(
@@ -17,52 +19,77 @@ export const useAuthStore = create<AuthStore>()(
             user: null,
             isAuthenticated: false,
             isLoading: false,
+            token: null,
 
             login: async (email: string, password: string) => {
                 set({ isLoading: true });
+                try {
+                    const data = await AuthService.login({ email, password });
+                    const token = data.access_token;
+                    const userPayload = data.user;
 
-                // Simulate API call
-                await new Promise(resolve => setTimeout(resolve, 1000));
-
-                // Mock successful login
-                if (email && password) {
+                    if (token) {
+                        await AsyncStorage.setItem('auth_token', token);
+                    }
                     const user: User = {
-                        id: '1',
-                        email,
-                        fullName: email.split('@')[0],
-                        createdAt: new Date().toISOString(),
+                        id: String(userPayload.id ?? userPayload.userId ?? ''),
+                        email: userPayload.email ?? email,
+                        fullName: [userPayload.name, userPayload.lastName].filter(Boolean).join(' ') || email.split('@')[0],
+                        avatar: userPayload.avatar,
+                        createdAt: userPayload.createdAt ?? new Date().toISOString(),
                     };
-                    set({ user, isAuthenticated: true, isLoading: false });
-                    return true;
+                    set({ user, isAuthenticated: true, isLoading: false, token });
+                    return { success: true };
+                } catch (error: any) {
+                    console.error('Login error:', error);
+                    let errorMessage = 'Ocurrió un error inesperado al iniciar sesión';
+                    if (error.response?.data?.message) {
+                        const msg = error.response.data.message;
+                        errorMessage = Array.isArray(msg) ? msg[0] : msg;
+                    }
+                    set({ isLoading: false });
+                    return { success: false, error: errorMessage };
                 }
-
-                set({ isLoading: false });
-                return false;
             },
 
             register: async (fullName: string, email: string, password: string) => {
                 set({ isLoading: true });
-
-                // Simulate API call
-                await new Promise(resolve => setTimeout(resolve, 1000));
-
-                if (fullName && email && password) {
-                    const user: User = {
-                        id: Date.now().toString(),
+                try {
+                    // Split fullName into name + last_name for the backend DTO
+                    const nameParts = fullName.trim().split(' ');
+                    const firstName = nameParts[0];
+                    const lastName = nameParts.slice(1).join(' ') || firstName;
+                    const data = await AuthService.register({
+                        name: firstName,
+                        last_name: lastName,
                         email,
-                        fullName,
-                        createdAt: new Date().toISOString(),
+                        password,
+                        phone: '',
+                    });
+                    const token = data.access_token ?? data.token;
+                    const userPayload = data.user ?? data;
+                    if (token) {
+                        await AsyncStorage.setItem('auth_token', token);
+                    }
+                    const user: User = {
+                        id: String(userPayload.id ?? userPayload.userId ?? Date.now()),
+                        email: userPayload.email ?? email,
+                        fullName: [userPayload.name, userPayload.lastName].filter(Boolean).join(' ') || fullName,
+                        avatar: userPayload.avatar,
+                        createdAt: userPayload.createdAt ?? new Date().toISOString(),
                     };
                     set({ user, isAuthenticated: true, isLoading: false });
                     return true;
+                } catch (error) {
+                    console.error('Register error:', error);
+                    set({ isLoading: false });
+                    return false;
                 }
-
-                set({ isLoading: false });
-                return false;
             },
 
-            logout: () => {
-                set({ user: null, isAuthenticated: false });
+            logout: async () => {
+                await AsyncStorage.removeItem('auth_token');
+                set({ user: null, isAuthenticated: false, token: null });
             },
 
             setLoading: (loading: boolean) => {

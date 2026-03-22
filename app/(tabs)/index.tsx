@@ -7,7 +7,7 @@ import { useTransactionStore } from '@/store/transaction-store';
 import { isAndroid } from '@/utils';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import React from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import Animated, { useAnimatedScrollHandler, useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -23,8 +23,33 @@ export default function HomeScreen() {
 		getRecentTransactions,
 		getTotalBalance,
 		getTotalIncome,
-		getTotalExpenses
+		getTotalExpenses,
+		fetchTransactions,
 	} = useTransactionStore();
+	const { fetchCategories, fetchRates } = useSettingsStore();
+
+	useEffect(() => {
+		fetchTransactions();
+		fetchCategories();
+		fetchRates();
+	}, []);
+
+	const [refreshing, setRefreshing] = useState(false);
+
+	const onRefresh = useCallback(async () => {
+		setRefreshing(true);
+		const start = Date.now();
+		await Promise.all([
+			fetchTransactions(),
+			fetchCategories(),
+			fetchRates()
+		]);
+		const elapsed = Date.now() - start;
+		if (elapsed < 1000) {
+			await new Promise(resolve => setTimeout(resolve, 1000 - elapsed));
+		}
+		setRefreshing(false);
+	}, [fetchTransactions, fetchCategories, fetchRates]);
 
 	const recentTransactions = getRecentTransactions(10);
 	const balance = getTotalBalance();
@@ -60,6 +85,8 @@ export default function HomeScreen() {
 				onScroll={scrollHandler}
 				scrollEventThrottle={16}
 				contentContainerStyle={{ flexGrow: 1 }}
+				refreshing={refreshing}
+				onRefresh={onRefresh}
 				ListHeaderComponent={() => (
 					<View>
 						{/* Animated Fixed Header */}
@@ -96,6 +123,8 @@ export default function HomeScreen() {
 									balance={balance}
 									income={income}
 									expenses={expenses}
+									onRefresh={onRefresh}
+									isRefreshing={refreshing}
 								/>
 							</View>
 						</Animated.View>
@@ -107,7 +136,7 @@ export default function HomeScreen() {
 
 							{/* Recent Transactions Header */}
 							<View className="flex-row items-center justify-between mb-4">
-								<Text className="text-lg font-semibold text-gray-800 dark:text-white">
+								<Text className="text-lg font-semibold text-gray-700 dark:text-white">
 									Transacciones Recientes
 								</Text>
 								<Pressable onPress={() => router.push('/history')}>

@@ -1,17 +1,33 @@
+import { TransactionService } from '@/api/services/transaction.service';
+import { useSettingsStore } from '@/store/settings-store';
 import type { Payment, Transaction, TransactionFilters } from '@/types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
+const getAmountInUSD = (t: Transaction) => {
+    const { exchangeRates } = useSettingsStore.getState();
+    let amountUSD = t.amount;
+    if (t.currency === 'VES' && exchangeRates.BCV_USD > 0) {
+        amountUSD = t.amount / exchangeRates.BCV_USD;
+    } else if (t.currency === 'EUR' && exchangeRates.BCV_EUR > 0 && exchangeRates.BCV_USD > 0) {
+        amountUSD = (t.amount * exchangeRates.BCV_EUR) / exchangeRates.BCV_USD;
+    }
+    return amountUSD;
+};
+
 interface TransactionStore {
     transactions: Transaction[];
     filters: TransactionFilters;
+    isLoading: boolean;
+    error: string | null;
 
     // Actions
-    addTransaction: (transaction: Omit<Transaction, 'id' | 'createdAt' | 'created_at'>) => void;
+    fetchTransactions: () => Promise<void>;
+    addTransaction: (transaction: Omit<Transaction, 'id' | 'createdAt' | 'created_at'>) => Promise<void>;
     updateTransaction: (id: string, data: Partial<Transaction>) => void;
     addLoanPayment: (transactionId: string, payment: Payment) => void;
-    deleteTransaction: (id: string) => void;
+    deleteTransaction: (id: string) => Promise<void>;
     setFilters: (filters: TransactionFilters) => void;
     clearFilters: () => void;
 
@@ -24,264 +40,102 @@ interface TransactionStore {
     getLoansDue: () => Transaction[];
 }
 
-// Mock initial transactions
-const mockTransactions: Transaction[] = [
-    {
-        id: '1',
-        type: 'income',
-        amount: 2500,
-        currency: 'USD',
-        category: 'Salario',
-        description: 'Pago mensual',
-        date: new Date().toISOString(),
-        createdAt: new Date().toISOString(),
-        created_at: new Date().toISOString(),
-    },
-    {
-        id: '2',
-        type: 'expense',
-        amount: 150,
-        currency: 'USD',
-        category: 'Comida',
-        description: 'Supermercado semanal',
-        date: new Date().toISOString(),
-        createdAt: new Date().toISOString(),
-        created_at: new Date().toISOString(),
-    },
-    {
-        id: '3',
-        type: 'expense',
-        amount: 50,
-        currency: 'USD',
-        category: 'Transporte',
-        description: 'Gasolina',
-        date: new Date(Date.now() - 86400000).toISOString(),
-        createdAt: new Date(Date.now() - 86400000).toISOString(),
-        created_at: new Date(Date.now() - 86400000).toISOString(),
-    },
-    {
-        id: '4',
-        type: 'income',
-        amount: 600,
-        currency: 'USD',
-        category: 'Salario',
-        description: 'Pago mensual',
-        date: new Date(Date.now() - 86400000).toISOString(),
-        createdAt: new Date(Date.now() - 86400000).toISOString(),
-        created_at: new Date(Date.now() - 86400000).toISOString(),
-    },
-    {
-        id: '5',
-        type: 'expense',
-        amount: 50,
-        currency: 'USD',
-        category: 'Transporte',
-        description: 'Gasolina',
-        date: new Date(Date.now() - 86400000).toISOString(),
-        createdAt: new Date(Date.now() - 86400000).toISOString(),
-        created_at: new Date(Date.now() - 86400000).toISOString(),
-    },
-    {
-        id: '6',
-        type: 'expense',
-        amount: 50,
-        currency: 'USD',
-        category: 'Transporte',
-        description: 'Gasolina',
-        date: new Date(Date.now() - 86400000).toISOString(),
-        createdAt: new Date(Date.now() - 86400000).toISOString(),
-        created_at: new Date(Date.now() - 86400000).toISOString(),
-    },
-    {
-        id: '7',
-        type: 'expense',
-        amount: 50,
-        currency: 'USD',
-        category: 'Transporte',
-        description: 'Gasolina',
-        date: new Date(Date.now() - 86400000).toISOString(),
-        createdAt: new Date(Date.now() - 86400000).toISOString(),
-        created_at: new Date(Date.now() - 86400000).toISOString(),
-    },
-    {
-        id: '8',
-        type: 'expense',
-        amount: 50,
-        currency: 'USD',
-        category: 'Transporte',
-        description: 'Gasolina',
-        date: new Date(Date.now() - 86400000).toISOString(),
-        createdAt: new Date(Date.now() - 86400000).toISOString(),
-        created_at: new Date(Date.now() - 86400000).toISOString(),
-    },
-    {
-        id: '9',
-        type: 'expense',
-        amount: 50,
-        currency: 'USD',
-        category: 'Transporte',
-        description: 'Gasolina',
-        date: new Date(Date.now() - 86400000).toISOString(),
-        createdAt: new Date(Date.now() - 86400000).toISOString(),
-        created_at: new Date(Date.now() - 86400000).toISOString(),
-    },
-    {
-        id: '10',
-        type: 'loan',
-        amount: 200,
-        currency: 'USD',
-        category: 'Préstamo',
-        description: 'Préstamo a Juan',
-        date: new Date(Date.now() - 172800000).toISOString(),
-        createdAt: new Date(Date.now() - 172800000).toISOString(),
-        created_at: new Date(Date.now() - 172800000).toISOString(),
-        loan: {
-            debtorName: 'Juan',
-            debtorLastName: 'Pérez',
-            debtorEmail: 'juan@email.com',
-            debtorPhone: '+58 412 1234567',
-            dueDate: new Date(Date.now() + 604800000).toISOString(),
-            interestRate: 0,
-            isPaid: false,
-        },
-    },
-    {
-        id: '11',
-        type: 'loan',
-        amount: 100,
-        currency: 'USD',
-        category: 'Préstamo',
-        description: 'Préstamo a Pedro',
-        date: new Date(Date.now() - 259200000).toISOString(),
-        createdAt: new Date(Date.now() - 259200000).toISOString(),
-        created_at: new Date(Date.now() - 259200000).toISOString(),
-        loan: {
-            debtorName: 'Pedro',
-            debtorLastName: 'Pérez',
-            debtorEmail: 'pedro@email.com',
-            debtorPhone: '+58 412 1234567',
-            dueDate: new Date(Date.now() + 605900000).toISOString(),
-            interestRate: 0,
-            isPaid: true,
-        },
-    },
-    {
-        id: '12',
-        type: 'expense',
-        amount: 60,
-        currency: 'USD',
-        category: 'Entretenimiento',
-        description: 'Suscripción Netflix/Spotify',
-        date: new Date(Date.now() - 345600000).toISOString(),
-        createdAt: new Date(Date.now() - 345600000).toISOString(),
-        created_at: new Date(Date.now() - 345600000).toISOString(),
-    },
-    {
-        id: '13',
-        type: 'expense',
-        amount: 120,
-        currency: 'USD',
-        category: 'Salud',
-        description: 'Farmacia',
-        date: new Date(Date.now() - 432000000).toISOString(),
-        createdAt: new Date(Date.now() - 432000000).toISOString(),
-        created_at: new Date(Date.now() - 432000000).toISOString(),
-    },
-    {
-        id: '14',
-        type: 'income',
-        amount: 100,
-        currency: 'USD',
-        category: 'Otros',
-        description: 'Regalo cumpleaños',
-        date: new Date(Date.now() - 518400000).toISOString(),
-        createdAt: new Date(Date.now() - 518400000).toISOString(),
-        created_at: new Date(Date.now() - 518400000).toISOString(),
-    },
-    {
-        id: '15',
-        type: 'expense',
-        amount: 300,
-        currency: 'USD',
-        category: 'Hogar',
-        description: 'Reparación tubería',
-        date: new Date(Date.now() - 604800000).toISOString(),
-        createdAt: new Date(Date.now() - 604800000).toISOString(),
-        created_at: new Date(Date.now() - 604800000).toISOString(),
-    },
-    {
-        id: '16',
-        type: 'expense',
-        amount: 45,
-        currency: 'USD',
-        category: 'Comida',
-        description: 'Cena restaurante',
-        date: new Date(Date.now() - 691200000).toISOString(),
-        createdAt: new Date(Date.now() - 691200000).toISOString(),
-        created_at: new Date(Date.now() - 691200000).toISOString(),
-    },
-    {
-        id: '17',
-        type: 'expense',
-        amount: 25,
-        currency: 'USD',
-        category: 'Otros',
-        description: 'Corte de cabello',
-        date: new Date(Date.now() - 777600000).toISOString(),
-        createdAt: new Date(Date.now() - 777600000).toISOString(),
-        created_at: new Date(Date.now() - 777600000).toISOString(),
-    },
-    {
-        id: '18',
-        type: 'income',
-        amount: 1200,
-        currency: 'USD',
-        category: 'Inversiones',
-        description: 'Dividendos acciones',
-        date: new Date(Date.now() - 864000000).toISOString(),
-        createdAt: new Date(Date.now() - 864000000).toISOString(),
-        created_at: new Date(Date.now() - 864000000).toISOString(),
-    },
-    {
-        id: '19',
-        type: 'expense',
-        amount: 80,
-        currency: 'USD',
-        category: 'Educación',
-        description: 'Libro programación',
-        date: new Date(Date.now() - 950400000).toISOString(),
-        createdAt: new Date(Date.now() - 950400000).toISOString(),
-        created_at: new Date(Date.now() - 950400000).toISOString(),
-    },
-    {
-        id: '20',
-        type: 'expense',
-        amount: 55,
-        currency: 'USD',
-        category: 'Salud',
-        description: 'Gimnasio mensual',
-        date: new Date(Date.now() - 1036800000).toISOString(),
-        createdAt: new Date(Date.now() - 1036800000).toISOString(),
-        created_at: new Date(Date.now() - 1036800000).toISOString(),
-    },
-];
-
 export const useTransactionStore = create<TransactionStore>()(
     persist(
         (set, get) => ({
-            transactions: mockTransactions,
+            transactions: [],
             filters: { type: 'all' },
+            isLoading: false,
+            error: null,
 
-            addTransaction: (transactionData) => {
-                const newTransaction: Transaction = {
-                    ...transactionData,
-                    id: Date.now().toString(),
-                    createdAt: new Date().toISOString(),
-                    created_at: new Date().toISOString(),
-                };
-                set((state) => ({
-                    transactions: [newTransaction, ...state.transactions],
-                }));
+            fetchTransactions: async () => {
+                set({ isLoading: true, error: null });
+                try {
+                    const apiTransactions = await TransactionService.getAll();
+                    // Map API Transaction shape → local Transaction shape
+                    const mapped: Transaction[] = apiTransactions.map((t: any) => ({
+                        id: String(t.id),
+                        type: t.type,
+                        amount: Number(t.amount),
+                        currency: t.currency ?? 'USD',
+                        category: t.category?.name ?? t.categoryId?.toString() ?? 'Otros',
+                        description: t.description ?? '',
+                        date: t.date ?? t.createdAt,
+                        createdAt: t.createdAt,
+                        created_at: t.createdAt,
+                        rate: t.rate,
+                        amountInVES: t.amountInVES,
+                        // Map loan details if present
+                        loan: t.loanDetail
+                            ? {
+                                debtorName: t.loanDetail.debtorName ?? t.loanDetail.debtor_name,
+                                debtorLastName: t.loanDetail.debtorLastname ?? t.loanDetail.debtor_lastname,
+                                debtorEmail: t.loanDetail.debtorEmail ?? t.loanDetail.debtor_email,
+                                debtorPhone: t.loanDetail.debtorPhone ?? t.loanDetail.debtor_phone,
+                                dueDate: t.loanDetail.expirationDate ?? t.loanDetail.expiration_date,
+                                interestRate: Number(t.loanDetail.interestRate ?? t.loanDetail.interest_rate ?? 0),
+                                isPaid: t.loanDetail.isPaid ?? false,
+                                payments: t.loanDetail.payments ?? [],
+                            }
+                            : undefined,
+                    }));
+                    set({ transactions: mapped, isLoading: false });
+                } catch (error: any) {
+                    console.error('fetchTransactions error:', error);
+                    set({ isLoading: false, error: error?.message ?? 'Error al cargar transacciones' });
+                }
+            },
+
+            addTransaction: async (transactionData) => {
+                try {
+                    // Build the DTO expected by the backend
+                    const isLoan = transactionData.type === 'loan';
+                    const loanInfo = transactionData.loan;
+
+                    const dto: any = {
+                        amount: transactionData.amount,
+                        description: transactionData.description,
+                        currency: (transactionData.currency as any) ?? 'USD',
+                        date: transactionData.date,
+                        type: transactionData.type,
+                        category_id: (transactionData as any).categoryId,
+                    };
+
+                    if (isLoan && loanInfo) {
+                        dto.loan_details = {
+                            debtor_name: loanInfo.debtorName,
+                            debtor_lastname: loanInfo.debtorLastName,
+                            debtor_email: loanInfo.debtorEmail,
+                            debtor_phone: loanInfo.debtorPhone,
+                            expiration_date: loanInfo.dueDate,
+                            interest_rate: loanInfo.interestRate,
+                        };
+                    }
+
+                    const created = await TransactionService.create(dto);
+                    // Optimistically build local shape from the created response
+                    const newTransaction: Transaction = {
+                        ...transactionData,
+                        id: String(created.id ?? Date.now()),
+                        createdAt: created.createdAt ?? new Date().toISOString(),
+                        created_at: created.createdAt ?? new Date().toISOString(),
+                    };
+                    set((state) => ({
+                        transactions: [newTransaction, ...state.transactions],
+                    }));
+                } catch (error: any) {
+                    console.error('addTransaction error:', error);
+                    // Still add locally so UI doesn't break in offline scenarios
+                    const newTransaction: Transaction = {
+                        ...transactionData,
+                        id: Date.now().toString(),
+                        createdAt: new Date().toISOString(),
+                        created_at: new Date().toISOString(),
+                    };
+                    set((state) => ({
+                        transactions: [newTransaction, ...state.transactions],
+                    }));
+                }
             },
 
             updateTransaction: (id, data) => {
@@ -300,15 +154,9 @@ export const useTransactionStore = create<TransactionStore>()(
                         const currentPayments = t.loan.payments || [];
                         const newPayments = [...currentPayments, payment];
 
-                        // Calculate totals to auto-update isPaid
-                        // Note: Assuming payment amount is in the same currency basis as the debt (USD)
-                        // If payment is in VES, the UI should probably convert it to USD before sending here,
-                        // or we store the USD equivalent in payment.amount
                         const interestAmount = t.amount * (t.loan.interestRate / 100);
                         const totalDebt = t.amount + interestAmount;
                         const totalPaid = newPayments.reduce((acc, p) => acc + p.amount, 0);
-
-                        // Allow small float epsilon, or strict >=
                         const isPaid = totalPaid >= totalDebt - 0.01;
 
                         return {
@@ -323,10 +171,18 @@ export const useTransactionStore = create<TransactionStore>()(
                 }));
             },
 
-            deleteTransaction: (id) => {
+            deleteTransaction: async (id) => {
+                // Optimistic removal
                 set((state) => ({
                     transactions: state.transactions.filter((t) => t.id !== id),
                 }));
+                try {
+                    await TransactionService.delete(Number(id));
+                } catch (error: any) {
+                    console.error('deleteTransaction error:', error);
+                    // Re-fetch to restore state if delete failed
+                    get().fetchTransactions();
+                }
             },
 
             setFilters: (filters) => {
@@ -376,8 +232,9 @@ export const useTransactionStore = create<TransactionStore>()(
             getTotalBalance: () => {
                 const { transactions } = get();
                 return transactions.reduce((acc, t) => {
-                    if (t.type === 'income') return acc + t.amount;
-                    if (t.type === 'expense' || t.type === 'loan') return acc - t.amount;
+                    const amountUSD = getAmountInUSD(t);
+                    if (t.type === 'income') return acc + amountUSD;
+                    if (t.type === 'expense' || t.type === 'loan') return acc - amountUSD;
                     return acc;
                 }, 0);
             },
@@ -386,20 +243,20 @@ export const useTransactionStore = create<TransactionStore>()(
                 const { transactions } = get();
                 return transactions
                     .filter((t) => t.type === 'income')
-                    .reduce((acc, t) => acc + t.amount, 0);
+                    .reduce((acc, t) => acc + getAmountInUSD(t), 0);
             },
 
             getTotalExpenses: () => {
                 const { transactions } = get();
                 return transactions
                     .filter((t) => t.type === 'expense' || t.type === 'loan')
-                    .reduce((acc, t) => acc + t.amount, 0);
+                    .reduce((acc, t) => acc + getAmountInUSD(t), 0);
             },
 
             getRecentTransactions: (limit = 5) => {
                 const { transactions } = get();
                 return [...transactions]
-                    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                    .sort((a, b) => Number(b.id) - Number(a.id))
                     .slice(0, limit);
             },
 
@@ -414,7 +271,7 @@ export const useTransactionStore = create<TransactionStore>()(
                             !t.loan.isPaid &&
                             new Date(t.loan.dueDate) <= new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)
                     )
-                    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()); // For due dates, we might want soonest first?
+                    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
             },
         }),
         {

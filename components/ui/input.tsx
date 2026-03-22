@@ -56,7 +56,7 @@ export function Input({
                 )}
 
                 <TextInput
-                    className={`flex-1 py-4 text-base text-gray-900 dark:text-white ${inputClassName}`}
+                    className={`flex-1 py-4 text-base text-gray-700 dark:text-white ${inputClassName}`}
                     placeholderTextColor="#9ca3af"
                     onFocus={() => setIsFocused(true)}
                     onBlur={() => setIsFocused(false)}

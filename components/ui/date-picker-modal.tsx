@@ -1,3 +1,4 @@
+import { useColorScheme } from '@/hooks/use-color-scheme';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import React, { useEffect, useState } from 'react';
@@ -27,6 +28,7 @@ export function DatePickerModal({
 }: DatePickerModalProps) {
     const [tempDate, setTempDate] = useState(new Date(value + 'T12:00:00')); // Use noon to avoid offset issues
     const opacity = useSharedValue(0);
+    const { colorScheme } = useColorScheme();
 
     useEffect(() => {
         if (visible && Platform.OS === 'ios') {
@@ -93,7 +95,7 @@ export function DatePickerModal({
                     <TouchableWithoutFeedback>
                         <Animated.View style={[cardStyle]} className="w-full">
                             <Card className="bg-white dark:bg-dark-surface p-6 rounded-3xl overflow-hidden">
-                                <Text className="text-xl font-bold text-gray-900 dark:text-white mb-6 text-center">
+                                <Text className="text-xl font-bold text-gray-700 dark:text-white mb-6 text-center">
                                     {label}
                                 </Text>
 
@@ -103,7 +105,7 @@ export function DatePickerModal({
                                         mode="date"
                                         display="spinner"
                                         minimumDate={minimumDate}
-                                        textColor={Platform.OS === 'ios' ? undefined : '#000'} // Adjust for dark mode if needed
+                                        textColor={Platform.OS === 'ios' ? (colorScheme === 'dark' ? '#ffffff' : '#000000') : undefined}
                                         onChange={(event, selectedDate) => {
                                             if (selectedDate) {
                                                 setTempDate(selectedDate);
@@ -171,7 +173,7 @@ export function DatePickerTrigger({
                     color={error ? '#ef4444' : '#6b7280'}
                     style={{ marginRight: 10 }}
                 />
-                <Text className={`text-base flex-1 ${value ? 'text-gray-900 dark:text-gray-100' : 'text-gray-400'
+                <Text className={`text-base flex-1 ${value ? 'text-gray-700 dark:text-gray-100' : 'text-gray-400'
                     }`}>
                     {value || placeholder}
                 </Text>

@@ -36,7 +36,7 @@ function SettingItem({ icon, iconColor = '#6b7280', title, subtitle, onPress, ri
                 <MaterialCommunityIcons name={icon} size={22} color={iconColor} />
             </View>
             <View className="flex-1">
-                <Text className="text-base font-medium text-gray-900 dark:text-white">
+                <Text className="text-base font-medium text-gray-700 dark:text-white">
                     {title}
                 </Text>
                 {subtitle && (
@@ -148,12 +148,12 @@ export default function SettingsScreen() {
                 showsVerticalScrollIndicator={false}
             >
                 {/* Header */}
-                <Text className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
+                <Text className="text-2xl font-bold text-gray-700 dark:text-white mb-6">
                     Ajustes
                 </Text>
 
                 {/* Profile Section */}
-                <Card variant="elevated" className="mb-6">
+                <Card className="mb-6 shadow-sm shadow-slate-200 dark:shadow-slate-700">
                     <View className="flex-row items-center">
                         {user?.avatar ? (
                             <Image
@@ -172,7 +172,7 @@ export default function SettingsScreen() {
                             </View>
                         )}
                         <View className="flex-1">
-                            <Text className="text-lg font-semibold text-gray-900 dark:text-white">
+                            <Text className="text-lg font-semibold text-gray-700 dark:text-white">
                                 {user?.fullName || 'Usuario'}
                             </Text>
                             <Text className="text-sm text-gray-500 dark:text-gray-400">
@@ -192,7 +192,7 @@ export default function SettingsScreen() {
                 <Text className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3 ml-1">
                     Preferencias
                 </Text>
-                <Card variant="elevated" className="mb-6">
+                <Card className="mb-6 shadow-sm shadow-slate-200 dark:shadow-slate-700">
                     <SettingItem
                         icon="theme-light-dark"
                         iconColor={currentPrimaryColor}
@@ -249,7 +249,7 @@ export default function SettingsScreen() {
                 <Text className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3 ml-1">
                     Gestión
                 </Text>
-                <Card variant="elevated" className="mb-6">
+                <Card className="mb-6 shadow-sm shadow-slate-200 dark:shadow-slate-700">
                     <SettingItem
                         icon="shape"
                         iconColor={currentPrimaryColor}
@@ -263,7 +263,7 @@ export default function SettingsScreen() {
                 <Text className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3 ml-1">
                     Datos
                 </Text>
-                <Card variant="elevated" className="mb-6">
+                <Card className="mb-6 shadow-sm shadow-slate-200 dark:shadow-slate-700">
                     <SettingItem
                         icon="export"
                         iconColor={currentPrimaryColor}

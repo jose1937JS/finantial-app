@@ -179,3 +179,11 @@ export interface UpsertSettingDto {
 
 // Additional interface for analysis endpoints (they return a CreateTransactionDto generally)
 export type AnalyzeResponse = CreateTransactionDto;
+
+export interface ApiErrorResponse {
+  success: boolean;
+  statusCode: number;
+  message: string | string[];
+  timestamp: string;
+  path: string;
+}

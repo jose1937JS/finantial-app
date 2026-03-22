@@ -1,7 +1,8 @@
-import React, { useMemo, useState } from 'react';
-import { ScrollView, Text, View } from 'react-native';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { RefreshControl, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { ChartService } from '@/api/services/chart.service';
 import { LineChart } from '@/components/charts/line-chart';
 import { PieChart } from '@/components/charts/pie-chart';
 import { Card } from '@/components/ui/card';
@@ -106,28 +107,94 @@ const categoryColors: Record<string, string> = {
 export default function AnalysisScreen() {
     const [dateFilter, setDateFilter] = useState<DateFilter>('7d');
     const { transactions } = useTransactionStore();
-    const { exchangeRates } = useSettingsStore();
+    const { exchangeRates, fetchRates } = useSettingsStore();
     const primaryColor = useThemeColor({}, 'tint');
 
-    // Calculate income vs expenses for comparison chart
-    const comparisonData = useMemo(() => {
-        // Aggregate by date
+    // Chart data from API
+    const [incomeExpenseData, setIncomeExpenseData] = useState<{ incomeSeries: any[]; expenseSeries: any[] } | null>(null);
+    const [categoryChartData, setCategoryChartData] = useState<PieChartData[] | null>(null);
+    const [timelineData, setTimelineData] = useState<any>(null);
+    const [isLoadingCharts, setIsLoadingCharts] = useState(false);
+
+    const loadCharts = useCallback(async () => {
+        setIsLoadingCharts(true);
+        try {
+            const [ieData, catData] = await Promise.all([
+                ChartService.getIncomeExpense(),
+                ChartService.getExpensesByCategory(),
+            ]);
+            // Map income/expense response to series format
+            if (Array.isArray(ieData)) {
+                const incomeSeries = ieData.map((d: any) => ({ value: Number(d.income ?? 0), date: d.date, label: d.label ?? d.date }));
+                const expenseSeries = ieData.map((d: any) => ({ value: Number(d.expense ?? d.expenses ?? 0), date: d.date, label: d.label ?? d.date }));
+                setIncomeExpenseData({ incomeSeries, expenseSeries });
+            }
+            // Map category response to PieChartData
+            if (Array.isArray(catData)) {
+                const total = catData.reduce((a: number, c: any) => a + Number(c.total ?? c.amount ?? 0), 0);
+                const mapped: PieChartData[] = catData.map((c: any) => ({
+                    label: c.category ?? c.name ?? 'Otros',
+                    value: Number(c.total ?? c.amount ?? 0),
+                    color: categoryColors[c.category ?? c.name] ?? '#71717a',
+                    percentage: total > 0 ? (Number(c.total ?? c.amount ?? 0) / total) * 100 : 0,
+                }));
+                setCategoryChartData(mapped);
+            }
+        } catch (error) {
+            console.error('Chart data error:', error);
+        } finally {
+            setIsLoadingCharts(false);
+        }
+    }, []);
+
+    const loadTimeline = useCallback(async () => {
+        try {
+            const data = await ChartService.getTimeline(dateFilter);
+            setTimelineData(data);
+        } catch (err) {
+            console.error('Timeline error:', err);
+        }
+    }, [dateFilter]);
+
+    useEffect(() => {
+        loadCharts();
+    }, [loadCharts]);
+
+    useEffect(() => {
+        loadTimeline();
+    }, [loadTimeline]);
+
+    const [refreshing, setRefreshing] = useState(false);
+
+    const onRefresh = useCallback(async () => {
+        setRefreshing(true);
+        const start = Date.now();
+        await Promise.all([
+            loadCharts(),
+            loadTimeline(),
+            fetchRates(),
+        ]);
+        const elapsed = Date.now() - start;
+        if (elapsed < 1000) {
+            await new Promise(res => setTimeout(res, 1000 - elapsed));
+        }
+        setRefreshing(false);
+    }, [loadCharts, loadTimeline, fetchRates]);
+
+    // Fallback: compute locally from transactions if API returns no data
+    const localComparisonData = useMemo(() => {
         const incomeMap: Record<string, number> = {};
         const expenseMap: Record<string, number> = {};
         const labels: string[] = [];
-
-        // For the sake of this mock/period, let's get last 7 days keys
         const now = new Date();
         for (let i = 6; i >= 0; i--) {
             const d = new Date(now);
             d.setDate(d.getDate() - i);
             const dateStr = d.toISOString().split('T')[0];
-            const label = d.getDate().toString();
-            labels.push(label);
+            labels.push(d.getDate().toString());
             incomeMap[dateStr] = 0;
             expenseMap[dateStr] = 0;
         }
-
         transactions.forEach(t => {
             const dateStr = t.date.split('T')[0];
             if (incomeMap[dateStr] !== undefined) {
@@ -135,25 +202,18 @@ export default function AnalysisScreen() {
                 else expenseMap[dateStr] += t.amount;
             }
         });
-
         const dates = Object.keys(incomeMap).sort();
-        const incomeSeries = dates.map((d, i) => ({ value: incomeMap[d], date: d, label: labels[i] }));
-        const expenseSeries = dates.map((d, i) => ({ value: expenseMap[d], date: d, label: labels[i] }));
-
-        return { incomeSeries, expenseSeries };
+        return {
+            incomeSeries: dates.map((d, i) => ({ value: incomeMap[d], date: d, label: labels[i] })),
+            expenseSeries: dates.map((d, i) => ({ value: expenseMap[d], date: d, label: labels[i] })),
+        };
     }, [transactions]);
 
-    // Calculate expense breakdown by category
-    const categoryData = useMemo((): PieChartData[] => {
+    const localCategoryData = useMemo((): PieChartData[] => {
         const expenses = transactions.filter(t => t.type === 'expense' || t.type === 'loan');
         const categoryTotals: Record<string, number> = {};
-
-        expenses.forEach(t => {
-            categoryTotals[t.category] = (categoryTotals[t.category] || 0) + t.amount;
-        });
-
+        expenses.forEach(t => { categoryTotals[t.category] = (categoryTotals[t.category] || 0) + t.amount; });
         const total = Object.values(categoryTotals).reduce((a, b) => a + b, 0);
-
         return Object.entries(categoryTotals).map(([category, value]) => ({
             label: category,
             value,
@@ -161,6 +221,9 @@ export default function AnalysisScreen() {
             percentage: total > 0 ? (value / total) * 100 : 0,
         }));
     }, [transactions]);
+
+    const comparisonData = incomeExpenseData ?? localComparisonData;
+    const categoryData = categoryChartData ?? localCategoryData;
 
 
     const dateFilters: { label: string; value: DateFilter }[] = [
@@ -174,9 +237,17 @@ export default function AnalysisScreen() {
             <ScrollView
                 contentContainerStyle={{ padding: 20 }}
                 showsVerticalScrollIndicator={false}
+                refreshControl={
+                    <RefreshControl
+                        refreshing={refreshing}
+                        onRefresh={onRefresh}
+                        colors={[primaryColor]}
+                        tintColor={primaryColor}
+                    />
+                }
             >
                 {/* Header */}
-                <Text className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
+                <Text className="text-2xl font-bold text-gray-700 dark:text-white mb-6">
                     Análisis
                 </Text>
 
@@ -200,8 +271,8 @@ export default function AnalysisScreen() {
                             showLegend
                         />
                     ) : (
-                        <Card variant="elevated">
-                            <Text className="text-lg font-bold text-gray-900 dark:text-white mb-2">
+                        <Card className="mb-6 shadow-sm shadow-slate-200 dark:shadow-slate-700">
+                            <Text className="text-lg font-bold text-gray-700 dark:text-white mb-2">
                                 Gastos por Categoría
                             </Text>
                             <Text className="text-gray-500 dark:text-gray-400 text-center py-8">
@@ -213,9 +284,9 @@ export default function AnalysisScreen() {
 
                 {/* Exchange Rate Section */}
                 <View className="mb-6">
-                    <Card variant="elevated">
+                    <Card className="mb-6 shadow-sm shadow-slate-200 dark:shadow-slate-700">
                         <View className="flex-row items-center justify-between mb-4">
-                            <Text className="text-lg font-bold text-gray-900 dark:text-white">
+                            <Text className="text-lg font-bold text-gray-700 dark:text-white">
                                 Comparativa Tasas USD/VES
                             </Text>
                             <View>
@@ -252,45 +323,45 @@ export default function AnalysisScreen() {
 
                 {/* Detailed Rates List */}
                 <View className="mb-6">
-                    <Text className="text-lg font-bold text-gray-900 dark:text-white mb-4">
+                    <Text className="text-lg font-bold text-gray-700 dark:text-white mb-4">
                         Tasas de Cambio Actuales
                     </Text>
 
-                    <Card variant="elevated" className="mb-3">
+                    <Card className="mb-3 shadow-sm shadow-slate-200 dark:shadow-slate-700">
                         <View className="flex-row items-center justify-between">
                             <View>
-                                <Text className="text-base font-semibold text-gray-900 dark:text-white">BCV USD</Text>
-                                <Text className="text-xs text-gray-500">Oficial (Dólar)</Text>
+                                <Text className="text-base font-semibold text-gray-700 dark:text-white">BCV USD</Text>
+                                <Text className="text-xs text-gray-500 dark:text-gray-400">Oficial (Dólar)</Text>
                             </View>
                             <Text className="text-lg font-bold text-primary-500">Bs. {exchangeRates.BCV_USD.toFixed(2)}</Text>
                         </View>
                     </Card>
 
-                    <Card variant="elevated" className="mb-3">
+                    <Card className="mb-3 shadow-sm shadow-slate-200 dark:shadow-slate-700">
                         <View className="flex-row items-center justify-between">
                             <View>
-                                <Text className="text-base font-semibold text-gray-900 dark:text-white">BCV EUR</Text>
-                                <Text className="text-xs text-gray-500">Oficial (Euro)</Text>
+                                <Text className="text-base font-semibold text-gray-700 dark:text-white">BCV EUR</Text>
+                                <Text className="text-xs text-gray-500 dark:text-gray-400">Oficial (Euro)</Text>
                             </View>
                             <Text className="text-lg font-bold text-blue-500">Bs. {exchangeRates.BCV_EUR.toFixed(2)}</Text>
                         </View>
                     </Card>
 
-                    <Card variant="elevated" className="mb-3">
+                    <Card className="mb-3 shadow-sm shadow-slate-200 dark:shadow-slate-700">
                         <View className="flex-row items-center justify-between">
                             <View>
-                                <Text className="text-base font-semibold text-gray-900 dark:text-white">Binance P2P</Text>
-                                <Text className="text-xs text-gray-500">Mercado Paralelo</Text>
+                                <Text className="text-base font-semibold text-gray-700 dark:text-white">Binance P2P</Text>
+                                <Text className="text-xs text-gray-500 dark:text-gray-400">Mercado Paralelo</Text>
                             </View>
                             <Text className="text-lg font-bold text-orange-500">Bs. {exchangeRates.Binance.toFixed(2)}</Text>
                         </View>
                     </Card>
 
-                    <Card variant="elevated">
+                    <Card className="mb-3 shadow-sm shadow-slate-200 dark:shadow-slate-700">
                         <View className="flex-row items-center justify-between">
                             <View>
-                                <Text className="text-base font-semibold text-gray-900 dark:text-white">USDT/VES</Text>
-                                <Text className="text-xs text-gray-500">Equivalente Digital</Text>
+                                <Text className="text-base font-semibold text-gray-700 dark:text-white">USDT/VES</Text>
+                                <Text className="text-xs text-gray-500 dark:text-gray-400">Equivalente Digital</Text>
                             </View>
                             <Text className="text-lg font-bold text-accent-blue">Bs. {(exchangeRates.Binance * 1.02).toFixed(2)}</Text>
                         </View>

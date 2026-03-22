@@ -48,7 +48,7 @@ export function TransactionItem({ transaction, onPress }: TransactionItemProps) 
     return (
         <Pressable
             onPress={handlePress}
-            className="flex-row items-center py-4 px-4 bg-white dark:bg-dark-card rounded-2xl mb-3 active:opacity-80 shadow-sm shadow-slate-200"
+            className="flex-row items-center py-4 px-4 bg-white dark:bg-dark-card rounded-2xl mb-3 active:opacity-70 shadow-md shadow-slate-100 dark:shadow-slate-700"
         >
             {/* Icon */}
             <View
@@ -65,7 +65,7 @@ export function TransactionItem({ transaction, onPress }: TransactionItemProps) 
             {/* Details */}
             <View className="flex-1">
                 <View className="flex-row items-center mb-0.5">
-                    <Text className="text-base font-semibold text-gray-900 dark:text-white mr-2">
+                    <Text className="text-base font-semibold text-gray-700 dark:text-white mr-2">
                         {title}
                     </Text>
                     {transaction.type === 'loan' && transaction.loan && (

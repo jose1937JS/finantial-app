@@ -15,27 +15,32 @@ import { useSettingsStore } from '@/store/settings-store';
 const COLORS = [
     '#ef4444', '#f97316', '#f59e0b', '#84cc16', '#22c55e',
     '#10b981', '#14b8a6', '#06b6d4', '#0ea5e9', '#3b82f6',
-    '#6366f1', '#8b5cf6', '#a855f7', '#d946ef', '#ec4899', '#f43f5e'
+    '#6366f1', '#8b5cf6', '#a855f7', '#d946ef', '#ec4899', '#f43f5e', '#000000', '#ffffff',
+    '#7f1d1d', '#7c2d12', '#78350f', '#3f6212', '#14532d',
+    '#064e3b', '#134e4a', '#164e63', '#0c4a6e', '#1e3a8a',
+    '#312e81', '#4c1d95', '#581c87', '#701a75', '#831843', '#881337', '#525252', '#a3a3a3'
 ];
 
 const ICONS = [
     'food', 'shopping', 'car', 'home', 'medical-bag',
     'school', 'gamepad-variant', 'cash', 'bank', 'chart-line',
-    'gift', 'airplane', 'music', 'book', 'briefcase', 'hammer'
+    'gift', 'airplane', 'music', 'book', 'briefcase', 'hammer', 'piggy-bank', 'piggy-bank-outline',
+    'cart', 'train', 'bus', 'tshirt-crew', 'laptop', 'cellphone', 'coffee', 'pizza', 'movie', 'gas-station',
+    'basketball', 'dumbbell', 'heart', 'water', 'lightning-bolt', 'fire', 'flower', 'paw'
 ];
 
 export default function CategoryFormScreen() {
     const router = useRouter();
     const { id } = useLocalSearchParams<{ id: string }>();
     const { categories, addCategory, updateCategory } = useSettingsStore();
-    const colorScheme = useColorScheme();
+    const { colorScheme } = useColorScheme();
     const primaryColor = useThemeColor({}, 'tint');
     const { showAlert } = useAlert();
 
     const isEditing = !!id;
 
     const [name, setName] = useState('');
-    const [type, setType] = useState<'income' | 'expense' | 'both'>('expense');
+    const [type, setType] = useState<'income' | 'expense' | 'loan'>('expense');
     const [color, setColor] = useState(COLORS[4]);
     const [icon, setIcon] = useState('tag');
     const [customImage, setCustomImage] = useState<string | undefined>(undefined);
@@ -94,8 +99,20 @@ export default function CategoryFormScreen() {
         try {
             if (isEditing && id) {
                 updateCategory(id, categoryData);
+                showAlert({
+                    title: 'Categoría actualizada',
+                    message: 'La categoría se ha actualizado correctamente',
+                    icon: 'check-circle',
+                    iconColor: '#22c55e'
+                });
             } else {
                 addCategory(categoryData as any);
+                showAlert({
+                    title: 'Categoría creada',
+                    message: 'La categoría se ha creado correctamente',
+                    icon: 'check-circle',
+                    iconColor: '#22c55e'
+                });
             }
             router.back();
         } finally {
@@ -137,7 +154,7 @@ export default function CategoryFormScreen() {
                             value={name}
                             onChangeText={setName}
                             placeholder="Ej. Comida, Transporte..."
-                            className="bg-white dark:bg-dark-card p-4 rounded-xl text-gray-900 dark:text-white text-base"
+                            className="bg-white dark:bg-dark-card p-4 rounded-xl text-gray-700 dark:text-white text-base"
                             placeholderTextColor="#9ca3af"
                         />
                     </View>
@@ -146,7 +163,7 @@ export default function CategoryFormScreen() {
                     <View className="mb-6">
                         <Text className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Tipo</Text>
                         <View className="flex-row bg-gray-100 dark:bg-dark-surface p-1 rounded-xl">
-                            {(['expense', 'income', 'both'] as const).map((t) => (
+                            {(['expense', 'income', 'loan'] as const).map((t) => (
                                 <TouchableOpacity
                                     key={t}
                                     onPress={() => setType(t)}
@@ -170,7 +187,7 @@ export default function CategoryFormScreen() {
                                                 : '#6b7280'
                                         }}
                                     >
-                                        {t === 'expense' ? 'Gasto' : t === 'income' ? 'Ingreso' : 'Ambos'}
+                                        {t === 'expense' ? 'Gasto' : t === 'income' ? 'Ingreso' : 'Préstamo'}
                                     </Text>
                                 </TouchableOpacity>
                             ))}
@@ -185,7 +202,7 @@ export default function CategoryFormScreen() {
                                 <TouchableOpacity
                                     key={c}
                                     onPress={() => setColor(c)}
-                                    className={`w-10 h-10 rounded-full ${color === c ? 'border-2 border-gray-400' : ''}`}
+                                    className={`w-10 h-10 rounded-full border border-gray-300 ${color === c ? 'border-4 border-gray-400' : ''}`}
                                     style={{ backgroundColor: c }}
                                 />
                             ))}

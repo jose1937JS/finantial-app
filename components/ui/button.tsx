@@ -33,7 +33,7 @@ export function Button({
         onPress?.(e);
     };
 
-    const baseClasses = 'items-center justify-center rounded-2xl active:opacity-80';
+    const baseClasses = 'items-center justify-center rounded-2xl active:opacity-80 shadow-sm shadow-slate-200 dark:shadow-slate-700';
 
     const sizeClasses = {
         sm: 'px-4 py-2',
@@ -57,7 +57,7 @@ export function Button({
 
     const textVariantClasses = {
         primary: 'text-white font-semibold',
-        secondary: 'text-gray-800 dark:text-gray-200 font-medium',
+        secondary: 'text-gray-700 dark:text-gray-200 font-medium',
         outline: 'text-primary-500 font-semibold',
         ghost: 'text-gray-600 dark:text-gray-400 font-medium',
         danger: 'text-white font-semibold',

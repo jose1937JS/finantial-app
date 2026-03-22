@@ -26,7 +26,7 @@ function OperationOption({ icon, iconColor, bgColor, title, subtitle, onPress }:
 	return (
 		<Pressable
 			onPress={handlePress}
-			className="bg-white dark:bg-dark-card rounded-3xl p-6 mb-4 active:opacity-80 shadow-sm"
+			className="bg-white dark:bg-dark-card rounded-3xl p-6 mb-4 active:opacity-80 shadow-sm shadow-slate-200 dark:shadow-slate-700"
 		>
 			<View className="flex-row items-center">
 				<View
@@ -36,7 +36,7 @@ function OperationOption({ icon, iconColor, bgColor, title, subtitle, onPress }:
 					<MaterialCommunityIcons name={icon} size={32} color={iconColor} />
 				</View>
 				<View className="flex-1">
-					<Text className="text-lg font-semibold text-gray-900 dark:text-white mb-1">
+					<Text className="text-lg font-semibold text-gray-700 dark:text-white mb-1">
 						{title}
 					</Text>
 					<Text className="text-sm text-gray-500 dark:text-gray-400">
@@ -75,7 +75,7 @@ export default function ModalScreen() {
 						>
 							<MaterialCommunityIcons name="plus-circle" size={48} color={currentPrimaryColor} />
 						</View>
-						{/* <Text className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+						{/* <Text className="text-2xl font-bold text-gray-700 dark:text-white mb-2">
 							Agregar Operación
 						</Text> */}
 						<Text className="text-xl text-gray-500 dark:text-gray-400 text-center px-8">

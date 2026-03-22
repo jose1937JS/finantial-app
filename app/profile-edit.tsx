@@ -5,6 +5,7 @@ import React, { useState } from 'react';
 import { Image, KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { UserService } from '@/api/services/user.service';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { CustomHeader } from '@/components/ui/custom-header';
@@ -111,7 +112,18 @@ export default function ProfileEditScreen() {
         setErrors({});
 
         try {
-            // Update user in store
+            // Split fullName into name + last_name for the backend DTO
+            const nameParts = fullName.trim().split(' ');
+            const firstName = nameParts[0];
+            const lastName = nameParts.slice(1).join(' ') || '';
+
+            await UserService.update(Number(user?.id), {
+                name: firstName,
+                last_name: lastName || undefined,
+                avatar: avatar || undefined,
+            });
+
+            // Update auth store locally
             updateUser({
                 fullName,
                 email,
@@ -180,8 +192,8 @@ export default function ProfileEditScreen() {
                         </View>
 
                         {/* Form */}
-                        <Card variant="elevated" className="mb-6">
-                            <Text className="text-lg font-bold text-gray-900 dark:text-white mb-4">
+                        <Card className="mb-6 shadow-sm shadow-slate-200 dark:shadow-slate-700">
+                            <Text className="text-lg font-bold text-gray-700 dark:text-white mb-4">
                                 Información Personal
                             </Text>
 
@@ -207,8 +219,8 @@ export default function ProfileEditScreen() {
                         </Card>
 
                         {/* Account Info */}
-                        <Card variant="elevated" className="mb-6">
-                            <Text className="text-lg font-bold text-gray-900 dark:text-white mb-4">
+                        <Card className="mb-6 shadow-sm shadow-slate-200 dark:shadow-slate-700">
+                            <Text className="text-lg font-bold text-gray-700 dark:text-white mb-4">
                                 Información de la Cuenta
                             </Text>
 

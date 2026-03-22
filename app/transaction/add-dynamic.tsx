@@ -24,9 +24,12 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { AiService } from '@/api/services/ai.service';
+import { TransactionService } from '@/api/services/transaction.service';
 import { CustomHeader } from '@/components/ui/custom-header';
 import { useAlert } from '@/hooks/alert-context';
 import { primaryColors, useSettingsStore } from '@/store/settings-store';
+import { useTransactionStore } from '@/store/transaction-store';
 
 // Message types
 type MessageType = 'text' | 'audio' | 'image' | 'system';
@@ -56,6 +59,7 @@ export default function AddDynamicScreen() {
     const { preferences } = useSettingsStore();
     const currentPrimaryColor = primaryColors[preferences.primaryColor]?.hex || '#22c55e';
     const { showAlert } = useAlert();
+    const { addTransaction } = useTransactionStore();
     const [messages, setMessages] = useState<ChatMessage[]>(initialMessages);
     const [inputText, setInputText] = useState('');
     const [recordingDuration, setRecordingDuration] = useState(0);
@@ -166,29 +170,129 @@ export default function AddDynamicScreen() {
         return newMessage;
     };
 
-    const simulateAssistantResponse = (userMessage: ChatMessage) => {
-        setIsProcessing(true);
+    const handleAiResponse = (aiData: any, userMessage: ChatMessage) => {
+        // Store for later confirmation via 'confirmar' keyword
+        lastAiDataRef.current = aiData;
 
-        // Simulate AI processing delay
+        // Build a human-readable summary of the detected transaction
+        const type = aiData.type ?? 'expense';
+        const amount = aiData.amount ?? '?';
+        const currency = aiData.currency ?? 'USD';
+        const description = aiData.description ?? '';
+        const category = aiData.category_id ?? aiData.category ?? '';
+
+        const typeLabel = type === 'income' ? 'Ingreso' : type === 'loan' ? 'Pr\u00e9stamo' : 'Gasto';
+        const responseContent = `✅ **Transacci\u00f3n detectada:**\n\n• Tipo: ${typeLabel}\n• Monto: ${currency} ${amount}\n• Descripci\u00f3n: ${description || 'N/A'}\n• Categor\u00eda: ${category || 'N/A'}\n\n¿Deseas confirmar y registrar esta operaci\u00f3n?`;
+
+        const assistantMessage = addMessage({
+            type: 'text',
+            content: responseContent,
+            sender: 'assistant',
+        });
+
+        // Store the transaction data for confirmation
+        (assistantMessage as any).__pendingTransaction = aiData;
+
+        // After adding response, give user a way to confirm
         setTimeout(() => {
-            let responseContent = '';
-
-            if (userMessage.type === 'text') {
-                responseContent = `Entendido. He analizado tu mensaje:\n\n"${userMessage.content}"\n\n🔍 **Detectado:**\n• Tipo: Gasto\n• Monto: Por determinar\n• Categoría: Por determinar\n\n¿Deseas que registre esta operación? Puedes darme más detalles o confirmar.`;
-            } else if (userMessage.type === 'audio') {
-                responseContent = `🎤 He recibido tu mensaje de voz (${userMessage.audioDuration}s).\n\n⏳ Transcribiendo audio...\n\n_Esta función requiere conexión al backend de IA para procesar el audio._`;
-            } else if (userMessage.type === 'image') {
-                responseContent = `📷 He recibido la imagen.\n\n⏳ Analizando recibo/factura...\n\n_Esta función requiere conexión al backend de IA para procesar la imagen con OCR._`;
-            }
-
             addMessage({
-                type: 'text',
-                content: responseContent,
+                type: 'system',
+                content: '⤵ Responde “confirmar” para guardar esta transacci\u00f3n, o escribe algo para continuar.',
                 sender: 'assistant',
             });
+        }, 300);
+    };
 
+    const callAiAndRespond = async (userMessage: ChatMessage) => {
+        setIsProcessing(true);
+        try {
+            let aiData: any;
+
+            if (userMessage.type === 'text') {
+                aiData = await AiService.analyzeText(userMessage.content);
+            } else if (userMessage.type === 'audio') {
+                // Build FormData for audio
+                const formData = new FormData();
+                formData.append('audio', {
+                    uri: userMessage.content,
+                    name: 'recording.m4a',
+                    type: 'audio/m4a',
+                } as any);
+                aiData = await AiService.analyzeAudio(formData);
+            } else if (userMessage.type === 'image') {
+                // Build FormData for image (content is base64 data URI)
+                const formData = new FormData();
+                formData.append('image', {
+                    uri: userMessage.content,
+                    name: 'photo.jpg',
+                    type: 'image/jpeg',
+                } as any);
+                aiData = await AiService.analyzeImage(formData);
+            }
+
+            if (aiData) {
+                handleAiResponse(aiData, userMessage);
+            } else {
+                addMessage({
+                    type: 'text',
+                    content: 'No pude analizar el contenido. Por favor intenta de nuevo.',
+                    sender: 'assistant',
+                });
+            }
+        } catch (error: any) {
+            console.error('AI analyze error:', error);
+            addMessage({
+                type: 'text',
+                content: `⚠️ Error al procesar: ${error?.message ?? 'Sin conexi\u00f3n al servidor'}. Por favor verifica tu conexi\u00f3n.`,
+                sender: 'assistant',
+            });
+        } finally {
             setIsProcessing(false);
-        }, 1500);
+        }
+    };
+
+    const confirmTransaction = async (aiData: any) => {
+        try {
+            setIsProcessing(true);
+            const dto = {
+                amount: Number(aiData.amount ?? 0),
+                description: aiData.description ?? '',
+                currency: aiData.currency ?? 'USD',
+                date: aiData.date ?? new Date().toISOString(),
+                type: aiData.type ?? 'expense',
+                category_id: aiData.category_id ?? undefined,
+            };
+            await TransactionService.create(dto);
+            // Also add locally to store
+            await addTransaction({
+                type: dto.type,
+                amount: dto.amount,
+                currency: dto.currency as any,
+                category: String(aiData.category ?? aiData.category_id ?? 'Otros'),
+                description: dto.description,
+                date: dto.date,
+            });
+            addMessage({
+                type: 'text',
+                content: '✅ ¡Transacci\u00f3n registrada exitosamente! Puedes verla en tu historial.',
+                sender: 'assistant',
+            });
+        } catch (err: any) {
+            addMessage({
+                type: 'text',
+                content: `❌ No se pudo guardar la transacci\u00f3n: ${err?.message ?? 'Error del servidor'}`,
+                sender: 'assistant',
+            });
+        } finally {
+            setIsProcessing(false);
+        }
+    };
+
+    // Last pending AI data
+    const lastAiDataRef = useRef<any>(null);
+
+    const simulateAssistantResponse = (userMessage: ChatMessage) => {
+        callAiAndRespond(userMessage);
     };
 
     const handleSendText = () => {
@@ -196,13 +300,30 @@ export default function AddDynamicScreen() {
 
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
+        const text = inputText.trim();
+        setInputText('');
+
+        // Allow user to confirm a pending transaction by typing 'confirmar'
+        if (text.toLowerCase() === 'confirmar' || text.toLowerCase() === 'confirm') {
+            addMessage({ type: 'text', content: text, sender: 'user' });
+            if (lastAiDataRef.current) {
+                confirmTransaction(lastAiDataRef.current);
+            } else {
+                addMessage({
+                    type: 'text',
+                    content: 'No hay una transacci\u00f3n pendiente de confirmaci\u00f3n.',
+                    sender: 'assistant',
+                });
+            }
+            return;
+        }
+
         const userMessage = addMessage({
             type: 'text',
-            content: inputText.trim(),
+            content: text,
             sender: 'user',
         });
 
-        setInputText('');
         simulateAssistantResponse(userMessage);
     };
 
@@ -502,7 +623,7 @@ export default function AddDynamicScreen() {
                     style={isUser ? { backgroundColor: currentPrimaryColor } : undefined}
                 >
                     {item.type === 'text' && (
-                        <Text className={`text-base leading-5 ${isUser ? 'text-white' : 'text-gray-900 dark:text-white'}`}>
+                        <Text className={`text-base leading-5 ${isUser ? 'text-white' : 'text-gray-700 dark:text-white'}`}>
                             {item.content}
                         </Text>
                     )}
@@ -562,7 +683,7 @@ export default function AddDynamicScreen() {
                     {isProcessing && (
                         <View className="mx-4 mb-2 items-start">
                             <View className="bg-white dark:bg-dark-card rounded-2xl rounded-bl-sm p-3 flex-row items-center">
-                                <Text className="text-sm text-gray-500">Procesando...</Text>
+                                <Text className="text-sm text-gray-500 dark:text-gray-400">Procesando...</Text>
                             </View>
                         </View>
                     )}
@@ -710,7 +831,7 @@ export default function AddDynamicScreen() {
                                 {/* Text Input */}
                                 <View className="flex-1 bg-light-surface dark:bg-dark-surface rounded-3xl px-4 py-2 min-h-[44px] max-h-[120px] justify-center">
                                     <TextInput
-                                        className="text-base text-gray-900 dark:text-white"
+                                        className="text-base text-gray-700 dark:text-white"
                                         placeholder="Escribe un mensaje..."
                                         placeholderTextColor="#9ca3af"
                                         value={inputText}

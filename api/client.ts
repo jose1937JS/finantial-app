@@ -1,5 +1,6 @@
-import axios, { AxiosError, InternalAxiosRequestConfig, AxiosResponse } from 'axios';
+import { useAuthStore } from '@/store/auth-store';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import axios, { AxiosError, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
 
 // In a real app, this should be an environment variable. Using localhost for development.
 // Ensure you replace this with your actual backend URL (e.g., your network IP for React Native testing).
@@ -9,6 +10,9 @@ export const apiClient = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
+    'Cache-Control': 'no-cache, no-store, must-revalidate',
+    'Pragma': 'no-cache',
+    'Expires': '0',
   },
 });
 
@@ -40,8 +44,8 @@ apiClient.interceptors.response.use(
       // Handle unauthorized (e.g., token expired)
       // Implementation depends on auth state management
       // Example: clear token and redirect
-      await AsyncStorage.removeItem('auth_token');
       // Optionally trigger an event to log the user out via Zustand or similar
+      useAuthStore.getState().logout();
     }
     return Promise.reject(error);
   }

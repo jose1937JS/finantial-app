@@ -1,3 +1,4 @@
+import { InfoModal } from '@/components/ui/info-modal';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Link, useRouter } from 'expo-router';
 import React, { useState } from 'react';
@@ -15,6 +16,9 @@ export default function LoginScreen() {
     const [password, setPassword] = useState('');
     const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
 
+    const [showErrorModal, setShowErrorModal] = useState(false);
+    const [modalErrorMsg, setModalErrorMsg] = useState('');
+
     const { login, isLoading } = useAuthStore();
 
     const handleLogin = async () => {
@@ -31,9 +35,14 @@ export default function LoginScreen() {
         }
 
         setErrors({});
-        const success = await login(email, password);
-        if (success) {
+        const result = await login(email, password);
+
+        if (result.success) {
             router.replace('/(tabs)');
+        }
+        else {
+            setModalErrorMsg(result.error || 'Correo o contraseña incorrectos');
+            setShowErrorModal(true);
         }
     };
 
@@ -53,7 +62,7 @@ export default function LoginScreen() {
                         <View className="w-20 h-20 rounded-full bg-primary-500 items-center justify-center mb-6">
                             <MaterialCommunityIcons name="wallet" size={40} color="#fff" />
                         </View>
-                        <Text className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                        <Text className="text-3xl font-bold text-gray-700 dark:text-white mb-2">
                             Bienvenido
                         </Text>
                         <Text className="text-base text-gray-500 dark:text-gray-400 text-center">
@@ -115,6 +124,14 @@ export default function LoginScreen() {
                     </View>
                 </ScrollView>
             </KeyboardAvoidingView>
+
+            <InfoModal
+                visible={showErrorModal}
+                title="Error de autenticación"
+                message={modalErrorMsg}
+                type="error"
+                onClose={() => setShowErrorModal(false)}
+            />
         </SafeAreaView>
     );
 }

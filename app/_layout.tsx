@@ -6,6 +6,8 @@ import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { vars } from 'nativewind';
+import { useEffect } from 'react';
+import { useColorScheme as useDeviceColorScheme } from 'react-native';
 import { View } from 'react-native';
 import 'react-native-reanimated';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -26,13 +28,18 @@ export default function RootLayout() {
 }
 
 function RootLayoutContent() {
-	const colorScheme = useColorScheme();
+	const { colorScheme, setColorScheme } = useColorScheme();
+	const deviceColorScheme = useDeviceColorScheme();
 	const { preferences } = useSettingsStore();
 
-	// Determine theme based on settings
+	// Determine effective theme and apply it to NativeWind
 	const effectiveTheme = preferences.theme === 'system'
-		? colorScheme
+		? (deviceColorScheme ?? 'light')
 		: preferences.theme;
+
+	useEffect(() => {
+		setColorScheme(effectiveTheme as 'light' | 'dark');
+	}, [effectiveTheme]);
 
 	const primaryColorHex = primaryColors[preferences.primaryColor]?.hex || '#2ba654';
 	const primaryColorRgb = hexToRgb(primaryColorHex);

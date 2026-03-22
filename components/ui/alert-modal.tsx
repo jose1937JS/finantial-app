@@ -170,7 +170,7 @@ export function AlertModal({
                                             />
                                         </View>
                                     )}
-                                    <Text className="text-xl font-bold text-gray-900 dark:text-white text-center mb-2">
+                                    <Text className="text-xl font-bold text-gray-700 dark:text-white text-center mb-2">
                                         {title}
                                     </Text>
                                     {message && (

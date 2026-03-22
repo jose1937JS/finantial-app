@@ -28,7 +28,7 @@ export default function AddTransactionScreen() {
         (params.type as OperationType) || 'expense'
     );
     const [amount, setAmount] = useState('');
-    const [category, setCategory] = useState('');
+    const [categoryId, setCategoryId] = useState('');
     const [description, setDescription] = useState('');
     const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
     const [currency, setCurrency] = useState<Currency>('USD');
@@ -59,8 +59,10 @@ export default function AddTransactionScreen() {
     const [isLoading, setIsLoading] = useState(false);
 
     const filteredCategories = categories.filter(
-        c => c.type === operationType || c.type === 'both'
+        c => c.type === operationType || c.name.replace(/\s/g, '').toLowerCase() === 'prestamo' || c.name.replace(/\s/g, '').toLowerCase() === 'préstamo'
     );
+
+    const loandCategory = categories.find(c => c.type === 'expense' || c.name.replace(/\s/g, '').toLowerCase() === 'prestamo' || c.name.replace(/\s/g, '').toLowerCase() === 'préstamo');
 
     const handleSubmit = async () => {
         const newErrors: Record<string, string> = {};
@@ -69,7 +71,7 @@ export default function AddTransactionScreen() {
         const amountValidation = validateAmount(amount);
         if (!amountValidation.isValid) newErrors.amount = amountValidation.error!;
 
-        if (!category) newErrors.category = 'Selecciona una categoría';
+        if (!categoryId) newErrors.categoryId = 'Selecciona una categoría';
 
         // Validate loan fields
         if (operationType === 'loan') {
@@ -120,7 +122,8 @@ export default function AddTransactionScreen() {
                 amount: parseFloat(amountInUSD),
                 amountInVES: currency === 'VES' ? parseFloat(amount) : 0,
                 currency: 'USD',
-                category,
+                category: categories.find(c => c.id === categoryId)?.name || 'Otros',
+                categoryId: parseInt(categoryId, 10),
                 description: currency === 'VES' ? `${description} (Tasa: ${exchangeRate})` : description,
                 date: (() => {
                     const d = new Date(date);
@@ -132,16 +135,17 @@ export default function AddTransactionScreen() {
                 loan: loanDetails,
             };
 
-            console.log(JSON.stringify({ payload }, null, 4));
-
-            addTransaction(payload);
+            await addTransaction(payload);
 
             showAlert({
                 title: 'Éxito',
                 message: 'Transacción agregada correctamente',
                 icon: 'check-circle',
                 iconColor: '#22c55e',
-                buttons: [{ text: 'OK', onPress: () => router.back() }]
+                buttons: [{
+                    text: 'OK',
+                    onPress: () => router.replace('/(tabs)/history')
+                }]
             });
         } catch (error) {
             showAlert({ title: 'Error', message: 'No se pudo agregar la transacción', icon: 'alert-circle', iconColor: '#ef4444' });
@@ -163,7 +167,7 @@ export default function AddTransactionScreen() {
                         keyboardShouldPersistTaps="handled"
                         showsVerticalScrollIndicator={false}
                     >
-                        <Card variant="elevated">
+                        <Card className="mb-6 shadow-sm shadow-slate-200 dark:shadow-slate-700">
                             {/* Type Selector */}
                             <View className="mb-6">
                                 <Text className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
@@ -173,19 +177,23 @@ export default function AddTransactionScreen() {
                                     <Chip
                                         label="Ingreso"
                                         selected={operationType === 'income'}
-                                        onPress={() => { setOperationType('income'); setCategory(''); }}
+                                        onPress={() => { setOperationType('income'); setCategoryId(''); }}
                                         variant="income"
                                     />
                                     <Chip
                                         label="Gasto"
                                         selected={operationType === 'expense'}
-                                        onPress={() => { setOperationType('expense'); setCategory(''); }}
+                                        onPress={() => { setOperationType('expense'); setCategoryId(''); }}
                                         variant="expense"
                                     />
                                     <Chip
                                         label="Préstamo"
                                         selected={operationType === 'loan'}
-                                        onPress={() => { setOperationType('loan'); setCategory('Préstamo'); }}
+                                        onPress={() => {
+                                            setOperationType('loan');
+                                            const loanCat = loandCategory;
+                                            if (loanCat) setCategoryId(loanCat.id);
+                                        }}
                                         variant="loan"
                                     />
                                 </View>
@@ -298,8 +306,8 @@ export default function AddTransactionScreen() {
                                         {filteredCategories.map((cat) => (
                                             <Pressable
                                                 key={cat.id}
-                                                onPress={() => setCategory(cat.name)}
-                                                className={`items-center px-4 py-3 rounded-2xl ${category === cat.name
+                                                onPress={() => setCategoryId(cat.id)}
+                                                className={`items-center px-4 py-3 rounded-2xl ${categoryId === cat.id
                                                     ? 'bg-primary-500'
                                                     : 'bg-light-surface dark:bg-dark-surface'
                                                     }`}
@@ -307,9 +315,9 @@ export default function AddTransactionScreen() {
                                                 <MaterialCommunityIcons
                                                     name={cat.icon as any}
                                                     size={20}
-                                                    color={category === cat.name ? '#fff' : cat.color}
+                                                    color={categoryId === cat.id ? '#fff' : cat.color}
                                                 />
-                                                <Text className={`text-xs mt-1 ${category === cat.name
+                                                <Text className={`text-xs mt-1 ${categoryId === cat.id
                                                     ? 'text-white font-semibold'
                                                     : 'text-gray-600 dark:text-gray-400'
                                                     }`}>
@@ -319,8 +327,8 @@ export default function AddTransactionScreen() {
                                         ))}
                                     </View>
                                 </ScrollView>
-                                {errors.category && (
-                                    <Text className="text-sm text-expense mt-2">{errors.category}</Text>
+                                {errors.categoryId && (
+                                    <Text className="text-sm text-expense mt-2">{errors.categoryId}</Text>
                                 )}
                             </View>
 
@@ -352,8 +360,8 @@ export default function AddTransactionScreen() {
 
                         {/* Loan-specific fields */}
                         {operationType === 'loan' && (
-                            <Card variant="elevated" className="mt-4">
-                                <Text className="text-lg font-bold text-gray-900 dark:text-white mb-4">
+                            <Card className="mb-6 shadow-sm shadow-slate-200 dark:shadow-slate-700">
+                                <Text className="text-lg font-bold text-gray-700 dark:text-white mb-4">
                                     Datos del Deudor
                                 </Text>
 
@@ -402,7 +410,7 @@ export default function AddTransactionScreen() {
                                     error={errors.debtorPhone}
                                 />
 
-                                <Text className="text-lg font-bold text-gray-900 dark:text-white mb-4 mt-2">
+                                <Text className="text-lg font-bold text-gray-700 dark:text-white mb-4 mt-2">
                                     Datos Financieros
                                 </Text>
 

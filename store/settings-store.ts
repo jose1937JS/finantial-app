@@ -1,4 +1,5 @@
-import { defaultCategories } from '@/constants/categories';
+import { CategoryService } from '@/api/services/category.service';
+import { RateService } from '@/api/services/rate.service';
 import type { Category, Currency, ExchangeRates, Language, PrimaryColor, ThemeMode, UserPreferences } from '@/types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
@@ -10,20 +11,20 @@ interface SettingsStore {
     exchangeRates: ExchangeRates;
 
     // Preference actions
-
-    // Preference actions
     setTheme: (theme: ThemeMode) => void;
     setLanguage: (language: Language) => void;
     setCurrency: (currency: Currency) => void;
     setPrimaryColor: (color: PrimaryColor) => void;
     updateExchangeRate: (key: keyof ExchangeRates, value: number) => void;
 
-    // Category actions
+    // Remote fetch actions
+    fetchCategories: () => Promise<void>;
+    fetchRates: () => Promise<void>;
 
     // Category actions
-    addCategory: (category: Omit<Category, 'id' | 'isDefault'>) => void;
-    updateCategory: (id: string, data: Partial<Category>) => void;
-    deleteCategory: (id: string) => void;
+    addCategory: (category: Omit<Category, 'id' | 'isDefault'>) => Promise<void>;
+    updateCategory: (id: string, data: Partial<Category>) => Promise<void>;
+    deleteCategory: (id: string) => Promise<void>;
 
     // Data actions
     exportData: () => Promise<string>;
@@ -39,9 +40,9 @@ const defaultPreferences: UserPreferences = {
 };
 
 const defaultExchangeRates: ExchangeRates = {
-    BCV_USD: 60.50,
-    BCV_EUR: 65.20,
-    Binance: 72.00,
+    BCV_USD: 0,
+    BCV_EUR: 0,
+    Binance: 0,
 };
 
 // Primary color hex values
@@ -62,7 +63,7 @@ export const useSettingsStore = create<SettingsStore>()(
     persist(
         (set, get) => ({
             preferences: defaultPreferences,
-            categories: defaultCategories,
+            categories: [],
             exchangeRates: defaultExchangeRates,
 
             setTheme: (theme) => {
@@ -95,29 +96,98 @@ export const useSettingsStore = create<SettingsStore>()(
                 }));
             },
 
-            addCategory: (categoryData) => {
-                const newCategory: Category = {
-                    ...categoryData,
-                    id: Date.now().toString(),
-                    isDefault: false,
-                };
-                set((state) => ({
-                    categories: [...state.categories, newCategory],
-                }));
+            fetchCategories: async () => {
+                try {
+                    const apiCategories = await CategoryService.getByUser();
+                    // Map API Category → local Category shape
+                    const mapped: Category[] = apiCategories.map((c: any) => ({
+                        id: String(c.id),
+                        name: c.name,
+                        type: c.type === 'loan' ? 'loan' : c.type,
+                        color: c.color ?? '#22c55e',
+                        icon: c.icon ?? 'tag',
+                        isDefault: false,
+                        customImage: undefined,
+                    }));
+                    set((state) => ({
+                        categories: mapped,
+                    }));
+                } catch (error) {
+                    console.error('fetchCategories error:', error);
+                }
             },
 
-            updateCategory: (id, data) => {
+            fetchRates: async () => {
+                try {
+                    const rates = await RateService.getAll();
+                    const rateMap: Partial<ExchangeRates> = {};
+                    rates.forEach((r: any) => {
+                        if (r.currency === 'BCV_USD') rateMap.BCV_USD = Number(r.rate);
+                        if (r.currency === 'BCV_EUR') rateMap.BCV_EUR = Number(r.rate);
+                        if (r.currency === 'USDT' || r.currency === 'Binance') rateMap.Binance = Number(r.rate);
+                    });
+                    if (Object.keys(rateMap).length > 0) {
+                        set((state) => ({
+                            exchangeRates: { ...state.exchangeRates, ...rateMap },
+                        }));
+                    }
+                } catch (error) {
+                    console.error('fetchRates error:', error);
+                }
+            },
+
+            addCategory: async (categoryData) => {
+                try {
+                    const created = await CategoryService.create({
+                        name: categoryData.name,
+                        icon: categoryData.icon,
+                        type: categoryData.type === 'loan' ? 'loan' : (categoryData.type as any),
+                        color: categoryData.color,
+                    });
+                    const newCategory: Category = {
+                        ...categoryData,
+                        id: String(created.id ?? Date.now()),
+                        isDefault: false,
+                    };
+                    set((state) => ({
+                        categories: [...state.categories, newCategory],
+                    }));
+                } catch (error) {
+                    console.error('addCategory error:', error);
+                    // Fallback: add locally
+                    const newCategory: Category = {
+                        ...categoryData,
+                        id: Date.now().toString(),
+                        isDefault: false,
+                    };
+                    set((state) => ({
+                        categories: [...state.categories, newCategory],
+                    }));
+                }
+            },
+
+            updateCategory: async (id, data) => {
                 set((state) => ({
                     categories: state.categories.map((c) =>
                         c.id === id ? { ...c, ...data } : c
                     ),
                 }));
+                try {
+                    await CategoryService.update(Number(id), data as any);
+                } catch (error) {
+                    console.error('updateCategory error:', error);
+                }
             },
 
-            deleteCategory: (id) => {
+            deleteCategory: async (id) => {
                 set((state) => ({
                     categories: state.categories.filter((c) => c.id !== id || c.isDefault),
                 }));
+                try {
+                    await CategoryService.delete(Number(id));
+                } catch (error) {
+                    console.error('deleteCategory error:', error);
+                }
             },
 
             exportData: async () => {
@@ -144,7 +214,7 @@ export const useSettingsStore = create<SettingsStore>()(
             resetSettings: () => {
                 set({
                     preferences: defaultPreferences,
-                    categories: defaultCategories,
+                    categories: [],
                     exchangeRates: defaultExchangeRates,
                 });
             },

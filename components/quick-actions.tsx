@@ -38,7 +38,7 @@ export function QuickActions({ onAddIncome, onAddExpense }: QuickActionsProps) {
                 style={{ elevation: isAndroid ? 2 : undefined }}
                 onPress={handleAddIncome}
                 className={
-                    `flex-1 flex-row items-center justify-center bg-white rounded-2xl py-4 px-6 active:opacity-80 ${!isAndroid && 'shadow-sm shadow-slate-300'}`
+                    `flex-1 flex-row items-center justify-center bg-white dark:bg-dark-card rounded-2xl py-4 px-6 active:opacity-80 ${!isAndroid && 'shadow-sm shadow-slate-300 dark:shadow-slate-700'}`
                 }
             >
                 <View className="w-10 h-10 rounded-full bg-income items-center justify-center mr-3">
@@ -52,7 +52,7 @@ export function QuickActions({ onAddIncome, onAddExpense }: QuickActionsProps) {
                     <Text className="text-md font-semibold text-income">
                         Ingreso
                     </Text>
-                    <Text className="text-xs text-gray-500 dark:text-white-400">
+                    <Text className="text-xs text-gray-500 dark:text-gray-400">
                         Agregar
                     </Text>
                 </View>
@@ -63,7 +63,7 @@ export function QuickActions({ onAddIncome, onAddExpense }: QuickActionsProps) {
                 style={{ elevation: isAndroid ? 2 : undefined }}
                 onPress={handleAddExpense}
                 className={
-                    `flex-1 flex-row items-center justify-center bg-white rounded-2xl py-4 px-6 active:opacity-80 ${!isAndroid && 'shadow-sm shadow-slate-300'}`
+                    `flex-1 flex-row items-center justify-center bg-white dark:bg-dark-card rounded-2xl py-4 px-6 active:opacity-80 ${!isAndroid && 'shadow-sm shadow-slate-300 dark:shadow-slate-700'}`
                 }
             >
                 <View className="w-10 h-10 rounded-full bg-expense items-center justify-center mr-3">
@@ -77,7 +77,7 @@ export function QuickActions({ onAddIncome, onAddExpense }: QuickActionsProps) {
                     <Text className="text-md font-semibold text-expense">
                         Gasto
                     </Text>
-                    <Text className="text-xs text-gray-500 dark:text-white-400">
+                    <Text className="text-xs text-gray-500 dark:text-gray-400">
                         Agregar
                     </Text>
                 </View>

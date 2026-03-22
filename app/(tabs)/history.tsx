@@ -1,6 +1,6 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import React, { useMemo, useState } from 'react';
-import { FlatList, Pressable, Text, TextInput, View } from 'react-native';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { FlatList, Pressable, RefreshControl, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { TransactionItem } from '@/components/transaction-item';
@@ -16,7 +16,19 @@ export default function HistoryScreen() {
     const [searchQuery, setSearchQuery] = useState('');
     const [activeFilter, setActiveFilter] = useState<FilterType>('all');
 
-    const { transactions, setFilters, getFilteredTransactions } = useTransactionStore();
+    const { transactions, setFilters, getFilteredTransactions, fetchTransactions } = useTransactionStore();
+
+    useEffect(() => {
+        fetchTransactions();
+    }, []);
+
+    const [refreshing, setRefreshing] = useState(false);
+
+    const onRefresh = useCallback(async () => {
+        setRefreshing(true);
+        await fetchTransactions();
+        setRefreshing(false);
+    }, [fetchTransactions]);
 
     const filteredTransactions = useMemo(() => {
         let filtered = [...transactions];
@@ -35,10 +47,12 @@ export default function HistoryScreen() {
             );
         }
 
+        return filtered;
+
         // Sort by date
-        return filtered.sort((a, b) =>
-            new Date(b.date).getTime() - new Date(a.date).getTime()
-        );
+        // return filtered.sort((a, b) =>
+        //     new Date(b.date).getTime() - new Date(a.date).getTime()
+        // );
     }, [transactions, activeFilter, searchQuery]);
 
     const filters: { label: string; value: FilterType }[] = [
@@ -52,7 +66,7 @@ export default function HistoryScreen() {
         <SafeAreaView edges={['top']} className="flex-1 bg-light-bg dark:bg-dark-bg">
             {/* Header */}
             <View className="px-5 pt-4 pb-5">
-                <Text className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+                <Text className="text-2xl font-bold text-gray-700 dark:text-white mb-4">
                     Historial
                 </Text>
 
@@ -60,7 +74,7 @@ export default function HistoryScreen() {
                 <View className="flex-row items-center bg-light-surface dark:bg-dark-surface rounded-2xl px-4 mb-4">
                     <MaterialCommunityIcons name="magnify" size={20} color="#9ca3af" />
                     <TextInput
-                        className="flex-1 py-4 px-3 text-base text-gray-900 dark:text-white"
+                        className="flex-1 py-4 px-3 text-base text-gray-700 dark:text-white"
                         placeholder="Buscar transacciones..."
                         placeholderTextColor="#9ca3af"
                         value={searchQuery}
@@ -98,6 +112,14 @@ export default function HistoryScreen() {
                 keyExtractor={(item) => item.id}
                 contentContainerStyle={{ paddingHorizontal: 20, flexGrow: 1 }}
                 showsVerticalScrollIndicator={false}
+                refreshControl={
+                    <RefreshControl
+                        refreshing={refreshing}
+                        onRefresh={onRefresh}
+                        colors={['#22c55e']}
+                        tintColor="#22c55e"
+                    />
+                }
                 renderItem={({ item }) => (
                     <TransactionItem
                         transaction={item}

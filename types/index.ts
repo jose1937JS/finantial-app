@@ -76,7 +76,7 @@ export interface Category {
     icon: string;
     customImage?: string;
     color: string;
-    type: 'income' | 'expense' | 'both';
+    type: 'income' | 'expense' | 'loan';
     isDefault: boolean;
 }
 

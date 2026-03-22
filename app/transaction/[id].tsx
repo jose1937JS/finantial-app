@@ -46,7 +46,7 @@ export default function TransactionDetailScreen() {
                     onPress={() => router.back()}
                     className="mt-6 px-6 py-3 bg-gray-200 dark:bg-gray-800 rounded-full"
                 >
-                    <Text className="text-gray-900 dark:text-white font-medium">Volver</Text>
+                    <Text className="text-gray-700 dark:text-white font-medium">Volver</Text>
                 </TouchableOpacity>
             </SafeAreaView>
         );
@@ -178,7 +178,7 @@ export default function TransactionDetailScreen() {
                         >
                             <MaterialCommunityIcons name={getIcon()} size={40} color={getColor()} />
                         </View>
-                        <Text className="text-3xl font-bold text-gray-900 dark:text-white mb-1">
+                        <Text className="text-3xl font-bold text-gray-700 dark:text-white mb-1">
                             {formatCurrency(transaction.amount, transaction.currency)}
                         </Text>
                         <Text className="text-base text-gray-500 dark:text-gray-400 font-medium uppercase tracking-wider">
@@ -210,7 +210,7 @@ export default function TransactionDetailScreen() {
                     {/* Loan Specific Details */}
                     {transaction.type === 'loan' && transaction.loan && (
                         <View className="bg-white dark:bg-dark-card rounded-3xl p-6 shadow-sm mb-6">
-                            <Text className="text-lg font-bold text-gray-900 dark:text-white mb-4">
+                            <Text className="text-lg font-bold text-gray-700 dark:text-white mb-4">
                                 Información del Préstamo
                             </Text>
 
@@ -248,7 +248,7 @@ export default function TransactionDetailScreen() {
                     {/* Financial Details (Interest & Totals) */}
                     {transaction.type === 'loan' && transaction.loan && (
                         <View className="bg-white dark:bg-dark-card rounded-3xl p-6 shadow-sm mb-6">
-                            <Text className="text-lg font-bold text-gray-900 dark:text-white mb-4">
+                            <Text className="text-lg font-bold text-gray-700 dark:text-white mb-4">
                                 Desglose Financiero ({isVES ? 'VES & USD' : 'USD'})
                             </Text>
 
@@ -361,7 +361,7 @@ export default function TransactionDetailScreen() {
                     {/* Payments History List */}
                     {transaction.type === 'loan' && payments.length > 0 && (
                         <View className="mt-8">
-                            <Text className="text-xl font-bold text-gray-900 dark:text-white mb-4">
+                            <Text className="text-xl font-bold text-gray-700 dark:text-white mb-4">
                                 Historial de Pagos
                             </Text>
                             <View className="bg-white dark:bg-dark-card rounded-3xl p-6 shadow-sm">
@@ -369,7 +369,7 @@ export default function TransactionDetailScreen() {
                                     <View key={p.id}>
                                         <View className="flex-row justify-between items-center py-2">
                                             <View>
-                                                <Text className="text-gray-900 dark:text-white font-semibold">
+                                                <Text className="text-gray-700 dark:text-white font-semibold">
                                                     {formatCurrency(p.amount, 'USD')}
                                                 </Text>
                                                 <Text className="text-xs text-gray-500 dark:text-gray-400">
@@ -409,9 +409,9 @@ export default function TransactionDetailScreen() {
                             onPress={() => setShowPaymentModal(false)}
                         >
                             <Pressable onPress={(e: any) => e.stopPropagation()}>
-                                <Card variant="elevated">
+                                <Card className="mb-6 shadow-sm shadow-slate-200 dark:shadow-slate-700">
                                     <View className="p-4">
-                                        <Text className="text-xl font-bold text-gray-900 dark:text-white mb-4">
+                                        <Text className="text-xl font-bold text-gray-700 dark:text-white mb-4">
                                             Registrar Devolución
                                         </Text>
 
@@ -551,7 +551,7 @@ const DetailItem = ({
                 {label}
             </Text>
         </View>
-        <Text className={`text-gray-900 dark:text-white font-semibold text-right flex-1 ml-4 ${valueStyle}`}>
+        <Text className={`text-gray-700 dark:text-white font-semibold text-right flex-1 ml-4 ${valueStyle}`}>
             {value}
         </Text>
     </View>

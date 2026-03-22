@@ -1,10 +1,10 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Link, useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, Text, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-
+import { AuthService } from '@/api/services/auth.service';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useThemeColor } from '@/hooks/use-theme-color';
@@ -29,11 +29,15 @@ export default function ForgotPasswordScreen() {
         setError(undefined);
         setIsLoading(true);
 
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 1500));
-
-        setIsLoading(false);
-        setIsSent(true);
+        try {
+            await AuthService.forgotPassword({ email });
+            setIsSent(true);
+        } catch (err) {
+            console.error('Forgot password error:', err);
+            setError('No se pudo enviar el correo. Verifica tu dirección e intenta de nuevo.');
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     if (isSent) {
@@ -44,7 +48,7 @@ export default function ForgotPasswordScreen() {
                         <MaterialCommunityIcons name="email-check" size={40} color={primaryColor} />
                     </View>
 
-                    <Text className="text-2xl font-bold text-gray-900 dark:text-white mb-3 text-center">
+                    <Text className="text-2xl font-bold text-gray-700 dark:text-white mb-3 text-center">
                         Correo Enviado
                     </Text>
 
@@ -87,10 +91,10 @@ export default function ForgotPasswordScreen() {
                 >
                     {/* Back button */}
                     <Link href="/login" asChild>
-                        <View className="flex-row items-center mt-4 mb-8">
+                        <Pressable className="flex-row items-center mt-4 mb-8">
                             <MaterialCommunityIcons name="arrow-left" size={24} color="#6b7280" />
                             <Text className="text-gray-500 ml-2">Volver</Text>
-                        </View>
+                        </Pressable>
                     </Link>
 
                     {/* Header */}
@@ -98,7 +102,7 @@ export default function ForgotPasswordScreen() {
                         <View className="w-20 h-20 rounded-full bg-primary-100 dark:bg-primary-900/30 items-center justify-center mb-6">
                             <MaterialCommunityIcons name="lock-reset" size={40} color={primaryColor} />
                         </View>
-                        <Text className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                        <Text className="text-2xl font-bold text-gray-700 dark:text-white mb-2">
                             ¿Olvidaste tu contraseña?
                         </Text>
                         <Text className="text-base text-gray-500 dark:text-gray-400 text-center px-4">

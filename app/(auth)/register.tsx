@@ -62,7 +62,7 @@ export default function RegisterScreen() {
                         <View className="w-16 h-16 rounded-full bg-primary-500 items-center justify-center mb-4">
                             <MaterialCommunityIcons name="account-plus" size={32} color="#fff" />
                         </View>
-                        <Text className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                        <Text className="text-2xl font-bold text-gray-700 dark:text-white mb-2">
                             Crear Cuenta
                         </Text>
                         <Text className="text-base text-gray-500 dark:text-gray-400 text-center">

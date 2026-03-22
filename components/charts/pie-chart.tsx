@@ -23,7 +23,7 @@ export function PieChart({ data, title, showLegend = true }: PieChartProps) {
     return (
         <View className="bg-white dark:bg-dark-card rounded-3xl p-6">
             {title && (
-                <Text className="text-lg font-bold text-gray-900 dark:text-white mb-4">
+                <Text className="text-lg font-bold text-gray-700 dark:text-white mb-4">
                     {title}
                 </Text>
             )}
@@ -40,7 +40,7 @@ export function PieChart({ data, title, showLegend = true }: PieChartProps) {
                             <Text className="text-sm text-gray-500 dark:text-gray-400">
                                 Total
                             </Text>
-                            <Text className="text-xl font-bold text-gray-900 dark:text-white">
+                            <Text className="text-xl font-bold text-gray-700 dark:text-white">
                                 100%
                             </Text>
                         </View>

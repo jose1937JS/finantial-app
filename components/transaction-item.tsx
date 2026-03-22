@@ -48,7 +48,7 @@ export function TransactionItem({ transaction, onPress }: TransactionItemProps) 
     return (
         <Pressable
             onPress={handlePress}
-            className="flex-row items-center py-4 px-4 bg-white dark:bg-dark-card rounded-2xl mb-3 active:opacity-70 shadow-md shadow-slate-100 dark:shadow-slate-700"
+            className="flex-row items-center py-4 px-4 bg-white dark:bg-dark-card rounded-2xl mb-3 active:opacity-70 shadow-sm shadow-slate-200 dark:shadow-slate-700"
         >
             {/* Icon */}
             <View

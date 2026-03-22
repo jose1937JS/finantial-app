@@ -1,6 +1,6 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import React, { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, FlatList, Pressable, Text, View } from 'react-native';
+import { ActivityIndicator, FlatList, Pressable, RefreshControl, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { NotificationService } from '@/api/services/notification.service';
@@ -20,9 +20,14 @@ interface AppNotification {
 export default function NotificationsScreen() {
     const [notifications, setNotifications] = useState<AppNotification[]>([]);
     const [isLoading, setIsLoading] = useState(false);
+    const [isRefreshing, setIsRefreshing] = useState(false);
 
-    const loadNotifications = useCallback(async () => {
-        setIsLoading(true);
+    const loadNotifications = useCallback(async (refresh = false) => {
+        if (refresh) {
+            setIsRefreshing(true);
+        } else {
+            setIsLoading(true);
+        }
         try {
             const data = await NotificationService.getAll();
             setNotifications(data as AppNotification[]);
@@ -30,6 +35,7 @@ export default function NotificationsScreen() {
             console.error('loadNotifications error:', error);
         } finally {
             setIsLoading(false);
+            setIsRefreshing(false);
         }
     }, []);
 
@@ -85,6 +91,14 @@ export default function NotificationsScreen() {
                     keyExtractor={(item) => String(item.id)}
                     contentContainerStyle={{ padding: 20, paddingTop: 10 }}
                     showsVerticalScrollIndicator={false}
+                    refreshControl={
+                        <RefreshControl
+                            refreshing={isRefreshing}
+                            onRefresh={() => loadNotifications(true)}
+                            tintColor="#22c55e"
+                            colors={['#22c55e']}
+                        />
+                    }
                     renderItem={({ item }) => {
                         const icon = getIconByType(item.type);
                         return (

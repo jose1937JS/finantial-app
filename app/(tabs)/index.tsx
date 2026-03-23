@@ -152,7 +152,7 @@ export default function HomeScreen() {
 					<View className="bg-light-bg dark:bg-dark-bg px-5 z-10">
 						<TransactionItem
 							transaction={item}
-							onPress={() => router.push(`/transaction/${item.id}`)}
+							onPress={() => router.push(`/transaction/${item.id}?type=${item.type}`)}
 						/>
 					</View>
 				)}

@@ -21,7 +21,7 @@ export default function AddTransactionScreen() {
     const router = useRouter();
     const params = useLocalSearchParams<{ type?: string }>();
     const { addTransaction } = useTransactionStore();
-    const { categories, exchangeRates } = useSettingsStore();
+    const { categories, exchangeRates, exchangeRateIds } = useSettingsStore();
     const { showAlert } = useAlert();
     // Form state
     const [operationType, setOperationType] = useState<OperationType>(
@@ -33,14 +33,16 @@ export default function AddTransactionScreen() {
     const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
     const [currency, setCurrency] = useState<Currency>('USD');
     const [rateSource, setRateSource] = useState<ExchangeRateSource>('BCV_USD');
-    const [customRate, setCustomRate] = useState('');
 
     // Calculated fields
-    const exchangeRate = rateSource === 'Custom'
-        ? parseFloat(customRate) || 0
-        : exchangeRates[rateSource as keyof typeof exchangeRates] || 0;
+    const exchangeRate = exchangeRates[rateSource as keyof typeof exchangeRates] || 0;
 
-    const amountInUSD = currency === 'VES' && exchangeRate > 0
+    const isEur = rateSource === 'BCV_EUR';
+    const currSymbol = isEur ? '€' : '$';
+    const currName = isEur ? 'EUR' : 'USD';
+    const currIcon = isEur ? 'currency-eur' : 'currency-usd';
+
+    const calculatedAmount = currency === 'VES' && exchangeRate > 0
         ? (parseFloat(amount) / exchangeRate).toFixed(2)
         : amount;
 
@@ -91,7 +93,8 @@ export default function AddTransactionScreen() {
 
             if (debtorPhone) {
                 const phoneValidation = validatePhone(debtorPhone);
-                if (!phoneValidation.isValid) newErrors.debtorPhone = phoneValidation.error!;
+                const phoneValidationRequired = validateRequired(debtorPhone, 'Teléfono');
+                if (!phoneValidation.isValid && !phoneValidationRequired.isValid) newErrors.debtorPhone = phoneValidation.error!;
             }
         }
 
@@ -119,12 +122,11 @@ export default function AddTransactionScreen() {
 
             const payload = {
                 type: operationType,
-                amount: parseFloat(amountInUSD),
-                amountInVES: currency === 'VES' ? parseFloat(amount) : 0,
-                currency: 'USD',
+                amount: parseFloat(amount),
+                currency: currency,
                 category: categories.find(c => c.id === categoryId)?.name || 'Otros',
                 categoryId: parseInt(categoryId, 10),
-                description: currency === 'VES' ? `${description} (Tasa: ${exchangeRate})` : description,
+                description: description,
                 date: (() => {
                     const d = new Date(date);
                     d.setHours(12, 0, 0, 0);
@@ -132,6 +134,7 @@ export default function AddTransactionScreen() {
                 })(),
                 created_at: new Date().toISOString(),
                 rate: exchangeRate,
+                rate_id: exchangeRateIds[rateSource],
                 loan: loanDetails,
             };
 
@@ -252,34 +255,15 @@ export default function AddTransactionScreen() {
                                                 onPress={() => setRateSource('Binance')}
                                                 variant={rateSource === 'Binance' ? 'default' : 'outline'}
                                             />
-                                            <Chip
-                                                label="Custom"
-                                                selected={rateSource === 'Custom'}
-                                                onPress={() => setRateSource('Custom')}
-                                                variant={rateSource === 'Custom' ? 'default' : 'outline'}
-                                            />
                                         </View>
                                     </ScrollView>
 
-                                    {rateSource === 'Custom' && (
-                                        <View className="mt-4">
-                                            <Input
-                                                label="Tasa Personalizada"
-                                                placeholder="0.00"
-                                                leftIcon="calculator"
-                                                value={customRate}
-                                                onChangeText={setCustomRate}
-                                                keyboardType="decimal-pad"
-                                            />
-                                        </View>
-                                    )}
-
                                     <View className="mt-4">
                                         <Input
-                                            label="Monto en USD (Calculado)"
-                                            value={amount && !isNaN(parseFloat(amountInUSD)) ? `$${amountInUSD}` : '$0.00'}
+                                            label={`Monto en ${currName} (Calculado)`}
+                                            value={amount && !isNaN(parseFloat(calculatedAmount)) ? `${calculatedAmount}` : `0.00`}
                                             editable={false}
-                                            leftIcon="currency-usd"
+                                            leftIcon={currIcon}
                                         />
                                     </View>
                                 </View>
@@ -401,7 +385,7 @@ export default function AddTransactionScreen() {
                                 />
 
                                 <Input
-                                    label="Teléfono (opcional)"
+                                    label="Teléfono"
                                     placeholder="+58 412 1234567"
                                     leftIcon="phone-outline"
                                     value={debtorPhone}

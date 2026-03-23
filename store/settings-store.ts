@@ -9,6 +9,7 @@ interface SettingsStore {
     preferences: UserPreferences;
     categories: Category[];
     exchangeRates: ExchangeRates;
+    exchangeRateIds: Record<string, number>;
 
     // Preference actions
     setTheme: (theme: ThemeMode) => void;
@@ -45,6 +46,8 @@ const defaultExchangeRates: ExchangeRates = {
     Binance: 0,
 };
 
+const defaultExchangeRateIds: Record<string, number> = {};
+
 // Primary color hex values
 
 // Primary color hex values
@@ -65,6 +68,7 @@ export const useSettingsStore = create<SettingsStore>()(
             preferences: defaultPreferences,
             categories: [],
             exchangeRates: defaultExchangeRates,
+            exchangeRateIds: defaultExchangeRateIds,
 
             setTheme: (theme) => {
                 set((state) => ({
@@ -121,14 +125,16 @@ export const useSettingsStore = create<SettingsStore>()(
                 try {
                     const rates = await RateService.getAll();
                     const rateMap: Partial<ExchangeRates> = {};
+                    const idMap: Record<string, number> = {};
                     rates.forEach((r: any) => {
-                        if (r.currency === 'BCV_USD') rateMap.BCV_USD = Number(r.rate);
-                        if (r.currency === 'BCV_EUR') rateMap.BCV_EUR = Number(r.rate);
-                        if (r.currency === 'USDT' || r.currency === 'Binance') rateMap.Binance = Number(r.rate);
+                        if (r.currency === 'BCV_USD') { rateMap.BCV_USD = Number(r.rate); idMap.BCV_USD = r.id; }
+                        if (r.currency === 'BCV_EUR') { rateMap.BCV_EUR = Number(r.rate); idMap.BCV_EUR = r.id; }
+                        if (r.currency === 'USDT' || r.currency === 'Binance') { rateMap.Binance = Number(r.rate); idMap.Binance = r.id; }
                     });
                     if (Object.keys(rateMap).length > 0) {
                         set((state) => ({
                             exchangeRates: { ...state.exchangeRates, ...rateMap },
+                            exchangeRateIds: { ...state.exchangeRateIds, ...idMap },
                         }));
                     }
                 } catch (error) {
@@ -216,6 +222,7 @@ export const useSettingsStore = create<SettingsStore>()(
                     preferences: defaultPreferences,
                     categories: [],
                     exchangeRates: defaultExchangeRates,
+                    exchangeRateIds: defaultExchangeRateIds,
                 });
             },
         }),

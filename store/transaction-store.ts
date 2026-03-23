@@ -1,3 +1,4 @@
+import { LoanService } from '@/api/services/loan.service';
 import { TransactionService } from '@/api/services/transaction.service';
 import { useSettingsStore } from '@/store/settings-store';
 import type { Payment, Transaction, TransactionFilters } from '@/types';
@@ -26,7 +27,7 @@ interface TransactionStore {
     fetchTransactions: () => Promise<void>;
     addTransaction: (transaction: Omit<Transaction, 'id' | 'createdAt' | 'created_at'>) => Promise<void>;
     updateTransaction: (id: string, data: Partial<Transaction>) => void;
-    addLoanPayment: (transactionId: string, payment: Payment) => void;
+    addLoanPayment: (transactionId: string, payment: Payment) => Promise<void>;
     deleteTransaction: (id: string) => Promise<void>;
     setFilters: (filters: TransactionFilters) => void;
     clearFilters: () => void;
@@ -38,6 +39,37 @@ interface TransactionStore {
     getTotalExpenses: () => number;
     getRecentTransactions: (limit?: number) => Transaction[];
     getLoansDue: () => Transaction[];
+}
+
+export function mapBackendTransactionToLocal(t: any): Transaction {
+    return {
+        id: String(t.id),
+        type: t.type,
+        amount: Number(t.amount),
+        currency: t.currency ?? 'USD',
+        category: t.category?.name ?? t.categoryId?.toString() ?? 'Otros',
+        description: t.description ?? '',
+        date: t.date ?? t.createdAt,
+        createdAt: t.createdAt,
+        created_at: t.createdAt,
+        rate: t.rate,
+        amountInVES: t.amountInVES,
+        loanDetailsId: t.loanDetailsId,
+        // Map loan details if present
+        loan: t.loanDetail
+            ? {
+                id: t.loanDetail.id,
+                debtorName: t.loanDetail.debtorName ?? t.loanDetail.debtor_name,
+                debtorLastName: t.loanDetail.debtorLastname ?? t.loanDetail.debtor_lastname,
+                debtorEmail: t.loanDetail.debtorEmail ?? t.loanDetail.debtor_email,
+                debtorPhone: t.loanDetail.debtorPhone ?? t.loanDetail.debtor_phone,
+                dueDate: t.loanDetail.expirationDate ?? t.loanDetail.expiration_date,
+                interestRate: Number(t.loanDetail.interestRate ?? t.loanDetail.interest_rate ?? 0),
+                isPaid: t.loanDetail.isPaid ?? false,
+                payments: t.loanDetail.payments ?? [],
+            }
+            : undefined,
+    };
 }
 
 export const useTransactionStore = create<TransactionStore>()(
@@ -52,33 +84,7 @@ export const useTransactionStore = create<TransactionStore>()(
                 set({ isLoading: true, error: null });
                 try {
                     const apiTransactions = await TransactionService.getAll();
-                    // Map API Transaction shape → local Transaction shape
-                    const mapped: Transaction[] = apiTransactions.map((t: any) => ({
-                        id: String(t.id),
-                        type: t.type,
-                        amount: Number(t.amount),
-                        currency: t.currency ?? 'USD',
-                        category: t.category?.name ?? t.categoryId?.toString() ?? 'Otros',
-                        description: t.description ?? '',
-                        date: t.date ?? t.createdAt,
-                        createdAt: t.createdAt,
-                        created_at: t.createdAt,
-                        rate: t.rate,
-                        amountInVES: t.amountInVES,
-                        // Map loan details if present
-                        loan: t.loanDetail
-                            ? {
-                                debtorName: t.loanDetail.debtorName ?? t.loanDetail.debtor_name,
-                                debtorLastName: t.loanDetail.debtorLastname ?? t.loanDetail.debtor_lastname,
-                                debtorEmail: t.loanDetail.debtorEmail ?? t.loanDetail.debtor_email,
-                                debtorPhone: t.loanDetail.debtorPhone ?? t.loanDetail.debtor_phone,
-                                dueDate: t.loanDetail.expirationDate ?? t.loanDetail.expiration_date,
-                                interestRate: Number(t.loanDetail.interestRate ?? t.loanDetail.interest_rate ?? 0),
-                                isPaid: t.loanDetail.isPaid ?? false,
-                                payments: t.loanDetail.payments ?? [],
-                            }
-                            : undefined,
-                    }));
+                    const mapped: Transaction[] = apiTransactions.map(mapBackendTransactionToLocal);
                     set({ transactions: mapped, isLoading: false });
                 } catch (error: any) {
                     console.error('fetchTransactions error:', error);
@@ -125,16 +131,7 @@ export const useTransactionStore = create<TransactionStore>()(
                     }));
                 } catch (error: any) {
                     console.error('addTransaction error:', error);
-                    // Still add locally so UI doesn't break in offline scenarios
-                    const newTransaction: Transaction = {
-                        ...transactionData,
-                        id: Date.now().toString(),
-                        createdAt: new Date().toISOString(),
-                        created_at: new Date().toISOString(),
-                    };
-                    set((state) => ({
-                        transactions: [newTransaction, ...state.transactions],
-                    }));
+                    throw error;
                 }
             },
 
@@ -146,25 +143,35 @@ export const useTransactionStore = create<TransactionStore>()(
                 }));
             },
 
-            addLoanPayment: (transactionId, payment) => {
+            addLoanPayment: async (transactionId, payment) => {
+                let apiResponse;
+                try {
+                    apiResponse = await LoanService.registerPayment(Number(transactionId), {
+                        amount: payment.amount,
+                    });
+                } catch (error) {
+                    console.error('registerPayment API error:', error);
+                    throw error;
+                }
+
                 set((state) => ({
                     transactions: state.transactions.map((t) => {
                         if (t.id !== transactionId || t.type !== 'loan' || !t.loan) return t;
 
-                        const currentPayments = t.loan.payments || [];
-                        const newPayments = [...currentPayments, payment];
-
-                        const interestAmount = t.amount * (t.loan.interestRate / 100);
-                        const totalDebt = t.amount + interestAmount;
-                        const totalPaid = newPayments.reduce((acc, p) => acc + p.amount, 0);
-                        const isPaid = totalPaid >= totalDebt - 0.01;
+                        const newPayments = apiResponse.payments?.map((p: any) => ({
+                            id: String(p.id),
+                            amount: Number(p.amount),
+                            currency: p.currency,
+                            rate: p.rate || p.exchangeRate || p.exchange_rate,
+                            date: p.date
+                        })) || [];
 
                         return {
                             ...t,
                             loan: {
                                 ...t.loan!,
                                 payments: newPayments,
-                                isPaid,
+                                isPaid: apiResponse.pendingBalance <= 0.01,
                             },
                         };
                     }),

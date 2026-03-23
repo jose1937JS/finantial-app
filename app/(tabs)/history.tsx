@@ -123,7 +123,7 @@ export default function HistoryScreen() {
                 renderItem={({ item }) => (
                     <TransactionItem
                         transaction={item}
-                        onPress={() => router.push(`/transaction/${item.id}`)}
+                        onPress={() => router.push(`/transaction/${item.id}?type=${item.type}`)}
                     />
                 )}
                 ListEmptyComponent={() => (

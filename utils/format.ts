@@ -5,8 +5,11 @@
 export const formatCurrency = (
     amount: number,
     currency: string = 'USD',
-    locale: string = 'en-US'
+    locale: string = 'es-VE'
 ): string => {
+
+    if (isNaN(amount)) return '-';
+
     const formatters: Record<string, Intl.NumberFormatOptions> = {
         USD: { style: 'currency', currency: 'USD' },
         VES: { style: 'currency', currency: 'VES', maximumFractionDigits: 0 },
@@ -23,10 +26,11 @@ export const formatCurrency = (
 };
 
 export const formatDate = (
-    date: string | Date,
+    date: string | Date | undefined | null,
     format: 'short' | 'long' | 'relative' = 'short',
     locale: string = 'es-ES'
 ): string => {
+    if (!date) return 'Fecha inválida';
     let d: Date;
 
     if (typeof date === 'string') {
@@ -91,7 +95,7 @@ export const formatTime = (date: string | Date | undefined | null, locale: strin
 };
 
 export const formatNumber = (num: number, decimals: number = 2): string => {
-    return num.toLocaleString('en-US', {
+    return num.toLocaleString('es-VE', {
         minimumFractionDigits: decimals,
         maximumFractionDigits: decimals,
     });

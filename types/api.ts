@@ -148,6 +148,9 @@ export interface CreateLoanDto {
 
 export interface LoanPaymentDto {
   amount: number;
+  currency?: 'USD' | 'VES' | 'USDT';
+  exchange_rate?: number;
+  date?: string;
 }
 
 export interface Rate {

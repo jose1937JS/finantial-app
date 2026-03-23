@@ -197,7 +197,7 @@ export function AlertModal({
                                                 <Pressable
                                                     key={index}
                                                     onPress={() => handleButtonPress(button)}
-                                                    className={`flex-1 py-4 rounded-2xl ${getButtonStyle(button.style)}`}
+                                                    className={`flex-1 py-3 rounded-2xl ${getButtonStyle(button.style)}`}
                                                 >
                                                     <Text className={`text-center font-semibold text-base ${getButtonTextStyle(button.style)}`}>
                                                         {button.text}

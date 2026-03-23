@@ -16,9 +16,11 @@ export interface Transaction {
     rate?: number;
     // Loan-specific fields
     loan?: LoanDetails;
+    loanDetailsId?: number;
 }
 
 export interface LoanDetails {
+    id?: string;
     debtorName: string;
     debtorLastName: string;
     debtorEmail?: string;
@@ -30,11 +32,11 @@ export interface LoanDetails {
 }
 
 export interface Payment {
-    id: string;
+    id?: string;
     amount: number;
-    currency: string;
+    currency?: string;
     rate?: number;
-    date: string;
+    date?: string;
 }
 
 // User types
@@ -56,7 +58,7 @@ export interface ExchangeRate {
     source: string;
 }
 
-export type ExchangeRateSource = 'BCV_USD' | 'BCV_EUR' | 'Binance' | 'Custom';
+export type ExchangeRateSource = 'BCV_USD' | 'BCV_EUR' | 'Binance';
 
 export interface ExchangeRates {
     BCV_USD: number;

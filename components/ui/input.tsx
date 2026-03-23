@@ -44,19 +44,23 @@ export function Input({
             )}
 
             <View
-                className={`flex-row items-center bg-light-surface dark:bg-dark-surface rounded-2xl border-2 ${borderColor} px-4`}
+                className={`
+                    flex-row h-14 items-center bg-light-surface dark:bg-dark-surface  rounded-2xl border-2 ${borderColor} ${props.editable === false ? 'bg-gray-300 dark:bg-gray-700' : ''} px-4
+                `}
             >
                 {leftIcon && (
                     <MaterialCommunityIcons
                         name={leftIcon}
                         size={20}
-                        color={error ? '#ef4444' : '#9ca3af'}
+                        color={error ? '#ef4444' : props.editable === false ? '#5c5c5cff' : '#9ca3af'}
                         style={{ marginRight: 12 }}
                     />
                 )}
 
                 <TextInput
-                    className={`flex-1 py-4 text-base text-gray-700 dark:text-white ${inputClassName}`}
+                    className={
+                        `flex-1 pt-2 mb-3  text-base text-gray-700 dark:text-white ${inputClassName} ${props.editable === false ? 'bg-gray-300 dark:bg-gray-700' : ''}`
+                    }
                     placeholderTextColor="#9ca3af"
                     onFocus={() => setIsFocused(true)}
                     onBlur={() => setIsFocused(false)}

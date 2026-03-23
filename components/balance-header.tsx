@@ -48,14 +48,14 @@ export function BalanceHeader({
                 <View className="flex-row justify-between">
                     {/* Income */}
                     <View className="flex-1 flex-row items-center bg-white/5 dark:bg-dark-surface rounded-2xl p-4 mr-2">
-                        <View className="w-10 h-10 rounded-full bg-white/30 items-center justify-center mr-3">
+                        <View className="w-8 h-8 rounded-full bg-white/30 items-center justify-center mr-3">
                             <Icon name="arrow-down" size={22} color="white" />
                         </View>
                         <View>
                             <Text className="text-xs text-white dark:text-gray-400">
                                 Ingresos
                             </Text>
-                            <Text className="text-base font-bold text-white dark:text-income">
+                            <Text className="text-sm font-bold text-white dark:text-income">
                                 +{formatCurrency(income, currency)}
                             </Text>
                         </View>
@@ -63,14 +63,14 @@ export function BalanceHeader({
 
                     {/* Expenses */}
                     <View className="flex-1 flex-row items-center bg-white/5 dark:bg-dark-surface rounded-2xl p-4 ml-2">
-                        <View className="w-10 h-10 rounded-full bg-white/30 items-center justify-center mr-3">
+                        <View className="w-8 h-8 rounded-full bg-white/30 items-center justify-center mr-3">
                             <Icon name="arrow-up" size={22} color="white" />
                         </View>
                         <View>
                             <Text className="text-xs text-white dark:text-gray-400">
                                 Gastos
                             </Text>
-                            <Text className="text-base font-bold text-white dark:text-expense">
+                            <Text className="text-sm font-bold text-white dark:text-expense">
                                 -{formatCurrency(expenses, currency)}
                             </Text>
                         </View>

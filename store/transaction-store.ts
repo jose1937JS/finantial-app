@@ -1,7 +1,7 @@
 import { LoanService } from '@/api/services/loan.service';
 import { TransactionService } from '@/api/services/transaction.service';
 import { useSettingsStore } from '@/store/settings-store';
-import type { Payment, Transaction, TransactionFilters } from '@/types';
+import type { Payment, RateObject, Transaction, TransactionFilters } from '@/types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
@@ -22,9 +22,14 @@ interface TransactionStore {
     filters: TransactionFilters;
     isLoading: boolean;
     error: string | null;
+    // Backend-authoritative balance summary (from /transaction/initial-data)
+    backendBalance: number | null;
+    backendIncome: number | null;
+    backendExpenses: number | null;
 
     // Actions
     fetchTransactions: () => Promise<void>;
+    fetchBalance: () => Promise<void>;
     addTransaction: (transaction: Omit<Transaction, 'id' | 'createdAt' | 'created_at'>) => Promise<void>;
     updateTransaction: (id: string, data: Partial<Transaction>) => void;
     addLoanPayment: (transactionId: string, payment: Payment) => Promise<void>;
@@ -52,12 +57,24 @@ export function mapBackendTransactionToLocal(t: any): Transaction {
         date: t.date ?? t.createdAt,
         createdAt: t.createdAt,
         created_at: t.createdAt,
-        rate: typeof t.rate === 'object' && t.rate !== null
-            ? Number(t.rate.rate)
-            : t.rate,
+        // rate comes as an object {id, currency, rate, ...} from the backend
+        // rate: always stored as a RateObject { id, rate, currency }
+        // Backend sends it as an object; legacy numeric values are wrapped for safety.
+        rate: (() => {
+            if (!t.rate && t.rate !== 0) return undefined;
+            if (typeof t.rate === 'object') {
+                return {
+                    id: t.rate.id,
+                    rate: Number(t.rate.rate),
+                    currency: t.rate.currency,
+                } as RateObject;
+            }
+            // Numeric fallback (shouldn't happen with current backend)
+            return { rate: Number(t.rate) } as RateObject;
+        })(),
         amountInVES: t.amountInVES,
         loanDetailsId: t.loanDetailsId,
-        // Map loan details if present
+        // Map loan details if present (appears on both 'loan' and 'income' loan-payment transactions)
         loan: t.loanDetail
             ? {
                 id: t.loanDetail.id,
@@ -68,6 +85,8 @@ export function mapBackendTransactionToLocal(t: any): Transaction {
                 dueDate: t.loanDetail.expirationDate ?? t.loanDetail.expiration_date,
                 interestRate: Number(t.loanDetail.interestRate ?? t.loanDetail.interest_rate ?? 0),
                 isPaid: t.loanDetail.isPaid ?? false,
+                // Keep payments as-is — they are full transaction objects from the backend.
+                // The history modal accesses p.rate?.rate (object) and p.amountInLoanCurrency directly.
                 payments: t.loanDetail.payments ?? [],
             }
             : undefined,
@@ -81,11 +100,31 @@ export const useTransactionStore = create<TransactionStore>()(
             filters: { type: 'all' },
             isLoading: false,
             error: null,
+            backendBalance: null,
+            backendIncome: null,
+            backendExpenses: null,
+
+            fetchBalance: async () => {
+                try {
+                    const data = await TransactionService.getInitialData();
+                    set({
+                        backendBalance: Number(data.balance ?? data.total ?? 0),
+                        backendIncome: Number(data.income ?? 0),
+                        backendExpenses: Number(data.expense ?? data.expenses ?? 0),
+                    });
+                } catch (error) {
+                    console.error('fetchBalance error:', error);
+                }
+            },
 
             fetchTransactions: async () => {
                 set({ isLoading: true, error: null, transactions: [] });
                 try {
-                    const apiTransactions = await TransactionService.getAll();
+                    // Fetch transactions and backend balance in parallel
+                    const [apiTransactions] = await Promise.all([
+                        TransactionService.getAll(),
+                        get().fetchBalance(),
+                    ]);
                     const mapped: Transaction[] = apiTransactions.map(mapBackendTransactionToLocal);
                     set({ transactions: mapped, isLoading: false });
                 } catch (error: any) {
@@ -107,6 +146,7 @@ export const useTransactionStore = create<TransactionStore>()(
                         date: transactionData.date,
                         type: transactionData.type,
                         category_id: (transactionData as any).categoryId,
+                        rate_id: transactionData.rate_id,
                     };
 
                     if (isLoan && loanInfo) {
@@ -126,11 +166,12 @@ export const useTransactionStore = create<TransactionStore>()(
                         ...transactionData,
                         id: String(created.id ?? Date.now()),
                         createdAt: created.createdAt ?? new Date().toISOString(),
-                        created_at: created.createdAt ?? new Date().toISOString(),
                     };
                     set((state) => ({
                         transactions: [newTransaction, ...state.transactions],
                     }));
+                    // Refresh backend balance so totals stay accurate
+                    get().fetchBalance();
                 } catch (error: any) {
                     console.error('addTransaction error:', error);
                     throw error;
@@ -158,28 +199,52 @@ export const useTransactionStore = create<TransactionStore>()(
                     throw error;
                 }
 
+                // apiResponse.payments[0] is the newest payment and is a full transaction object.
+                // Map it directly so the optimistic income tx has all correct fields.
+                const latestPayment = apiResponse.payments?.[0];
+                const newPaymentTx: Transaction = latestPayment
+                    ? mapBackendTransactionToLocal(latestPayment)
+                    : {
+                        id: String(Date.now()),
+                        type: 'income' as const,
+                        amount: payment.amount,
+                        currency: payment.currency ?? 'USD',
+                        category: 'Pago Préstamo',
+                        description: '',
+                        date: payment.date ?? new Date().toISOString().split('T')[0],
+                        createdAt: new Date().toISOString(),
+                    };
+
                 set((state) => ({
-                    transactions: state.transactions.map((t) => {
-                        if (t.id !== transactionId || t.type !== 'loan' || !t.loan) return t;
+                    transactions: [
+                        // Insert the new income payment transaction
+                        newPaymentTx,
+                        // Update the parent loan entry with the refreshed payments list
+                        ...state.transactions.map((t) => {
+                            if (t.id !== transactionId || t.type !== 'loan' || !t.loan) return t;
 
-                        const newPayments = apiResponse.payments?.map((p: any) => ({
-                            id: String(p.id),
-                            amount: Number(p.amount),
-                            currency: p.currency,
-                            rate: p.rate || p.exchangeRate || p.exchange_rate,
-                            date: p.date
-                        })) || [];
+                            const newPayments = apiResponse.payments?.map((p: any) => ({
+                                id: String(p.id),
+                                amount: Number(p.amount),
+                                currency: p.currency,
+                                amountInLoanCurrency: p.amountInLoanCurrency,
+                                rate: p.rate || p.exchangeRate || p.exchange_rate,
+                                date: p.date,
+                            })) || [];
 
-                        return {
-                            ...t,
-                            loan: {
-                                ...t.loan!,
-                                payments: newPayments,
-                                isPaid: apiResponse.pendingBalance <= 0.01,
-                            },
-                        };
-                    }),
+                            return {
+                                ...t,
+                                loan: {
+                                    ...t.loan!,
+                                    payments: newPayments,
+                                    isPaid: apiResponse.pendingBalance <= 0.01,
+                                },
+                            };
+                        }),
+                    ],
                 }));
+                // Refresh backend balance so totals stay accurate
+                get().fetchBalance();
             },
 
             deleteTransaction: async (id) => {
@@ -241,6 +306,10 @@ export const useTransactionStore = create<TransactionStore>()(
             },
 
             getTotalBalance: () => {
+                const { backendBalance } = get();
+                // Use backend value when available — it accounts for per-transaction rates correctly.
+                if (backendBalance !== null) return backendBalance;
+                // Fallback: local estimate (may differ due to rate drift)
                 const { transactions } = get();
                 return transactions.reduce((acc, t) => {
                     const amountUSD = getAmountInUSD(t);
@@ -251,6 +320,8 @@ export const useTransactionStore = create<TransactionStore>()(
             },
 
             getTotalIncome: () => {
+                const { backendIncome } = get();
+                if (backendIncome !== null) return backendIncome;
                 const { transactions } = get();
                 return transactions
                     .filter((t) => t.type === 'income')
@@ -258,6 +329,8 @@ export const useTransactionStore = create<TransactionStore>()(
             },
 
             getTotalExpenses: () => {
+                const { backendExpenses } = get();
+                if (backendExpenses !== null) return backendExpenses;
                 const { transactions } = get();
                 return transactions
                     .filter((t) => t.type === 'expense' || t.type === 'loan')

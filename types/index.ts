@@ -1,6 +1,14 @@
 // Transaction types
 export type TransactionType = 'income' | 'expense' | 'loan';
 
+export interface RateObject {
+    id?: number;
+    /** Numeric value of the exchange rate */
+    rate: number;
+    /** Source/currency key, e.g. 'BCV_USD', 'BCV_EUR', 'Binance' */
+    currency?: string;
+}
+
 export interface Transaction {
     id: string;
     type: TransactionType;
@@ -9,11 +17,13 @@ export interface Transaction {
     category: string;
     description: string;
     date: string;
-    createdAt: string;
-    created_at: string;
+    createdAt?: string;
+    created_at?: string;
     // Optional currency details
     amountInVES?: number;
-    rate?: number;
+    /** Rate stored as object { id, rate, currency } — use .rate for the numeric value */
+    rate?: RateObject;
+    rate_id?: number;
     // Loan-specific fields
     loan?: LoanDetails;
     loanDetailsId?: number;
@@ -35,9 +45,12 @@ export interface Payment {
     id?: string;
     amount: number;
     currency?: string;
-    rate?: number;
+    /** Raw rate object from backend (has .rate property) or numeric rate */
+    rate?: any;
     date?: string;
     rate_id?: number;
+    /** Amount converted to the loan's original currency (e.g. VES payment → USD) */
+    amountInLoanCurrency?: number;
 }
 
 // User types

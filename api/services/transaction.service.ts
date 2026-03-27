@@ -14,7 +14,9 @@ export const TransactionService = {
     return response.data.data;
   },
   getInitialData: async (): Promise<any> => {
-    const response = await apiClient.get(API_ENDPOINTS.TRANSACTION.GET_INITIAL_DATA);
+    const response = await apiClient.get(API_ENDPOINTS.TRANSACTION.GET_INITIAL_DATA, {
+      params: { _t: Date.now() },
+    });
     return response.data.data;
   },
   getOne: async (id: number): Promise<Transaction> => {

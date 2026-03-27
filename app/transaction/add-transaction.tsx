@@ -138,6 +138,8 @@ export default function AddTransactionScreen() {
                 loan: loanDetails,
             };
 
+            console.log({ transactionPayload: payload })
+
             await addTransaction(payload);
 
             showAlert({

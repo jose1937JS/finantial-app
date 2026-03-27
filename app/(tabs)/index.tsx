@@ -6,8 +6,8 @@ import { primaryColors, useSettingsStore } from '@/store/settings-store';
 import { useTransactionStore } from '@/store/transaction-store';
 import { isAndroid } from '@/utils';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
-import React, { useCallback, useEffect, useState } from 'react';
+import { useFocusEffect, useRouter } from 'expo-router';
+import React, { useCallback, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import Animated, { useAnimatedScrollHandler, useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -19,20 +19,27 @@ export default function HomeScreen() {
 	const scrollY = useSharedValue(0);
 	const { preferences } = useSettingsStore();
 	const primaryColorHex = primaryColors[preferences.primaryColor]?.hex || '#22c55e';
-	const {
-		getRecentTransactions,
-		getTotalBalance,
-		getTotalIncome,
-		getTotalExpenses,
-		fetchTransactions,
-	} = useTransactionStore();
+	const fetchTransactions = useTransactionStore((state) => state.fetchTransactions);
+	const getRecentTransactions = useTransactionStore((state) => state.getRecentTransactions);
+	const getTotalBalance = useTransactionStore((state) => state.getTotalBalance);
+	const getTotalIncome = useTransactionStore((state) => state.getTotalIncome);
+	const getTotalExpenses = useTransactionStore((state) => state.getTotalExpenses);
+
+	// explicitly subscribe to properties so the component re-renders when they update
+	const transactions = useTransactionStore((state) => state.transactions);
+	const backendBalance = useTransactionStore((state) => state.backendBalance);
+	const backendIncome = useTransactionStore((state) => state.backendIncome);
+	const backendExpenses = useTransactionStore((state) => state.backendExpenses);
+
 	const { fetchCategories, fetchRates } = useSettingsStore();
 
-	useEffect(() => {
-		fetchTransactions();
-		fetchCategories();
-		fetchRates();
-	}, []);
+	useFocusEffect(
+		useCallback(() => {
+			fetchTransactions();
+			fetchCategories();
+			fetchRates();
+		}, [])
+	);
 
 	const [refreshing, setRefreshing] = useState(false);
 

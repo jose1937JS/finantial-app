@@ -160,7 +160,8 @@ export default function TransactionDetailScreen() {
     // Note: We don't really have a strict remainingBalanceVES if the debt is pegged to USD,
     // but we can estimate it based on the current rate if original was VES.
     const currentRate = exchangeRates.BCV_USD;
-    const estimatedRemainingVES = remainingBalanceUSD * (transaction.rate || currentRate);
+    const txRateValue = transaction.rate?.rate ?? 0;
+    const estimatedRemainingVES = remainingBalanceUSD * (txRateValue || currentRate);
 
     const forcedRateSource: ExchangeRateSource | null =
         transaction.currency === 'USDT' ? 'Binance' :
@@ -245,7 +246,33 @@ export default function TransactionDetailScreen() {
         }
     };
 
-    console.log(JSON.stringify(transaction, null, 4))
+    const handleOpenParentLoan = async () => {
+        // Try local store first
+        const parentLoan = transactions.find(
+            (t: any) => t.type === 'loan' && t.loanDetailsId === transaction.loanDetailsId
+        );
+        if (parentLoan) {
+            router.push(`/transaction/${parentLoan.id}?type=loan`);
+            return;
+        }
+        // Fallback: fetch from API using loanDetailsId
+        try {
+            const { LoanService } = await import('@/api/services/loan.service');
+            const data = await LoanService.getLoanDetail(transaction.loanDetailsId!);
+            if (data?.loan?.id) {
+                router.push(`/transaction/${data.loan.id}?type=loan`);
+            }
+        } catch {
+            showAlert({
+                title: 'No encontrado',
+                message: 'No se pudo encontrar la transacción original del préstamo.',
+                icon: 'alert-circle',
+                iconColor: '#ef4444'
+            });
+        }
+    }
+
+    console.log(JSON.stringify({ type, transaction }, null, 4))
 
     return (
         <>
@@ -308,7 +335,15 @@ export default function TransactionDetailScreen() {
                         <DetailItem
                             icon="currency-usd"
                             label="Tasa de Cambio"
-                            value={transaction.rate != null ? String(transaction.rate) : 'No aplica'}
+                            value={
+                                transaction.rate
+                                    ? `${transaction.rate.rate.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs.${
+                                        transaction.rate.currency
+                                            ? ` (${transaction.rate.currency === 'BCV_USD' ? 'BCV $' : transaction.rate.currency === 'BCV_EUR' ? 'BCV €' : transaction.rate.currency})`
+                                            : ''
+                                    }`
+                                    : 'No aplica'
+                            }
                         />
                     </View>
 
@@ -322,19 +357,7 @@ export default function TransactionDetailScreen() {
                                 {transaction.type === 'income' && transaction.loanDetailsId && (
                                     <TouchableOpacity
                                         className="p-2 -mr-2"
-                                        onPress={() => {
-                                            const parentLoan = transactions.find((t: any) => t.type === 'loan' && t.loanDetailsId === transaction.loanDetailsId);
-                                            if (parentLoan) {
-                                                router.push(`/transaction/${parentLoan.id}?type=loan`);
-                                            } else {
-                                                showAlert({
-                                                    title: 'No encontrado',
-                                                    message: 'No se pudo verificar la transacción original del préstamo localmente.',
-                                                    icon: 'alert-circle',
-                                                    iconColor: '#ef4444'
-                                                });
-                                            }
-                                        }}
+                                        onPress={handleOpenParentLoan}
                                     >
                                         <MaterialCommunityIcons name="open-in-new" size={24} color={primaryColor} />
                                     </TouchableOpacity>
@@ -423,7 +446,7 @@ export default function TransactionDetailScreen() {
                                     <DetailItem
                                         icon="swap-horizontal"
                                         label="Tasa de Cambio"
-                                        value={formatCurrency(transaction.rate || 0, 'VES')}
+                                        value={formatCurrency(txRateValue, 'VES')}
                                     />
                                     <View className="h-[1px] bg-gray-100 dark:bg-gray-800 my-4" />
                                     <DetailItem
@@ -512,7 +535,7 @@ export default function TransactionDetailScreen() {
 
                                         <View className="bg-orange-50 dark:bg-orange-900/10 p-4 rounded-2xl mb-6">
                                             <Text className="text-orange-700 dark:text-orange-400 font-bold text-center">
-                                                Deuda Restante: {formatCurrency(remainingBalanceUSD, 'USD')}
+                                                Deuda Restante: {formatCurrency(remainingBalanceUSD, transaction.currency)}
                                             </Text>
                                         </View>
 
@@ -579,8 +602,26 @@ export default function TransactionDetailScreen() {
                                                 )}
 
                                                 <Input
-                                                    label="Monto Equivalente (USD)"
-                                                    value={effectiveRate > 0 && paymentAmount ? `$${calculatedUSD}` : '$0.00'}
+                                                    label={
+                                                        activeRateSource === 'BCV_EUR'
+                                                            ? 'Monto Equivalente (Euro)'
+                                                            : activeRateSource === 'Binance'
+                                                                ? 'Monto Equivalente (USDT)'
+                                                                : 'Monto Equivalente (USD)'
+                                                    }
+                                                    value={
+                                                        effectiveRate > 0 && paymentAmount
+                                                            ? activeRateSource === 'BCV_EUR'
+                                                                ? `€ ${calculatedUSD}`
+                                                                : activeRateSource === 'Binance'
+                                                                    ? `${calculatedUSD}`
+                                                                    : `$ ${calculatedUSD}`
+                                                            : activeRateSource === 'BCV_EUR'
+                                                                ? '€ 0.00'
+                                                                : activeRateSource === 'Binance'
+                                                                    ? '0.00'
+                                                                    : '$ 0.00'
+                                                    }
                                                     editable={false}
                                                     leftIcon="calculator"
                                                     containerClassName="opacity-70"

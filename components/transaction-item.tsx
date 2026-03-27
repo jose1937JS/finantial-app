@@ -64,17 +64,10 @@ export function TransactionItem({ transaction, onPress }: TransactionItemProps) 
 
             {/* Details */}
             <View className="flex-1">
-                <View className="flex-row items-center mb-0.5">
+                <View className="flex-row items-center">
                     <Text className="text-base font-semibold text-gray-700 dark:text-white mr-2">
                         {title}
                     </Text>
-                    {transaction.type === 'loan' && transaction.loan && (
-                        <View className={`px-2 py-0.5 rounded-md ${transaction.loan.isPaid ? 'bg-green-100 dark:bg-green-900/30' : 'bg-orange-100 dark:bg-orange-900/30'}`}>
-                            <Text className={`text-[8px] font-semibold ${transaction.loan.isPaid ? 'text-green-600 dark:text-green-400' : 'text-orange-600 dark:text-orange-400'}`}>
-                                {transaction.loan.isPaid ? 'Pagado' : 'Pendiente'}
-                            </Text>
-                        </View>
-                    )}
                 </View>
 
                 {subtitle && (
@@ -87,11 +80,23 @@ export function TransactionItem({ transaction, onPress }: TransactionItemProps) 
                     {transaction.category} • {formatDate(transaction.date)} {transaction.created_at ? formatTime(transaction.created_at) : formatTime(transaction.date)}
                 </Text>
             </View>
+            <View className="flex-col items-end">
+                {/* is paid status */}
+                {transaction.type === 'loan' && transaction.loan && (
+                    <View className={`px-2 py-0.5 rounded-md ${transaction.loan.isPaid ? 'bg-green-100 dark:bg-green-900/30' : 'bg-orange-100 dark:bg-orange-900/30'}`}>
+                        <Text className={`text-[8px] font-semibold ${transaction.loan.isPaid ? 'text-green-600 dark:text-green-400' : 'text-orange-600 dark:text-orange-400'}`}>
+                            {transaction.loan.isPaid ? 'Pagado' : 'Pendiente'}
+                        </Text>
+                    </View>
+                )}
 
-            {/* Amount */}
-            <Text className={`text-base font-bold ${getAmountColor()}`}>
-                {getAmountPrefix()}{formatCurrency(transaction.amount, transaction.currency)}
-            </Text>
+                {/* Amount */}
+                <Text className={`text-base mt-1 font-bold ${getAmountColor()}`}>
+                    {getAmountPrefix()}{formatCurrency(transaction.amount, transaction.currency)}
+                </Text>
+
+            </View>
+
         </Pressable>
     );
 }

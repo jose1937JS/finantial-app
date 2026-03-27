@@ -44,9 +44,9 @@ export function Input({
             )}
 
             <View
-                className={`
-                    flex-row h-14 items-center bg-light-surface dark:bg-dark-surface  rounded-2xl border-2 ${borderColor} ${props.editable === false ? 'bg-gray-300 dark:bg-gray-700' : ''} px-4
-                `}
+                className={
+                    `${props.editable === false ? 'bg-gray-300 dark:bg-gray-700' : 'bg-light-surface dark:bg-dark-surface'} flex-row h-14 items-center rounded-2xl border px-4 ${borderColor}`
+                }
             >
                 {leftIcon && (
                     <MaterialCommunityIcons

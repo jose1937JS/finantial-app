@@ -21,7 +21,7 @@ export default function TransactionDetailScreen() {
     const { id, type } = useLocalSearchParams<{ id: string, type: string }>();
     const router = useRouter();
     const { deleteTransaction, addLoanPayment, transactions } = useTransactionStore();
-    const { exchangeRates } = useSettingsStore();
+    const { exchangeRates, exchangeRateIds } = useSettingsStore();
     const primaryColor = useThemeColor({}, 'tint');
     const { showAlert } = useAlert();
     // Payment Form State
@@ -149,9 +149,9 @@ export default function TransactionDetailScreen() {
     const interestAmountVES = transaction.loan ? calculateInterest(amountVES, transaction.loan.interestRate) : 0;
     const totalAmountVES = amountVES + interestAmountVES;
 
-    // Repayment Logic
+    // Repayment Logic — use amountInLoanCurrency (backend-calculated USD equivalent)
     const payments = transaction.loan?.payments || [];
-    const totalPaidUSD = payments.reduce((acc: number, p: any) => acc + Number(p.amount), 0);
+    const totalPaidUSD = payments.reduce((acc: number, p: any) => acc + Number(p.amountInLoanCurrency ?? p.amount), 0);
     const remainingBalanceUSD = totalAmount - totalPaidUSD;
     // const isFullyPaid = totalPaidUSD >= totalAmount - 0.01;
 
@@ -181,12 +181,10 @@ export default function TransactionDetailScreen() {
         : paymentAmount;
 
     const handleAddPayment = async () => {
-        // For VES: amount in USD = raw / rate. For USD/USDT: amount as entered.
-        const amountVAL = paymentCurrency === 'VES'
-            ? parseFloat(calculatedUSD)
-            : parseFloat(paymentAmount);
+        // Validate the entered amount (always in the selected currency)
+        const rawAmount = parseFloat(paymentAmount);
 
-        if (isNaN(amountVAL) || amountVAL <= 0) {
+        if (isNaN(rawAmount) || rawAmount <= 0) {
             setShowPaymentModal(false);
             showAlert({
                 title: 'Error',
@@ -197,7 +195,12 @@ export default function TransactionDetailScreen() {
             return;
         }
 
-        if (amountVAL > remainingBalanceUSD + 0.01) {
+        // For balance validation we still compare in USD equivalent
+        const amountInUSD = paymentCurrency === 'VES' && effectiveRate > 0
+            ? rawAmount / effectiveRate
+            : rawAmount;
+
+        if (amountInUSD > remainingBalanceUSD + 0.01) {
             setShowPaymentModal(false);
             showAlert({
                 title: 'Error',
@@ -209,7 +212,12 @@ export default function TransactionDetailScreen() {
         }
 
         try {
-            await addLoanPayment(transaction.id, { amount: amountVAL });
+            await addLoanPayment(transaction.id, {
+                amount: rawAmount,
+                currency: paymentCurrency,
+                // Only send rate_id when paying in VES, matching the transaction creation logic
+                ...(paymentCurrency === 'VES' && { rate_id: exchangeRateIds[activeRateSource] }),
+            });
             setShowPaymentModal(false);
             showAlert({
                 title: 'Pago registrado',
@@ -224,9 +232,13 @@ export default function TransactionDetailScreen() {
             // Refetch details
             fetchDetail();
         } catch (e: any) {
+            setShowPaymentModal(false);
+            const backendMsg = e?.response?.data?.message;
             showAlert({
                 title: 'Error',
-                message: e?.message || 'Ocurrió un error al registrar el pago',
+                message: Array.isArray(backendMsg)
+                    ? backendMsg.join('\n')
+                    : backendMsg || e?.message || 'Ocurrió un error al registrar el pago',
                 icon: 'alert-circle',
                 iconColor: '#ef4444'
             });
@@ -260,13 +272,15 @@ export default function TransactionDetailScreen() {
                         >
                             <MaterialCommunityIcons name={getIcon()} size={40} color={getColor()} />
                         </View>
-                        <Text className="text-3xl font-bold text-gray-700 dark:text-white mb-1">
+                        <Text className="text-3xl font-bold text-gray-700 dark:text-white">
                             {formatCurrency(transaction.amount, transaction.currency)}
                         </Text>
-                        <Text className='text-md font-medium uppercase tracking-wider'>
-                            {transaction.currency === 'VES' ? `${(transaction.amount / exchangeRates.BCV_USD).toFixed(2)} USD` : ''}
-                        </Text>
-                        <Text className="text-base text-gray-500 dark:text-gray-400 font-medium uppercase tracking-wider mt-3">
+                        {transaction.currency === 'VES' && (
+                            <Text className='text-lg font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mt-1 mb-2'>
+                                {transaction.currency === 'VES' ? `${(transaction.amount / exchangeRates.BCV_USD).toFixed(2)} USD` : ''}
+                            </Text>
+                        )}
+                        <Text className="text-base text-gray-500 dark:text-gray-400 font-medium uppercase tracking-wider">
                             {transaction.type === 'income' ? 'Ingreso' : transaction.type === 'expense' ? 'Gasto' : 'Préstamo'}
                         </Text>
                     </View>
@@ -294,7 +308,7 @@ export default function TransactionDetailScreen() {
                         <DetailItem
                             icon="currency-usd"
                             label="Tasa de Cambio"
-                            value={transaction.rate}
+                            value={transaction.rate != null ? String(transaction.rate) : 'No aplica'}
                         />
                     </View>
 
@@ -468,11 +482,11 @@ export default function TransactionDetailScreen() {
                     {transaction.type === 'loan' && payments.length > 0 && (
                         <Button
                             onPress={() => setShowHistoryModal(true)}
-                            variant="secondary"
+                            variant="outline"
                         >
                             <View className="flex-row items-center justify-center">
                                 <MaterialCommunityIcons name="history" size={20} color={primaryColor} />
-                                <Text className="ml-2 font-semibold">Ver Historial de Pagos ({payments.length})</Text>
+                                <Text className="ml-2 font-semibold text-primary dark:text-primary">Ver Historial de Pagos ({payments.length})</Text>
                             </View>
                         </Button>
                     )}
@@ -643,38 +657,56 @@ export default function TransactionDetailScreen() {
                                 </View>
 
                                 <ScrollView className="p-6" showsVerticalScrollIndicator={false}>
-                                    {transaction?.loan?.payments?.map((p: any, index: number) => (
-                                        <View key={p.id}>
-                                            <View className="flex-row justify-between items-center py-3">
-                                                <View className="flex-row items-center flex-1">
-                                                    <View className="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900/30 items-center justify-center mr-3">
-                                                        <MaterialCommunityIcons name="cash-check" size={20} color="#22c55e" />
+                                    {transaction?.loan?.payments?.map((p: any, index: number) => {
+                                        // payment amount in the currency it was paid with
+                                        const paidAmount = Number(p.amount);
+                                        const paidCurrency = p.currency || 'USD';
+                                        // equivalent in the loan's original currency
+                                        const loanCurrencyAmount = p.amountInLoanCurrency != null
+                                            ? Number(p.amountInLoanCurrency)
+                                            : null;
+                                        const loanCurrency = transaction.currency || 'USD';
+                                        // rate value from the rate object
+                                        const rateValue = p.rate?.rate ? Number(p.rate.rate) : null;
+
+                                        return (
+                                            <View key={p.id}>
+                                                <View className="flex-row justify-between items-center py-3">
+                                                    <View className="flex-row items-center flex-1">
+                                                        <View className="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900/30 items-center justify-center mr-3">
+                                                            <MaterialCommunityIcons name="cash-check" size={20} color="#22c55e" />
+                                                        </View>
+                                                        <View>
+                                                            {/* Primary: amount in payment currency */}
+                                                            <Text className="text-gray-800 dark:text-white font-semibold text-base">
+                                                                {formatCurrency(paidAmount, paidCurrency)}
+                                                            </Text>
+                                                            <Text className="text-sm text-gray-500 dark:text-gray-400">
+                                                                {formatDate(p.date)}
+                                                            </Text>
+                                                        </View>
                                                     </View>
-                                                    <View>
-                                                        <Text className="text-gray-800 dark:text-white font-semibold text-base">
-                                                            {formatCurrency(p.amount, 'USD')}
-                                                        </Text>
-                                                        <Text className="text-sm text-gray-500 dark:text-gray-400">
-                                                            {formatDate(p.date)}
-                                                        </Text>
-                                                    </View>
+
+                                                    {/* Secondary: equivalent in loan currency (only when different) */}
+                                                    {loanCurrencyAmount != null && paidCurrency !== loanCurrency && (
+                                                        <View className="items-end ml-2">
+                                                            <Text className="text-sm font-semibold text-gray-600 dark:text-gray-300">
+                                                                {formatCurrency(loanCurrencyAmount, loanCurrency)}
+                                                            </Text>
+                                                            {rateValue && (
+                                                                <Text className="text-xs text-gray-400">
+                                                                    Tasa: {rateValue.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                                                </Text>
+                                                            )}
+                                                        </View>
+                                                    )}
                                                 </View>
-                                                {p.currency === 'VES' && (
-                                                    <View className="items-end">
-                                                        <Text className="text-sm text-gray-600 dark:text-gray-300">
-                                                            {formatCurrency(p.amount * (p.rate || 1), 'VES')}
-                                                        </Text>
-                                                        <Text className="text-xs text-gray-400">
-                                                            Tasa: {p.rate}
-                                                        </Text>
-                                                    </View>
+                                                {index < (transaction.loan.payments?.length || 0) - 1 && (
+                                                    <View className="h-[1px] bg-gray-200 dark:bg-gray-800 my-1 ml-14" />
                                                 )}
                                             </View>
-                                            {index < (transaction.loan.payments?.length || 0) - 1 && (
-                                                <View className="h-[1px] bg-gray-200 dark:bg-gray-800 my-1 ml-14" />
-                                            )}
-                                        </View>
-                                    ))}
+                                        );
+                                    })}
                                     <View className="h-12" />
                                 </ScrollView>
                             </View>

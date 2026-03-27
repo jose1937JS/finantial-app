@@ -37,6 +37,7 @@ export interface Payment {
     currency?: string;
     rate?: number;
     date?: string;
+    rate_id?: number;
 }
 
 // User types

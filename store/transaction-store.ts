@@ -52,7 +52,9 @@ export function mapBackendTransactionToLocal(t: any): Transaction {
         date: t.date ?? t.createdAt,
         createdAt: t.createdAt,
         created_at: t.createdAt,
-        rate: t.rate,
+        rate: typeof t.rate === 'object' && t.rate !== null
+            ? Number(t.rate.rate)
+            : t.rate,
         amountInVES: t.amountInVES,
         loanDetailsId: t.loanDetailsId,
         // Map loan details if present
@@ -81,7 +83,7 @@ export const useTransactionStore = create<TransactionStore>()(
             error: null,
 
             fetchTransactions: async () => {
-                set({ isLoading: true, error: null });
+                set({ isLoading: true, error: null, transactions: [] });
                 try {
                     const apiTransactions = await TransactionService.getAll();
                     const mapped: Transaction[] = apiTransactions.map(mapBackendTransactionToLocal);
@@ -148,6 +150,8 @@ export const useTransactionStore = create<TransactionStore>()(
                 try {
                     apiResponse = await LoanService.registerPayment(Number(transactionId), {
                         amount: payment.amount,
+                        currency: payment.currency as 'USD' | 'VES' | 'USDT' | undefined,
+                        rate_id: payment.rate_id,
                     });
                 } catch (error) {
                     console.error('registerPayment API error:', error);

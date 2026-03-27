@@ -4,7 +4,9 @@ import { API_ENDPOINTS } from '../endpoints';
 
 export const TransactionService = {
   getAll: async (): Promise<Transaction[]> => {
-    const response = await apiClient.get(API_ENDPOINTS.TRANSACTION.GET_ALL);
+    const response = await apiClient.get(API_ENDPOINTS.TRANSACTION.GET_ALL, {
+      params: { _t: Date.now() },
+    });
     return response.data.data;
   },
   create: async (data: CreateTransactionDto): Promise<Transaction> => {

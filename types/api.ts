@@ -150,6 +150,7 @@ export interface LoanPaymentDto {
   amount: number;
   currency?: 'USD' | 'VES' | 'USDT';
   exchange_rate?: number;
+  rate_id?: number;
   date?: string;
 }
 

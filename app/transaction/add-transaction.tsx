@@ -151,6 +151,7 @@ export default function AddTransactionScreen() {
                 }]
             });
         } catch (error) {
+
             showAlert({ title: 'Error', message: 'No se pudo agregar la transacción', icon: 'alert-circle', iconColor: '#ef4444' });
         } finally {
             setIsLoading(false);

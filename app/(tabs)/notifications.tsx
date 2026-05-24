@@ -1,11 +1,11 @@
+import { NotificationService } from '@/api/services/notification.service';
+import { Card } from '@/components/ui/card';
+import { primaryColors, useSettingsStore } from '@/store/settings-store';
+import { formatDate } from '@/utils/format';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import React, { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, Pressable, RefreshControl, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
-import { NotificationService } from '@/api/services/notification.service';
-import { Card } from '@/components/ui/card';
-import { formatDate } from '@/utils/format';
 
 // Use API Notification type directly since it has the same shape
 interface AppNotification {
@@ -21,6 +21,8 @@ export default function NotificationsScreen() {
     const [notifications, setNotifications] = useState<AppNotification[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [isRefreshing, setIsRefreshing] = useState(false);
+    const { preferences } = useSettingsStore();
+    const currentPrimaryColor = primaryColors[preferences.primaryColor]?.hex || '#22c55e';
 
     const loadNotifications = useCallback(async (refresh = false) => {
         if (refresh) {
@@ -69,9 +71,14 @@ export default function NotificationsScreen() {
         <SafeAreaView edges={['top']} className="flex-1 bg-light-bg dark:bg-dark-bg">
             {/* Header */}
             <View className="px-5 pt-4 pb-2 flex-row items-center justify-between">
-                <Text className="text-2xl font-bold text-gray-700 dark:text-white">
-                    Notificaciones
-                </Text>
+                <View className='flex-row items-center gap-3 mb-1'>
+                    <View className='w-9 h-9 rounded-full bg-primary-500/10 dark:bg-dark-surface items-center justify-center'>
+                        <MaterialCommunityIcons name='bell-ring-outline' size={18} color={currentPrimaryColor} />
+                    </View>
+                    <Text className="text-2xl font-bold text-gray-700 dark:text-white">
+                        Notificaciones
+                    </Text>
+                </View>
                 {notifications.length > 0 && (
                     <Pressable onPress={handleMarkAllRead}>
                         <Text className="text-sm text-primary-500 font-medium">

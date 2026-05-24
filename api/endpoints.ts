@@ -46,6 +46,12 @@ export const API_ENDPOINTS = {
     GET_ALL: '/api/v1/user-setting',
     UPSERT: '/api/v1/user-setting',
   },
+  JOB: {
+    GET_ALL: '/api/v1/jobs',
+    CREATE: '/api/v1/jobs',
+    GET_ONE: (id: number) => `/api/v1/jobs/${id}`,
+    ADD_PAYMENT: (id: number) => `/api/v1/jobs/${id}/payments`,
+  },
   CHART: {
     INCOME_EXPENSE: '/api/v1/chart/income-expense',
     EXPENSES_BY_CATEGORY: '/api/v1/chart/expenses-by-category',

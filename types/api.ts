@@ -191,3 +191,90 @@ export interface ApiErrorResponse {
   timestamp: string;
   path: string;
 }
+
+export interface JobRate {
+  id: number;
+  currency: string;
+  rate: string;
+}
+
+export interface JobDebt {
+  id: number;
+  job_id: number;
+  currency: string;
+  amount_owed: string;
+  amount_paid: string;
+  total_payments_made: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface JobPayment {
+  id: number;
+  job_id: number;
+  amount: string;
+  currency: string;
+  date: string;
+  type: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface JobSummary {
+  id: number;
+  name: string;
+  company: string;
+  logo: string;
+  payments_made: number;
+  expected_payments: number;
+  payment_ratio: number;
+  salary: string;
+  currency: string;
+  debt_usd: number;
+}
+
+export interface JobDetail {
+  id: number;
+  name: string;
+  description: string;
+  salary: string;
+  currency: string;
+  rate: JobRate;
+  monthly_payment_frequency: number;
+  company: string;
+  start_date: string;
+  logo: string;
+  user_id: number;
+  debt: JobDebt;
+  payments: JobPayment[];
+  createdAt: string;
+  updatedAt: string;
+  expected_payments: number;
+  debt_usd: number;
+  expected_amount_per_period_usd: number;
+  equivalent_calculation: {
+    salary_ves: number;
+    debt_ves: number;
+    rate_value: number;
+  };
+}
+
+export interface CreateJobDto {
+  name: string;
+  description: string;
+  salary: string;
+  currency: string;
+  rate_id: number;
+  monthly_payment_frequency: number;
+  company: string;
+  start_date: string;
+  logo: string;
+}
+
+export interface CreateJobPaymentDto {
+  amount: number;
+  currency: string;
+  date: string;
+  type: string;
+}
+

@@ -1,13 +1,13 @@
+import { TransactionItem } from '@/components/transaction-item';
+import { Chip } from '@/components/ui/chip';
+import { primaryColors, useSettingsStore } from '@/store/settings-store';
+import { useTransactionStore } from '@/store/transaction-store';
+import type { TransactionType } from '@/types';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { FlatList, Pressable, RefreshControl, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
-import { TransactionItem } from '@/components/transaction-item';
-import { Chip } from '@/components/ui/chip';
-import { useTransactionStore } from '@/store/transaction-store';
-import type { TransactionType } from '@/types';
-import { useRouter } from 'expo-router';
 
 type FilterType = 'all' | TransactionType;
 
@@ -15,6 +15,8 @@ export default function HistoryScreen() {
     const router = useRouter();
     const [searchQuery, setSearchQuery] = useState('');
     const [activeFilter, setActiveFilter] = useState<FilterType>('all');
+    const { preferences } = useSettingsStore();
+    const currentPrimaryColor = primaryColors[preferences.primaryColor]?.hex || '#22c55e';
 
     const { transactions, setFilters, getFilteredTransactions, fetchTransactions } = useTransactionStore();
 
@@ -65,9 +67,17 @@ export default function HistoryScreen() {
     return (
         <SafeAreaView edges={['top']} className="flex-1 bg-light-bg dark:bg-dark-bg">
             {/* Header */}
-            <View className="px-5 pt-4 pb-5">
-                <Text className="text-2xl font-bold text-gray-700 dark:text-white mb-4">
-                    Historial
+            <View className="px-5 pb-5">
+                <View className='flex-row items-center gap-3 mb-1'>
+                    <View className='w-10 h-10 rounded-full bg-primary-500/10 dark:bg-dark-surface items-center justify-center'>
+                        <MaterialCommunityIcons name='history' size={20} color={currentPrimaryColor} />
+                    </View>
+                    <Text className="text-3xl font-bold text-gray-700 dark:text-white">
+                        Historial
+                    </Text>
+                </View>
+                <Text className="text-sm text-gray-500 dark:text-gray-400 mt-1 mb-4">
+                    Aquí puedes encontrar todas tus transacciones.
                 </Text>
 
                 {/* Search Bar */}

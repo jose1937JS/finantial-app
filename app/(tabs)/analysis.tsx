@@ -8,9 +8,10 @@ import { PieChart } from '@/components/charts/pie-chart';
 import { Card } from '@/components/ui/card';
 import { Chip } from '@/components/ui/chip';
 import { useThemeColor } from '@/hooks/use-theme-color';
-import { useSettingsStore } from '@/store/settings-store';
+import { primaryColors, useSettingsStore } from '@/store/settings-store';
 import { useTransactionStore } from '@/store/transaction-store';
 import type { PieChartData } from '@/types';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 type DateFilter = '7d' | '1m' | '1y';
 
@@ -115,6 +116,9 @@ export default function AnalysisScreen() {
     const [categoryChartData, setCategoryChartData] = useState<PieChartData[] | null>(null);
     const [timelineData, setTimelineData] = useState<any>(null);
     const [isLoadingCharts, setIsLoadingCharts] = useState(false);
+
+    const { preferences } = useSettingsStore();
+    const currentPrimaryColor = primaryColors[preferences.primaryColor]?.hex || '#22c55e';
 
     const loadCharts = useCallback(async () => {
         setIsLoadingCharts(true);
@@ -234,6 +238,20 @@ export default function AnalysisScreen() {
 
     return (
         <SafeAreaView edges={['top']} className="flex-1 bg-light-bg dark:bg-dark-bg">
+            {/* Header */}
+            <View className="px-5">
+                <View className='flex-row items-center gap-3 mb-1'>
+                    <View className='w-10 h-10 rounded-full bg-primary-500/10 dark:bg-dark-surface items-center justify-center'>
+                        <MaterialCommunityIcons name='chart-line' size={18} color={currentPrimaryColor} />
+                    </View>
+                    <Text className="text-3xl font-bold text-gray-700 dark:text-white">
+                        Análisis
+                    </Text>
+                </View>
+                <Text className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                    Aquí puedes analizar tus transacciones!
+                </Text>
+            </View>
             <ScrollView
                 contentContainerStyle={{ padding: 20 }}
                 showsVerticalScrollIndicator={false}
@@ -246,11 +264,6 @@ export default function AnalysisScreen() {
                     />
                 }
             >
-                {/* Header */}
-                <Text className="text-2xl font-bold text-gray-700 dark:text-white mb-6">
-                    Análisis
-                </Text>
-
                 {/* Income vs Expenses Chart */}
                 <View className="mb-6">
                     <LineChart

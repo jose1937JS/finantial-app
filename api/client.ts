@@ -1,4 +1,3 @@
-import { useAuthStore } from '@/store/auth-store';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios, { AxiosError, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
 
@@ -45,7 +44,12 @@ apiClient.interceptors.response.use(
       // Implementation depends on auth state management
       // Example: clear token and redirect
       // Optionally trigger an event to log the user out via Zustand or similar
-      useAuthStore.getState().logout();
+      try {
+        const { useAuthStore } = require('@/store/auth-store');
+        useAuthStore.getState().logout();
+      } catch (e) {
+        console.error('Failed to logout dynamically', e);
+      }
     }
     return Promise.reject(error);
   }

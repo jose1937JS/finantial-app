@@ -8,9 +8,18 @@ import { StatusBar } from 'expo-status-bar';
 import { vars } from 'nativewind';
 import { useEffect } from 'react';
 import { useColorScheme as useDeviceColorScheme } from 'react-native';
-import { View } from 'react-native';
-import 'react-native-reanimated';
+import { LogBox, View } from 'react-native';
+import { configureReanimatedLogger, ReanimatedLogLevel } from 'react-native-reanimated';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+
+configureReanimatedLogger({
+	level: ReanimatedLogLevel.warn,
+	strict: false,
+});
+
+LogBox.ignoreLogs([
+	"SafeAreaView has been deprecated and will be removed in a future release. Please use 'react-native-safe-area-context' instead.",
+]);
 import '../global.css';
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -101,6 +110,27 @@ function RootLayoutContent() {
 						/>
 						<Stack.Screen
 							name="transaction/[id]"
+							options={{
+								presentation: 'card',
+								headerShown: false,
+							}}
+						/>
+						<Stack.Screen
+							name="jobs/create"
+							options={{
+								presentation: 'card',
+								headerShown: false,
+							}}
+						/>
+						<Stack.Screen
+							name="jobs/[id]"
+							options={{
+								presentation: 'card',
+								headerShown: false,
+							}}
+						/>
+						<Stack.Screen
+							name="jobs/[id]/payments"
 							options={{
 								presentation: 'card',
 								headerShown: false,

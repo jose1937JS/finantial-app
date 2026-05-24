@@ -116,13 +116,22 @@ export default function HomeScreen() {
 											Resumen Financiero
 										</Text>
 									</View>
-									<Pressable
-										style={{ elevation: isAndroid ? 20 : undefined }}
-										onPress={handleAnalysis}
-										className={`w-12 h-12 bg-primary-500 rounded-full items-center justify-center ${!isAndroid && 'shadow-lg'}`}
-									>
-										<MaterialCommunityIcons name="chart-pie" size={28} color="#fff" />
-									</Pressable>
+									<View className="flex-row gap-2">
+										<Pressable
+											style={{ elevation: isAndroid ? 20 : undefined }}
+											onPress={() => router.push('/(tabs)/notifications')}
+											className={`w-12 h-12 bg-primary-500 rounded-full items-center justify-center`}
+										>
+											<MaterialCommunityIcons name="bell-outline" size={26} color="#fff" />
+										</Pressable>
+										<Pressable
+											style={{ elevation: isAndroid ? 20 : undefined }}
+											onPress={handleAnalysis}
+											className={`w-12 h-12 bg-primary-500 rounded-full items-center justify-center`}
+										>
+											<MaterialCommunityIcons name="chart-pie" size={28} color="#fff" />
+										</Pressable>
+									</View>
 								</View>
 
 								{/* Balance Card */}

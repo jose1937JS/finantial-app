@@ -85,10 +85,10 @@ export default function TabLayout() {
 				})}
 			/>
 			<Tabs.Screen
-				name="notifications"
+				name="salary"
 				options={{
-					title: 'Alertas',
-					tabBarIcon: ({ color }) => getTabIcon('bell-outline', color),
+					title: 'Salario',
+					tabBarIcon: ({ color }) => getTabIcon('cash-multiple', color),
 				}}
 			/>
 			<Tabs.Screen
@@ -100,6 +100,12 @@ export default function TabLayout() {
 			/>
 
 			{/* Hidden tabs */}
+			<Tabs.Screen
+				name="notifications"
+				options={{
+					href: null,
+				}}
+			/>
 			<Tabs.Screen
 				name="analysis"
 				options={{

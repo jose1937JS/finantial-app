@@ -1,9 +1,3 @@
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
-import { Image, Pressable, ScrollView, Switch, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { SelectModal, SelectOption } from '@/components/ui/select-modal';
@@ -11,6 +5,11 @@ import { useAlert } from '@/hooks/alert-context';
 import { useAuthStore } from '@/store/auth-store';
 import { primaryColors, useSettingsStore } from '@/store/settings-store';
 import type { Currency, Language, PrimaryColor } from '@/types';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import React, { useState } from 'react';
+import { Image, Pressable, ScrollView, Switch, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 
 interface SettingItemProps {
@@ -143,14 +142,24 @@ export default function SettingsScreen() {
 
     return (
         <SafeAreaView edges={['top']} className="flex-1 bg-light-bg dark:bg-dark-bg">
+            {/* Header */}
+            <View className="px-5 pb-6">
+                <View className='flex-row items-center gap-3 mb-1'>
+                    <View className='w-10 h-10 rounded-full bg-primary-500/10 dark:bg-dark-surface items-center justify-center'>
+                        <MaterialCommunityIcons name='cog-outline' size={20} color={currentPrimaryColor} />
+                    </View>
+                    <Text className="text-3xl font-bold text-gray-700 dark:text-white">
+                        Ajustes
+                    </Text>
+                </View>
+                <Text className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                    Aquí puedes personalizar tu experiencia!
+                </Text>
+            </View>
             <ScrollView
-                contentContainerStyle={{ padding: 20 }}
+                contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 20 }}
                 showsVerticalScrollIndicator={false}
             >
-                {/* Header */}
-                <Text className="text-2xl font-bold text-gray-700 dark:text-white mb-6">
-                    Ajustes
-                </Text>
 
                 {/* Profile Section */}
                 <Card className="mb-6 shadow-sm shadow-slate-200 dark:shadow-slate-700">

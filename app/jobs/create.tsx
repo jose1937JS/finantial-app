@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { useAlert } from '@/hooks/alert-context';
 import { useCreateJobMutation } from '@/hooks/mutations/useJobMutations';
 import { useSettingsStore } from '@/store/settings-store';
-import { validateAmount, validateRequired, validateDate } from '@/utils/validation';
+import { validateAmount, validateDate, validateRequired } from '@/utils/validation';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, Text, View } from 'react-native';
@@ -15,7 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function CreateJobScreen() {
   const router = useRouter();
-  const { exchangeRates, exchangeRateIds } = useSettingsStore();
+  const { exchangeRates } = useSettingsStore();
   const { showAlert } = useAlert();
   const createJobMutation = useCreateJobMutation();
 
@@ -25,7 +25,7 @@ export default function CreateJobScreen() {
   const [company, setCompany] = useState('');
   const [salary, setSalary] = useState('');
   const [currency, setCurrency] = useState<'USD' | 'VES' | 'USDT'>('USD');
-  const [rateSource, setRateSource] = useState<'BCV_USD' | 'BCV_EUR' | 'Binance'>('BCV_USD');
+  const [rateSource, setRateSource] = useState<'BCV_USD' | 'BCV_EUR' | 'Binance' | 'USDT'>('BCV_USD');
   const [frequency, setFrequency] = useState<1 | 2>(2); // 1 = Monthly, 2 = Bi-weekly (Quincenal)
   const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
 
@@ -56,20 +56,19 @@ export default function CreateJobScreen() {
     setIsLoading(true);
 
     try {
-      // Find the selected rate ID
-      const rateId = exchangeRateIds[rateSource] || 6; // fallback to 6 as BCV_USD ID
-
       const payload = {
         name,
         description,
         salary,
         currency,
-        rate_id: rateId,
+        rate: rateSource,
         monthly_payment_frequency: frequency,
         company,
         start_date: startDate,
         logo: '',
       };
+
+      console.log(JSON.stringify(payload, null, 4))
 
       await createJobMutation.mutateAsync(payload);
 
@@ -84,6 +83,7 @@ export default function CreateJobScreen() {
         }]
       });
     } catch (error) {
+      console.log(JSON.stringify(error, null, 4))
       showAlert({
         title: 'Error',
         message: 'No se pudo registrar el trabajo',
@@ -199,6 +199,12 @@ export default function CreateJobScreen() {
                     selected={rateSource === 'Binance'}
                     onPress={() => setRateSource('Binance')}
                     variant={rateSource === 'Binance' ? 'default' : 'outline'}
+                  />
+                  <Chip
+                    label="USDT"
+                    selected={rateSource === 'USDT'}
+                    onPress={() => setRateSource('USDT')}
+                    variant={rateSource === 'USDT' ? 'default' : 'outline'}
                   />
                 </View>
               </View>

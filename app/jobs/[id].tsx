@@ -5,17 +5,29 @@ import { useJob } from '@/hooks/queries/useJobQueries';
 import { primaryColors, useSettingsStore } from '@/store/settings-store';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React from 'react';
-import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
+import React, { useCallback, useState } from 'react';
+import { ActivityIndicator, RefreshControl, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function JobDetailsScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const jobId = id ? parseInt(id, 10) : 0;
-  const { data: job, isLoading, error } = useJob(jobId);
+  const { data: job, isLoading, error, refetch } = useJob(jobId);
   const { preferences } = useSettingsStore();
   const primaryColorHex = primaryColors[preferences.primaryColor]?.hex || '#22c55e';
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await refetch();
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setRefreshing(false);
+    }
+  }, [refetch]);
 
   if (isLoading) {
     return (
@@ -52,6 +64,14 @@ export default function JobDetailsScreen() {
         <ScrollView
           contentContainerStyle={{ padding: 15 }}
           showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              colors={[primaryColorHex]}
+              tintColor={primaryColorHex}
+            />
+          }
         >
           {/* Main Info Card */}
           <Card className="mb-6 shadow-sm shadow-slate-200 dark:shadow-slate-700 p-5">

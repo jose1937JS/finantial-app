@@ -2,6 +2,7 @@ import { AlertButton, AlertModal } from '@/components/ui/alert-modal';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import React, { createContext, useCallback, useContext, useRef, useState } from 'react';
 import { Alert, Platform } from 'react-native';
+import Toast from 'react-native-toast-message';
 
 interface AlertConfig {
     title: string;
@@ -26,6 +27,29 @@ export function AlertProvider({ children }: { children: React.ReactNode }) {
     const isNavigatingRef = useRef(false);
 
     const showAlert = useCallback((newConfig: AlertConfig) => {
+        const titleLower = (newConfig.title || '').toLowerCase();
+        const isSuccess = titleLower.includes('éxito') || titleLower.includes('exito') || titleLower === 'success';
+        const isError = titleLower.includes('error') || titleLower.includes('falló') || titleLower.includes('fallo') || titleLower === 'failure';
+
+        if (isSuccess || isError) {
+            Toast.show({
+                type: isSuccess ? 'success' : 'error',
+                text1: newConfig.title,
+                text2: newConfig.message,
+                position: 'top',
+                visibilityTime: 3000,
+            });
+
+            // Execute the onPress callback of the first actionable button immediately
+            if (newConfig.buttons && newConfig.buttons.length > 0) {
+                const actionableButton = newConfig.buttons.find(btn => btn.onPress);
+                if (actionableButton && actionableButton.onPress) {
+                    actionableButton.onPress();
+                }
+            }
+            return;
+        }
+
         // On iOS, if useNativeOnIOS is true or there are action buttons with navigation,
         // use the native Alert to avoid freezing issues
         if (Platform.OS === 'ios' && newConfig.useNativeOnIOS) {

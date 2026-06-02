@@ -5,7 +5,7 @@ import { CustomHeader } from '@/components/ui/custom-header';
 import { DatePickerModal, DatePickerTrigger } from '@/components/ui/date-picker-modal';
 import { Input } from '@/components/ui/input';
 import { useAlert } from '@/hooks/alert-context';
-import { useSettingsStore } from '@/store/settings-store';
+import { primaryColors, useSettingsStore } from '@/store/settings-store';
 import { useTransactionStore } from '@/store/transaction-store';
 import type { Currency, ExchangeRateSource, LoanDetails, TransactionType } from '@/types';
 import { validateAmount, validateDate, validateEmail, validatePhone, validateRequired } from '@/utils/validation';
@@ -21,7 +21,8 @@ export default function AddTransactionScreen() {
     const router = useRouter();
     const params = useLocalSearchParams<{ type?: string }>();
     const { addTransaction } = useTransactionStore();
-    const { categories, exchangeRates, exchangeRateIds } = useSettingsStore();
+    const { preferences, categories, exchangeRates, exchangeRateIds } = useSettingsStore();
+    const primaryColorHex = primaryColors[preferences.primaryColor]?.hex || '#22c55e';
     const { showAlert } = useAlert();
     // Form state
     const [operationType, setOperationType] = useState<OperationType>(
@@ -66,6 +67,70 @@ export default function AddTransactionScreen() {
 
     const loandCategory = categories.find(c => c.type === 'expense' || c.name.replace(/\s/g, '').toLowerCase() === 'prestamo' || c.name.replace(/\s/g, '').toLowerCase() === 'préstamo');
 
+    const saveTransaction = async () => {
+        setIsLoading(true);
+
+        try {
+            const loanDetails: LoanDetails | undefined = operationType === 'loan' ? {
+                debtorName,
+                debtorLastName,
+                debtorEmail: debtorEmail || undefined,
+                debtorPhone: debtorPhone || undefined,
+                dueDate: (() => {
+                    const d = new Date(dueDate);
+                    d.setHours(12, 0, 0, 0);
+                    return d.toISOString();
+                })(),
+                interestRate: parseFloat(interestRate) || 0,
+                isPaid: false,
+            } : undefined;
+
+            const payload = {
+                type: operationType,
+                amount: parseFloat(amount),
+                currency: currency,
+                category: categories.find(c => c.id === categoryId)?.name || 'Otros',
+                categoryId: parseInt(categoryId, 10),
+                description: description,
+                date: (() => {
+                    const d = new Date(date);
+                    d.setHours(12, 0, 0, 0);
+                    return d.toISOString();
+                })(),
+                created_at: new Date().toISOString(),
+                rate_id: exchangeRateIds[rateSource],
+                loan: loanDetails,
+            };
+
+            console.log({
+                transactionPayload: payload,
+                rate: {
+                    id: exchangeRateIds[rateSource],
+                    rate: exchangeRate,
+                    currency: rateSource,
+                },
+            })
+
+            await addTransaction(payload);
+
+            showAlert({
+                title: 'Éxito',
+                message: 'Transacción agregada correctamente',
+                icon: 'check-circle',
+                iconColor: '#22c55e',
+                buttons: [{
+                    text: 'OK',
+                    onPress: () => router.replace('/(tabs)/history')
+                }]
+            });
+        } catch (error) {
+
+            showAlert({ title: 'Error', message: 'No se pudo agregar la transacción', icon: 'alert-circle', iconColor: '#ef4444' });
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     const handleSubmit = async () => {
         const newErrors: Record<string, string> = {};
 
@@ -103,61 +168,42 @@ export default function AddTransactionScreen() {
             return;
         }
 
-        setIsLoading(true);
+        const categoryName = categories.find(c => c.id === categoryId)?.name || 'Otros';
+        const typeLabel = operationType === 'income' ? 'Ingreso' : operationType === 'loan' ? 'Préstamo' : 'Gasto';
 
-        try {
-            const loanDetails: LoanDetails | undefined = operationType === 'loan' ? {
-                debtorName,
-                debtorLastName,
-                debtorEmail: debtorEmail || undefined,
-                debtorPhone: debtorPhone || undefined,
-                dueDate: (() => {
-                    const d = new Date(dueDate);
-                    d.setHours(12, 0, 0, 0);
-                    return d.toISOString();
-                })(),
-                interestRate: parseFloat(interestRate) || 0,
-                isPaid: false,
-            } : undefined;
+        let confirmMessage = `¿Desea registrar esta transacción con la siguiente información?\n\n` +
+            `• Tipo: ${typeLabel}\n` +
+            `• Monto: ${amount} ${currency}\n` +
+            `• Categoría: ${categoryName}\n` +
+            `• Fecha: ${date}`;
 
-            const payload = {
-                type: operationType,
-                amount: parseFloat(amount),
-                currency: currency,
-                category: categories.find(c => c.id === categoryId)?.name || 'Otros',
-                categoryId: parseInt(categoryId, 10),
-                description: description,
-                date: (() => {
-                    const d = new Date(date);
-                    d.setHours(12, 0, 0, 0);
-                    return d.toISOString();
-                })(),
-                created_at: new Date().toISOString(),
-                rate: exchangeRate,
-                rate_id: exchangeRateIds[rateSource],
-                loan: loanDetails,
-            };
-
-            console.log({ transactionPayload: payload })
-
-            await addTransaction(payload);
-
-            showAlert({
-                title: 'Éxito',
-                message: 'Transacción agregada correctamente',
-                icon: 'check-circle',
-                iconColor: '#22c55e',
-                buttons: [{
-                    text: 'OK',
-                    onPress: () => router.replace('/(tabs)/history')
-                }]
-            });
-        } catch (error) {
-
-            showAlert({ title: 'Error', message: 'No se pudo agregar la transacción', icon: 'alert-circle', iconColor: '#ef4444' });
-        } finally {
-            setIsLoading(false);
+        if (description) {
+            confirmMessage += `\n• Descripción: ${description}`;
         }
+
+        if (operationType === 'loan') {
+            confirmMessage += `\n• Deudor: ${debtorName} ${debtorLastName}`;
+        }
+
+        showAlert({
+            title: 'Confirmar Transacción',
+            message: confirmMessage,
+            icon: 'swap-horizontal',
+            iconColor: primaryColorHex,
+            buttons: [
+                {
+                    text: 'Cancelar',
+                    style: 'cancel',
+                },
+                {
+                    text: 'Confirmar',
+                    style: 'default',
+                    onPress: () => {
+                        saveTransaction();
+                    }
+                }
+            ]
+        });
     };
 
     return (

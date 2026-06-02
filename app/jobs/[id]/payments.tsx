@@ -37,20 +37,7 @@ export default function JobPaymentsScreen() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = async () => {
-    const newErrors: Record<string, string> = {};
-
-    const amountVal = validateAmount(amount);
-    if (!amountVal.isValid) newErrors.amount = amountVal.error!;
-
-    const dateVal = validateDate(date);
-    if (!dateVal.isValid) newErrors.date = dateVal.error!;
-
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      return;
-    }
-
+  const processPayment = async () => {
     setIsSubmitting(true);
 
     try {
@@ -60,6 +47,8 @@ export default function JobPaymentsScreen() {
         date,
         type,
       };
+
+      console.log(JSON.stringify(payload, null, 4))
 
       await addPaymentMutation.mutateAsync(payload);
 
@@ -78,6 +67,7 @@ export default function JobPaymentsScreen() {
         }]
       });
     } catch (error) {
+      console.log(JSON.stringify(error, null, 4))
       showAlert({
         title: 'Error',
         message: 'No se pudo registrar el pago',
@@ -87,6 +77,41 @@ export default function JobPaymentsScreen() {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleSubmit = async () => {
+    const newErrors: Record<string, string> = {};
+
+    const amountVal = validateAmount(amount);
+    if (!amountVal.isValid) newErrors.amount = amountVal.error!;
+
+    const dateVal = validateDate(date);
+    if (!dateVal.isValid) newErrors.date = dateVal.error!;
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
+    showAlert({
+      title: 'Confirmar Pago',
+      message: `¿Desea registrar este pago con la siguiente información?\n\n• Monto: ${amount} ${currency}\n• Tipo: ${type === 'SALARY' ? 'Salario' : 'Bono'}\n• Fecha: ${date}`,
+      icon: 'cash-register',
+      iconColor: primaryColorHex,
+      buttons: [
+        {
+          text: 'Cancelar',
+          style: 'cancel',
+        },
+        {
+          text: 'Confirmar',
+          style: 'default',
+          onPress: () => {
+            processPayment();
+          }
+        }
+      ]
+    });
   };
 
   if (isJobLoading) {
@@ -116,7 +141,7 @@ export default function JobPaymentsScreen() {
       </View>
       <View className="items-end">
         <Text className="text-base font-extrabold text-emerald-500">
-          +{Number(item.amount).toLocaleString('es-VE', { minimumFractionDigits: 2 })} {item.currency}
+          +{Number(item.amount).toLocaleString('es-VE', { maximumFractionDigits: 2 })} {item.currency}
         </Text>
       </View>
     </View>
@@ -136,7 +161,7 @@ export default function JobPaymentsScreen() {
             renderItem={renderPaymentItem}
             contentContainerStyle={{ padding: 15 }}
             showsVerticalScrollIndicator={false}
-            ListHeaderComponent={() => (
+            ListHeaderComponent={
               <Card className="mb-6 shadow-sm shadow-slate-200 dark:shadow-slate-700 p-5">
                 <Text className="text-base font-bold text-gray-800 dark:text-white mb-4">
                   Registrar Nuevo Pago
@@ -160,13 +185,13 @@ export default function JobPaymentsScreen() {
                   </Text>
                   <View className="flex-row gap-2">
                     <Chip
-                      label="USD (Dólares)"
+                      label="Dólares"
                       selected={currency === 'USD'}
                       onPress={() => setCurrency('USD')}
                       variant={currency === 'USD' ? 'default' : 'outline'}
                     />
                     <Chip
-                      label="VES (Bolívares)"
+                      label="Bolívares"
                       selected={currency === 'VES'}
                       onPress={() => setCurrency('VES')}
                       variant={currency === 'VES' ? 'default' : 'outline'}
@@ -187,22 +212,16 @@ export default function JobPaymentsScreen() {
                   </Text>
                   <View className="flex-row gap-2 flex-wrap">
                     <Chip
-                      label="Salario (SALARY)"
+                      label="Salario"
                       selected={type === 'SALARY'}
                       onPress={() => setType('SALARY')}
                       variant={type === 'SALARY' ? 'default' : 'outline'}
                     />
                     <Chip
-                      label="Bono (BONUS)"
+                      label="Bono"
                       selected={type === 'BONUS'}
                       onPress={() => setType('BONUS')}
                       variant={type === 'BONUS' ? 'default' : 'outline'}
-                    />
-                    <Chip
-                      label="Extra (EXTRA)"
-                      selected={type === 'EXTRA'}
-                      onPress={() => setType('EXTRA')}
-                      variant={type === 'EXTRA' ? 'default' : 'outline'}
                     />
                   </View>
                 </View>
@@ -235,7 +254,7 @@ export default function JobPaymentsScreen() {
                   </Button>
                 </View>
               </Card>
-            )}
+            }
             ListEmptyComponent={() => (
               <View className="bg-light-surface dark:bg-dark-surface p-8 rounded-3xl items-center justify-center border border-gray-150 dark:border-gray-800">
                 <MaterialCommunityIcons name="currency-usd-off" size={40} color="#9ca3af" />

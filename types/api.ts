@@ -264,7 +264,7 @@ export interface CreateJobDto {
   description: string;
   salary: string;
   currency: string;
-  rate_id: number;
+  rate: string;
   monthly_payment_frequency: number;
   company: string;
   start_date: string;

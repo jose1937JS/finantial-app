@@ -1,3 +1,4 @@
+import Toast, { BaseToast, ErrorToast } from 'react-native-toast-message';
 import { AlertProvider } from '@/hooks/alert-context';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { primaryColors, useSettingsStore } from '@/store/settings-store';
@@ -25,6 +26,63 @@ import '../global.css';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 const queryClient = new QueryClient();
+
+const getToastConfig = (theme: 'light' | 'dark') => {
+	const isDark = theme === 'dark';
+	const bgColor = isDark ? '#212121' : '#ffffff';
+	const textColor = isDark ? '#ffffff' : '#1f2937';
+	const subTextColor = isDark ? '#a1a1aa' : '#4b5563';
+	const borderColor = isDark ? '#2a2a2a' : '#e2e8f0';
+
+	return {
+		success: (props: any) => (
+			<BaseToast
+				{...props}
+				style={{
+					borderLeftColor: '#22c55e',
+					backgroundColor: bgColor,
+					borderColor: borderColor,
+					borderWidth: isDark ? 1 : 0,
+					borderRadius: 16,
+					height: 60,
+				}}
+				contentContainerStyle={{ paddingHorizontal: 15 }}
+				text1Style={{
+					fontSize: 15,
+					fontWeight: 'bold',
+					color: textColor,
+				}}
+				text2Style={{
+					fontSize: 13,
+					color: subTextColor,
+				}}
+			/>
+		),
+		error: (props: any) => (
+			<ErrorToast
+				{...props}
+				style={{
+					borderLeftColor: '#ef4444',
+					backgroundColor: bgColor,
+					borderColor: borderColor,
+					borderWidth: isDark ? 1 : 0,
+					borderRadius: 16,
+					height: 60,
+				}}
+				contentContainerStyle={{ paddingHorizontal: 15 }}
+				text1Style={{
+					fontSize: 15,
+					fontWeight: 'bold',
+					color: textColor,
+				}}
+				text2Style={{
+					fontSize: 13,
+					color: subTextColor,
+				}}
+			/>
+		)
+	};
+};
 
 export default function RootLayout() {
 	return (
@@ -137,6 +195,7 @@ function RootLayoutContent() {
 							}}
 						/>
 					</Stack>
+					<Toast config={getToastConfig(effectiveTheme as 'light' | 'dark')} />
 				</AlertProvider>
 				<StatusBar
 					style={effectiveTheme === 'dark' ? 'light' : 'dark'}

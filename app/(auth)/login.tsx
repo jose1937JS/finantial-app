@@ -12,8 +12,8 @@ import { validateEmail, validatePassword } from '@/utils/validation';
 
 export default function LoginScreen() {
     const router = useRouter();
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
+    const [email, setEmail] = useState('jose@jose.com');
+    const [password, setPassword] = useState('123123');
     const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
 
     const [showErrorModal, setShowErrorModal] = useState(false);

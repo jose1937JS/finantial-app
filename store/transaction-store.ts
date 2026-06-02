@@ -147,6 +147,7 @@ export const useTransactionStore = create<TransactionStore>()(
                         type: transactionData.type,
                         category_id: (transactionData as any).categoryId,
                         rate_id: transactionData.rate_id,
+                        job_id: transactionData.job_id,
                     };
 
                     if (isLoan && loanInfo) {

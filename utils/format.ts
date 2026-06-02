@@ -22,7 +22,11 @@ export const formatCurrency = (
         return `${new Intl.NumberFormat(locale, options).format(amount)} USDT`;
     }
 
-    return new Intl.NumberFormat(locale, options).format(amount);
+    const formatted = new Intl.NumberFormat(locale, options).format(amount);
+    if (currency === 'VES') {
+        return formatted.replace('Bs.S', 'Bs.').replace('Bs.D', 'Bs.');
+    }
+    return formatted;
 };
 
 export const formatDate = (

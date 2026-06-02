@@ -5,9 +5,11 @@ import { CustomHeader } from '@/components/ui/custom-header';
 import { DatePickerModal, DatePickerTrigger } from '@/components/ui/date-picker-modal';
 import { Input } from '@/components/ui/input';
 import { useAlert } from '@/hooks/alert-context';
+import { useJobs } from '@/hooks/queries/useJobQueries';
 import { primaryColors, useSettingsStore } from '@/store/settings-store';
 import { useTransactionStore } from '@/store/transaction-store';
 import type { Currency, ExchangeRateSource, LoanDetails, TransactionType } from '@/types';
+import { formatCurrency } from '@/utils/format';
 import { validateAmount, validateDate, validateEmail, validatePhone, validateRequired } from '@/utils/validation';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -61,6 +63,13 @@ export default function AddTransactionScreen() {
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [isLoading, setIsLoading] = useState(false);
 
+    // Job state and queries
+    const [selectedJobId, setSelectedJobId] = useState<number | null>(null);
+    const { data: jobs } = useJobs();
+    
+    const selectedCategory = categories.find(c => c.id === categoryId);
+    const isSalaryCategory = selectedCategory?.name?.trim().toLowerCase() === 'salario';
+
     const filteredCategories = categories.filter(
         c => c.type === operationType || c.name.replace(/\s/g, '').toLowerCase() === 'prestamo' || c.name.replace(/\s/g, '').toLowerCase() === 'préstamo'
     );
@@ -100,6 +109,7 @@ export default function AddTransactionScreen() {
                 created_at: new Date().toISOString(),
                 rate_id: exchangeRateIds[rateSource],
                 loan: loanDetails,
+                job_id: (operationType === 'income' && isSalaryCategory && selectedJobId) ? selectedJobId : undefined,
             };
 
             console.log({
@@ -140,6 +150,11 @@ export default function AddTransactionScreen() {
 
         if (!categoryId) newErrors.categoryId = 'Selecciona una categoría';
 
+        // Validate job selection for salary income
+        if (operationType === 'income' && isSalaryCategory && !selectedJobId) {
+            newErrors.jobId = 'Selecciona un trabajo para registrar el salario';
+        }
+
         // Validate loan fields
         if (operationType === 'loan') {
             const nameValidation = validateRequired(debtorName, 'Nombre');
@@ -171,9 +186,9 @@ export default function AddTransactionScreen() {
         const categoryName = categories.find(c => c.id === categoryId)?.name || 'Otros';
         const typeLabel = operationType === 'income' ? 'Ingreso' : operationType === 'loan' ? 'Préstamo' : 'Gasto';
 
-        let confirmMessage = `¿Desea registrar esta transacción con la siguiente información?\n\n` +
+        let confirmMessage =
             `• Tipo: ${typeLabel}\n` +
-            `• Monto: ${amount} ${currency}\n` +
+            `• Monto: ${formatCurrency(+amount, currency)}\n` +
             `• Categoría: ${categoryName}\n` +
             `• Fecha: ${date}`;
 
@@ -181,14 +196,21 @@ export default function AddTransactionScreen() {
             confirmMessage += `\n• Descripción: ${description}`;
         }
 
+        if (operationType === 'income' && isSalaryCategory && selectedJobId) {
+            const selectedJob = jobs?.find(j => j.id === selectedJobId);
+            if (selectedJob) {
+                confirmMessage += `\n• Trabajo: ${selectedJob.name} (${selectedJob.company})`;
+            }
+        }
+
         if (operationType === 'loan') {
             confirmMessage += `\n• Deudor: ${debtorName} ${debtorLastName}`;
         }
 
         showAlert({
-            title: 'Confirmar Transacción',
+            title: '¡Confirmar Transacción!',
             message: confirmMessage,
-            icon: 'swap-horizontal',
+            icon: 'alert-circle',
             iconColor: primaryColorHex,
             buttons: [
                 {
@@ -229,13 +251,13 @@ export default function AddTransactionScreen() {
                                     <Chip
                                         label="Ingreso"
                                         selected={operationType === 'income'}
-                                        onPress={() => { setOperationType('income'); setCategoryId(''); }}
+                                        onPress={() => { setOperationType('income'); setCategoryId(''); setSelectedJobId(null); }}
                                         variant="income"
                                     />
                                     <Chip
                                         label="Gasto"
                                         selected={operationType === 'expense'}
-                                        onPress={() => { setOperationType('expense'); setCategoryId(''); }}
+                                        onPress={() => { setOperationType('expense'); setCategoryId(''); setSelectedJobId(null); }}
                                         variant="expense"
                                     />
                                     <Chip
@@ -245,6 +267,7 @@ export default function AddTransactionScreen() {
                                             setOperationType('loan');
                                             const loanCat = loandCategory;
                                             if (loanCat) setCategoryId(loanCat.id);
+                                            setSelectedJobId(null);
                                         }}
                                         variant="loan"
                                     />
@@ -339,7 +362,12 @@ export default function AddTransactionScreen() {
                                         {filteredCategories.map((cat) => (
                                             <Pressable
                                                 key={cat.id}
-                                                onPress={() => setCategoryId(cat.id)}
+                                                onPress={() => {
+                                                    setCategoryId(cat.id);
+                                                    if (cat.name?.trim().toLowerCase() !== 'salario') {
+                                                        setSelectedJobId(null);
+                                                    }
+                                                }}
                                                 className={`items-center px-4 py-3 rounded-2xl ${categoryId === cat.id
                                                     ? 'bg-primary-500'
                                                     : 'bg-light-surface dark:bg-dark-surface'
@@ -364,6 +392,56 @@ export default function AddTransactionScreen() {
                                     <Text className="text-sm text-expense mt-2">{errors.categoryId}</Text>
                                 )}
                             </View>
+
+                            {/* Job Selector (only for Income + Salario category) */}
+                            {operationType === 'income' && isSalaryCategory && (
+                                <View className="mb-4">
+                                    <Text className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                                        Trabajo
+                                    </Text>
+                                    {jobs && jobs.length > 0 ? (
+                                        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                                            <View className="flex-row gap-2">
+                                                {jobs.map((job) => (
+                                                    <Pressable
+                                                        key={job.id}
+                                                        onPress={() => setSelectedJobId(job.id)}
+                                                        className={`items-center px-4 py-3 rounded-2xl ${selectedJobId === job.id
+                                                            ? 'bg-primary-500'
+                                                            : 'bg-light-surface dark:bg-dark-surface'
+                                                            }`}
+                                                    >
+                                                        <MaterialCommunityIcons
+                                                            name="briefcase-outline"
+                                                            size={20}
+                                                            color={selectedJobId === job.id ? '#fff' : primaryColorHex}
+                                                        />
+                                                        <Text className={`text-xs mt-1 ${selectedJobId === job.id
+                                                            ? 'text-white font-semibold'
+                                                            : 'text-gray-600 dark:text-gray-400'
+                                                            }`}>
+                                                            {job.name}
+                                                        </Text>
+                                                        <Text className={`text-[10px] ${selectedJobId === job.id
+                                                            ? 'text-primary-100'
+                                                            : 'text-gray-400 dark:text-gray-500'
+                                                            }`}>
+                                                            {job.company}
+                                                        </Text>
+                                                    </Pressable>
+                                                ))}
+                                            </View>
+                                        </ScrollView>
+                                    ) : (
+                                        <Text className="text-xs text-gray-400 dark:text-gray-500 italic">
+                                            No tienes trabajos registrados. Créalo primero en la sección de Salarios.
+                                        </Text>
+                                    )}
+                                    {errors.jobId && (
+                                        <Text className="text-sm text-expense mt-2">{errors.jobId}</Text>
+                                    )}
+                                </View>
+                            )}
 
                             {/* Description */}
                             <Input

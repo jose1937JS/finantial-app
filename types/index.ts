@@ -27,6 +27,8 @@ export interface Transaction {
     // Loan-specific fields
     loan?: LoanDetails;
     loanDetailsId?: number;
+    // Job-specific fields
+    job_id?: number;
 }
 
 export interface LoanDetails {

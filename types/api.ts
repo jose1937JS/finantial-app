@@ -98,6 +98,7 @@ export interface Transaction {
   user?: User;
   category?: Category;
   loanDetail?: LoanDetail;
+  job_id?: number;
 }
 
 export interface UpdateUserDto {
@@ -131,6 +132,7 @@ export interface CreateTransactionDto {
   type: 'income' | 'expense' | 'loan';
   category_id?: number;
   loan_details?: LoanDetailsDto;
+  job_id?: number;
 }
 
 export interface CreateLoanDto {

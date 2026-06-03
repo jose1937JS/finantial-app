@@ -48,8 +48,6 @@ export default function JobPaymentsScreen() {
         type,
       };
 
-      console.log(JSON.stringify(payload, null, 4))
-
       await addPaymentMutation.mutateAsync(payload);
 
       showAlert({

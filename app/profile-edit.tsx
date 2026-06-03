@@ -13,7 +13,7 @@ import { Input } from '@/components/ui/input';
 import { useAlert } from '@/hooks/alert-context';
 import { useAuthStore } from '@/store/auth-store';
 import { primaryColors, useSettingsStore } from '@/store/settings-store';
-import { validateEmail, validateRequired } from '@/utils/validation';
+import { validateEmail, validateRequired, validatePhone } from '@/utils/validation';
 
 export default function ProfileEditScreen() {
     const router = useRouter();
@@ -22,6 +22,7 @@ export default function ProfileEditScreen() {
     const { showAlert } = useAlert();
     const [fullName, setFullName] = useState(user?.fullName || '');
     const [email, setEmail] = useState(user?.email || '');
+    const [phone, setPhone] = useState(user?.phone || '');
     const [avatar, setAvatar] = useState(user?.avatar || '');
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [isLoading, setIsLoading] = useState(false);
@@ -39,7 +40,7 @@ export default function ProfileEditScreen() {
 
         const result = await ImagePicker.launchImageLibraryAsync({
             mediaTypes: ['images'],
-            allowsEditing: true,
+            allowsEditing: false,
             aspect: [1, 1],
             quality: 0.5,
             base64: true,
@@ -66,7 +67,7 @@ export default function ProfileEditScreen() {
         }
 
         const result = await ImagePicker.launchCameraAsync({
-            allowsEditing: true,
+            allowsEditing: false,
             aspect: [1, 1],
             quality: 0.5,
             base64: true,
@@ -103,6 +104,9 @@ export default function ProfileEditScreen() {
         const emailValidation = validateEmail(email);
         if (!emailValidation.isValid) newErrors.email = emailValidation.error!;
 
+        const phoneValidation = validatePhone(phone);
+        if (!phoneValidation.isValid) newErrors.phone = phoneValidation.error!;
+
         if (Object.keys(newErrors).length > 0) {
             setErrors(newErrors);
             return;
@@ -121,6 +125,7 @@ export default function ProfileEditScreen() {
                 name: firstName,
                 last_name: lastName || undefined,
                 avatar: avatar || undefined,
+                phone: phone || undefined,
             });
 
             // Update auth store locally
@@ -128,6 +133,7 @@ export default function ProfileEditScreen() {
                 fullName,
                 email,
                 avatar: avatar || undefined,
+                phone: phone || undefined,
             });
 
             showAlert({
@@ -138,6 +144,7 @@ export default function ProfileEditScreen() {
                 buttons: [{ text: 'OK', onPress: () => router.back() }]
             });
         } catch (error) {
+            console.log("Error actualizando el perfil: ", error)
             showAlert({ title: 'Error', message: 'No se pudo actualizar el perfil', icon: 'alert-circle', iconColor: '#ef4444' });
         } finally {
             setIsLoading(false);
@@ -215,6 +222,16 @@ export default function ProfileEditScreen() {
                                 keyboardType="email-address"
                                 autoCapitalize="none"
                                 error={errors.email}
+                            />
+
+                            <Input
+                                label="Teléfono"
+                                placeholder="Tu número de teléfono"
+                                leftIcon="phone-outline"
+                                value={phone}
+                                onChangeText={setPhone}
+                                keyboardType="phone-pad"
+                                error={errors.phone}
                             />
                         </Card>
 

@@ -68,7 +68,7 @@ export default function CreateJobScreen() {
         logo: '',
       };
 
-      console.log(JSON.stringify(payload, null, 4))
+      //console.log(JSON.stringify(payload, null, 4))
 
       await createJobMutation.mutateAsync(payload);
 

@@ -36,6 +36,7 @@ export const useAuthStore = create<AuthStore>()(
                         email: userPayload.email ?? email,
                         fullName: [userPayload.name, userPayload.lastName].filter(Boolean).join(' ') || email.split('@')[0],
                         avatar: userPayload.avatar,
+                        phone: userPayload.phone,
                         createdAt: userPayload.createdAt ?? new Date().toISOString(),
                     };
                     set({ user, isAuthenticated: true, isLoading: false, token });
@@ -76,6 +77,7 @@ export const useAuthStore = create<AuthStore>()(
                         email: userPayload.email ?? email,
                         fullName: [userPayload.name, userPayload.lastName].filter(Boolean).join(' ') || fullName,
                         avatar: userPayload.avatar,
+                        phone: userPayload.phone || '',
                         createdAt: userPayload.createdAt ?? new Date().toISOString(),
                     };
                     set({ user, isAuthenticated: true, isLoading: false });

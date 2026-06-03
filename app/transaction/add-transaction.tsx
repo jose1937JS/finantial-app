@@ -112,15 +112,6 @@ export default function AddTransactionScreen() {
                 job_id: (operationType === 'income' && isSalaryCategory && selectedJobId) ? selectedJobId : undefined,
             };
 
-            console.log({
-                transactionPayload: payload,
-                rate: {
-                    id: exchangeRateIds[rateSource],
-                    rate: exchangeRate,
-                    currency: rateSource,
-                },
-            })
-
             await addTransaction(payload);
 
             showAlert({

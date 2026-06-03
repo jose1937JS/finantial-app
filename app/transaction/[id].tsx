@@ -272,8 +272,6 @@ export default function TransactionDetailScreen() {
         }
     }
 
-    console.log(JSON.stringify({ type, transaction }, null, 4))
-
     return (
         <>
             <CustomHeader title="Detalle de Transacción" />

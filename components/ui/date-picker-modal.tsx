@@ -164,8 +164,7 @@ export function DatePickerTrigger({
             </Text>
             <Pressable
                 onPress={onPress}
-                className={`flex-row items-center bg-white dark:bg-dark-surface border rounded-xl px-4 py-3 ${error ? 'border-expense' : 'border-gray-200 dark:border-gray-800'
-                    }`}
+                className={`flex-row items-center bg-gray-50 dark:bg-dark-surface border rounded-xl px-4 py-3 ${error ? 'border-expense' : 'border-gray-200 dark:border-gray-800'}`}
             >
                 <MaterialCommunityIcons
                     name={icon}

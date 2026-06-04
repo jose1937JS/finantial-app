@@ -1,9 +1,25 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios, { AxiosError, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
+import { Platform } from 'react-native';
+import Constants from 'expo-constants';
 
 // In a real app, this should be an environment variable. Using localhost for development.
 // Ensure you replace this with your actual backend URL (e.g., your network IP for React Native testing).
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
+let API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
+
+if (Platform.OS === 'android') {
+  if (API_BASE_URL.includes('localhost') || API_BASE_URL.includes('127.0.0.1')) {
+    const hostUri = Constants.expoConfig?.hostUri;
+    const hostIp = hostUri ? hostUri.split(':')[0] : null;
+    if (hostIp) {
+      API_BASE_URL = API_BASE_URL.replace('localhost', hostIp).replace('127.0.0.1', hostIp);
+    } else {
+      API_BASE_URL = API_BASE_URL.replace('localhost', '10.0.2.2').replace('127.0.0.1', '10.0.2.2');
+    }
+  }
+}
+
+console.log('Resolved API Base URL for platform:', Platform.OS, '->', API_BASE_URL);
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,

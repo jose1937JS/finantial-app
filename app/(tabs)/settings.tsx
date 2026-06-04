@@ -160,26 +160,14 @@ export default function SettingsScreen() {
                 contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 20 }}
                 showsVerticalScrollIndicator={false}
             >
-
                 {/* Profile Section */}
                 <Card className="mb-6 shadow-sm shadow-slate-200 dark:shadow-slate-700">
                     <View className="flex-row items-center">
-                        {user?.avatar ? (
-                            <Image
-                                source={{ uri: user.avatar }}
-                                className="w-16 h-16 rounded-full mr-4"
-                                resizeMode="cover"
-                            />
-                        ) : (
-                            <View
-                                className="w-16 h-16 rounded-full items-center justify-center mr-4"
-                                style={{ backgroundColor: currentPrimaryColor }}
-                            >
-                                <Text className="text-2xl font-bold text-white">
-                                    {user?.fullName?.charAt(0).toUpperCase() || 'U'}
-                                </Text>
-                            </View>
-                        )}
+                        <Image
+                            source={{ uri: 'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y' }}
+                            className="w-16 h-16 rounded-full mr-4"
+                            resizeMode="cover"
+                        />
                         <View className="flex-1">
                             <Text className="text-lg font-semibold text-gray-700 dark:text-white">
                                 {user?.fullName || 'Usuario'}

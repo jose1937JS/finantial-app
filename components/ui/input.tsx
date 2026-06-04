@@ -1,6 +1,6 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import React, { useState } from 'react';
-import { Pressable, Text, TextInput, TextInputProps, View } from 'react-native';
+import { Platform, Pressable, Text, TextInput, TextInputProps, View } from 'react-native';
 
 interface InputProps extends TextInputProps {
     label?: string;
@@ -33,7 +33,7 @@ export function Input({
         ? 'border-expense'
         : isFocused
             ? 'border-primary-500'
-            : 'border-light-border dark:border-dark-border';
+            : 'border-gray-200 dark:border-gray-800';
 
     return (
         <View className={`mb-4 ${containerClassName}`}>
@@ -45,7 +45,7 @@ export function Input({
 
             <View
                 className={
-                    `${props.editable === false ? 'bg-gray-300 dark:bg-gray-700' : 'bg-light-surface dark:bg-dark-surface'} flex-row h-14 items-center rounded-2xl border px-4 ${borderColor}`
+                    `${props.editable === false ? 'bg-gray-200 dark:bg-gray-700' : 'bg-gray-50 dark:bg-gray-900'} flex-row h-14 items-center rounded-2xl border px-4 ${borderColor}`
                 }
             >
                 {leftIcon && (
@@ -59,7 +59,7 @@ export function Input({
 
                 <TextInput
                     className={
-                        `flex-1 pt-2 mb-3  text-base text-gray-700 dark:text-white ${inputClassName} ${props.editable === false ? 'bg-gray-300 dark:bg-gray-700' : ''}`
+                        `${Platform.OS === 'ios' ? 'pb-2' : ''} flex-1 py-0 text-base text-gray-700 dark:text-white ${inputClassName} ${props.editable === false ? 'bg-gray-200 dark:bg-gray-700' : ''}`
                     }
                     placeholderTextColor="#9ca3af"
                     onFocus={() => setIsFocused(true)}

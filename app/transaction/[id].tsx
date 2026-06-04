@@ -54,6 +54,7 @@ export default function TransactionDetailScreen() {
                         payments: data.payments
                     }
                 };
+                // console.log('loan Transaction', JSON.stringify(apiTransaction, null, 4));
                 setTransaction(mapBackendTransactionToLocal(apiTransaction));
             } else {
                 const { TransactionService } = await import('@/api/services/transaction.service');
@@ -153,7 +154,7 @@ export default function TransactionDetailScreen() {
     const payments = transaction.loan?.payments || [];
     const totalPaidUSD = payments.reduce((acc: number, p: any) => acc + Number(p.amountInLoanCurrency ?? p.amount), 0);
     const remainingBalanceUSD = totalAmount - totalPaidUSD;
-    // const isFullyPaid = totalPaidUSD >= totalAmount - 0.01;
+    const transactionCurrency = transaction.rate?.currency === 'BCV_USD' ? 'USD' : transaction.rate?.currency === 'BCV_EUR' ? 'EUR' : transaction.currency;
 
     // Repayment Logic VES
     // const totalPaidVES = payments.reduce((acc: number, p: any) => acc + (p.currency === 'VES' ? (p.amount * (p.rate || 1)) : 0), 0);
@@ -343,6 +344,17 @@ export default function TransactionDetailScreen() {
                                     : 'No aplica'
                             }
                         />
+                        {transaction.currency == 'VES' && (
+                            <>
+                                <View className="h-[1px] bg-gray-100 dark:bg-gray-800 my-4" />
+                                <DetailItem
+                                    icon="cash-multiple"
+                                    label={`Monto en ${transactionCurrency}`}
+                                    value={formatCurrency(transaction.amount / (transaction.rate?.rate || 1), transactionCurrency)}
+                                    valueStyle="text-primary font-bold text-xl"
+                                />
+                            </>
+                        )}
                     </View>
 
                     {/* Loan Specific Details (Shown for both Loan and Loan Payment transactions) */}
@@ -420,6 +432,17 @@ export default function TransactionDetailScreen() {
                                 value={formatCurrency(totalAmount, transaction.currency)}
                                 valueStyle="text-primary font-bold text-xl"
                             />
+                            {transaction.currency === 'VES' && (
+                                <>
+                                    <View className="h-[1px] bg-gray-100 dark:bg-gray-800 my-4" />
+                                    <DetailItem
+                                        icon="cash-multiple"
+                                        label="Total en USD"
+                                        value={formatCurrency(transaction.amount / exchangeRates.BCV_USD, 'USD')}
+                                        valueStyle="text-primary font-bold text-xl"
+                                    />
+                                </>
+                            )}
                             <View className="h-[1px] bg-gray-100 dark:bg-gray-800 my-4" />
                             <DetailItem
                                 icon="account-cash-outline"

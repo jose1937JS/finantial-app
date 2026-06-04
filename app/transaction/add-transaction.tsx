@@ -41,7 +41,6 @@ export default function AddTransactionScreen() {
     const exchangeRate = exchangeRates[rateSource as keyof typeof exchangeRates] || 0;
 
     const isEur = rateSource === 'BCV_EUR';
-    const currSymbol = isEur ? '€' : '$';
     const currName = isEur ? 'EUR' : 'USD';
     const currIcon = isEur ? 'currency-eur' : 'currency-usd';
 
@@ -320,28 +319,36 @@ export default function AddTransactionScreen() {
                                             />
                                         </View>
                                     </ScrollView>
-
-                                    <View className="mt-4">
-                                        <Input
-                                            label={`Monto en ${currName} (Calculado)`}
-                                            value={amount && !isNaN(parseFloat(calculatedAmount)) ? `${calculatedAmount}` : `0.00`}
-                                            editable={false}
-                                            leftIcon={currIcon}
-                                        />
-                                    </View>
                                 </View>
                             )}
 
-                            {/* Amount */}
-                            <Input
-                                label="Monto"
-                                placeholder="0.00"
-                                leftIcon="currency-usd"
-                                value={amount}
-                                onChangeText={setAmount}
-                                keyboardType="decimal-pad"
-                                error={errors.amount}
-                            />
+                            {/* Amount and acalculated amount in usd (it shows the value in bs when currency is ves, in usd when currency is usd and in usdt when currency is usdt) */}
+                            <View className='flex-row items-center justify-between gap-4 mt-4'>
+                                <Input
+                                    label="Monto"
+                                    placeholder="0.00"
+                                    leftIcon="currency-usd"
+                                    value={amount}
+                                    onChangeText={setAmount}
+                                    keyboardType="decimal-pad"
+                                    error={errors.amount}
+                                    containerClassName='w-[55%]'
+                                />
+                                <View className='items-end justify-end flex-1'>
+                                    <Text className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                        Monto en {currName}
+                                    </Text>
+                                    <Text
+                                        className='text-gray-700 dark:text-gray-300 text-3xl font-semibold'
+                                        numberOfLines={1}
+                                        adjustsFontSizeToFit={true}
+                                        minimumFontScale={0.46}
+                                    >
+                                        {`${amount && !isNaN(parseFloat(calculatedAmount)) ? `${calculatedAmount}` : `0.00`}`}
+                                    </Text>
+
+                                </View>
+                            </View>
 
                             {/* Category Selector */}
                             <View className="mb-4">

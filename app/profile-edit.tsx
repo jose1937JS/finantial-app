@@ -1,10 +1,3 @@
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-import * as ImagePicker from 'expo-image-picker';
-import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
-import { Image, KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-
 import { UserService } from '@/api/services/user.service';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -12,88 +5,22 @@ import { CustomHeader } from '@/components/ui/custom-header';
 import { Input } from '@/components/ui/input';
 import { useAlert } from '@/hooks/alert-context';
 import { useAuthStore } from '@/store/auth-store';
-import { primaryColors, useSettingsStore } from '@/store/settings-store';
-import { validateEmail, validateRequired, validatePhone } from '@/utils/validation';
+import { validateEmail, validatePhone, validateRequired } from '@/utils/validation';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import React, { useState } from 'react';
+import { Image, KeyboardAvoidingView, Platform, ScrollView, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function ProfileEditScreen() {
     const router = useRouter();
     const { user, updateUser } = useAuthStore();
-    const { preferences } = useSettingsStore();
     const { showAlert } = useAlert();
     const [fullName, setFullName] = useState(user?.fullName || '');
     const [email, setEmail] = useState(user?.email || '');
     const [phone, setPhone] = useState(user?.phone || '');
-    const [avatar, setAvatar] = useState(user?.avatar || '');
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [isLoading, setIsLoading] = useState(false);
-
-    const currentPrimaryColor = primaryColors[preferences.primaryColor]?.hex || '#22c55e';
-
-    const pickImage = async () => {
-        // Request permissions
-        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-
-        if (status !== 'granted') {
-            showAlert({ title: 'Permisos necesarios', message: 'Necesitamos acceso a tu galería para seleccionar una imagen', icon: 'image-off', iconColor: '#f59e0b' });
-            return;
-        }
-
-        const result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ['images'],
-            allowsEditing: false,
-            aspect: [1, 1],
-            quality: 0.5,
-            base64: true,
-        });
-
-        if (!result.canceled && result.assets[0]) {
-            const asset = result.assets[0];
-            if (asset.base64) {
-                // Store as base64 data URI
-                const mimeType = asset.mimeType || 'image/jpeg';
-                const base64Uri = `data:${mimeType};base64,${asset.base64}`;
-                setAvatar(base64Uri);
-            }
-        }
-    };
-
-    const takePhoto = async () => {
-        // Request camera permissions
-        const { status } = await ImagePicker.requestCameraPermissionsAsync();
-
-        if (status !== 'granted') {
-            showAlert({ title: 'Permisos necesarios', message: 'Necesitamos acceso a tu cámara para tomar una foto', icon: 'camera-off', iconColor: '#f59e0b' });
-            return;
-        }
-
-        const result = await ImagePicker.launchCameraAsync({
-            allowsEditing: false,
-            aspect: [1, 1],
-            quality: 0.5,
-            base64: true,
-        });
-
-        if (!result.canceled && result.assets[0]) {
-            const asset = result.assets[0];
-            if (asset.base64) {
-                const mimeType = asset.mimeType || 'image/jpeg';
-                const base64Uri = `data:${mimeType};base64,${asset.base64}`;
-                setAvatar(base64Uri);
-            }
-        }
-    };
-
-    const showImageOptions = () => {
-        showAlert({
-            title: 'Cambiar Foto',
-            message: 'Selecciona una opción',
-            icon: 'camera',
-            buttons: [
-                { text: 'Cámara', onPress: takePhoto },
-                { text: 'Galería', onPress: pickImage },
-            ]
-        });
-    };
 
     const handleSave = async () => {
         const newErrors: Record<string, string> = {};
@@ -124,7 +51,6 @@ export default function ProfileEditScreen() {
             await UserService.update(Number(user?.id), {
                 name: firstName,
                 last_name: lastName || undefined,
-                avatar: avatar || undefined,
                 phone: phone || undefined,
             });
 
@@ -132,7 +58,6 @@ export default function ProfileEditScreen() {
             updateUser({
                 fullName,
                 email,
-                avatar: avatar || undefined,
                 phone: phone || undefined,
             });
 
@@ -166,36 +91,11 @@ export default function ProfileEditScreen() {
                     >
                         {/* Avatar Section */}
                         <View className="items-center mb-8">
-                            <Pressable onPress={showImageOptions} className="relative">
-                                {avatar ? (
-                                    <Image
-                                        source={{ uri: avatar }}
-                                        className="w-28 h-28 rounded-full"
-                                        resizeMode="cover"
-                                    />
-                                ) : (
-                                    <View
-                                        className="w-28 h-28 rounded-full items-center justify-center"
-                                        style={{ backgroundColor: currentPrimaryColor }}
-                                    >
-                                        <Text className="text-4xl font-bold text-white">
-                                            {fullName?.charAt(0).toUpperCase() || 'U'}
-                                        </Text>
-                                    </View>
-                                )}
-
-                                {/* Camera badge */}
-                                <View
-                                    className="absolute bottom-0 right-0 w-10 h-10 rounded-full items-center justify-center border-4 border-light-bg dark:border-dark-bg"
-                                    style={{ backgroundColor: currentPrimaryColor }}
-                                >
-                                    <MaterialCommunityIcons name="camera" size={20} color="#fff" />
-                                </View>
-                            </Pressable>
-
-                            <Text className="text-sm text-gray-500 dark:text-gray-400 mt-3">
-                                Toca para cambiar la foto
-                            </Text>
+                            <Image
+                                source={{ uri: 'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y' }}
+                                className="w-28 h-28 rounded-full"
+                                resizeMode="cover"
+                            />
                         </View>
 
                         {/* Form */}

@@ -13,6 +13,7 @@ export const formatCurrency = (
     const formatters: Record<string, Intl.NumberFormatOptions> = {
         USD: { style: 'currency', currency: 'USD' },
         VES: { style: 'currency', currency: 'VES', maximumFractionDigits: 0 },
+        EUR: { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 },
         USDT: { style: 'decimal', minimumFractionDigits: 2, maximumFractionDigits: 2 },
     };
 

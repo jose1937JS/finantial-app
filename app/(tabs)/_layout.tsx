@@ -2,7 +2,7 @@ import { useThemeColor } from '@/hooks/use-theme-color';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Tabs, useRouter } from 'expo-router';
 import React from 'react';
-import { View } from 'react-native';
+import { View, ColorValue } from 'react-native';
 
 import { HapticTab } from '@/components/haptic-tab';
 import { Colors } from '@/constants/theme';
@@ -15,8 +15,8 @@ export default function TabLayout() {
 	const router = useRouter();
 	const tintColor = useThemeColor({}, 'tint');
 
-	const getTabIcon = (name: IconName, color: string, size: number = 24) => (
-		<MaterialCommunityIcons name={name} size={size} color={color} />
+	const getTabIcon = (name: IconName, color: ColorValue, size: number = 24) => (
+		<MaterialCommunityIcons name={name} size={size} color={color as string} />
 	);
 
 	return (

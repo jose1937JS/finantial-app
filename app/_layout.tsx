@@ -1,17 +1,17 @@
-import Toast, { BaseToast, ErrorToast } from 'react-native-toast-message';
 import { AlertProvider } from '@/hooks/alert-context';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { primaryColors, useSettingsStore } from '@/store/settings-store';
 import { hexToRgb } from '@/utils/colors';
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { Stack } from 'expo-router';
+import { DarkTheme, DefaultTheme, ThemeProvider } from "expo-router/react-navigation";
 import { StatusBar } from 'expo-status-bar';
 import { vars } from 'nativewind';
 import { useEffect } from 'react';
-import { useColorScheme as useDeviceColorScheme } from 'react-native';
-import { LogBox, View } from 'react-native';
+import { LogBox, useColorScheme as useDeviceColorScheme, View } from 'react-native';
 import { configureReanimatedLogger, ReanimatedLogLevel } from 'react-native-reanimated';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import Toast, { BaseToast, ErrorToast } from 'react-native-toast-message';
+import '../global.css';
 
 configureReanimatedLogger({
 	level: ReanimatedLogLevel.warn,
@@ -21,7 +21,6 @@ configureReanimatedLogger({
 LogBox.ignoreLogs([
 	"SafeAreaView has been deprecated and will be removed in a future release. Please use 'react-native-safe-area-context' instead.",
 ]);
-import '../global.css';
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
@@ -197,11 +196,7 @@ function RootLayoutContent() {
 					</Stack>
 					<Toast config={getToastConfig(effectiveTheme as 'light' | 'dark')} />
 				</AlertProvider>
-				<StatusBar
-					style={effectiveTheme === 'dark' ? 'light' : 'dark'}
-					backgroundColor="transparent"
-					translucent={true}
-				/>
+				<StatusBar style={effectiveTheme === 'dark' ? 'light' : 'dark'} />
 			</View>
 		</ThemeProvider>
 	);

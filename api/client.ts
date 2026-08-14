@@ -1,7 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios, { AxiosError, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
-import { Platform } from 'react-native';
 import Constants from 'expo-constants';
+import { router } from 'expo-router';
+import { Platform } from 'react-native';
 
 // In a real app, this should be an environment variable. Using localhost for development.
 // Ensure you replace this with your actual backend URL (e.g., your network IP for React Native testing).
@@ -19,7 +20,7 @@ if (Platform.OS === 'android') {
   }
 }
 
-console.log('Resolved API Base URL for platform:', Platform.OS, '->', API_BASE_URL);
+// console.log('Resolved API Base URL for platform:', Platform.OS, '->', API_BASE_URL);
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
@@ -63,6 +64,7 @@ apiClient.interceptors.response.use(
       try {
         const { useAuthStore } = require('@/store/auth-store');
         useAuthStore.getState().logout();
+        router.replace('/(auth)/login');
       } catch (e) {
         console.error('Failed to logout dynamically', e);
       }

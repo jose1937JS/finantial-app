@@ -1,7 +1,6 @@
 import { isAndroid } from '@/utils';
 import { formatCurrency } from '@/utils/format';
 import Icon from '@expo/vector-icons/MaterialCommunityIcons';
-import React from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 
 interface BalanceHeaderProps {
@@ -47,7 +46,7 @@ export function BalanceHeader({
                 {/* Income & Expenses */}
                 <View className="flex-row justify-between">
                     {/* Income */}
-                    <View className="flex-1 flex-row items-center bg-white/5 dark:bg-dark-surface rounded-2xl p-4 mr-2">
+                    <View className="flex-1 flex-row items-center bg-white/10 dark:bg-dark-surface rounded-2xl p-4 mr-2">
                         <View className="w-8 h-8 rounded-full bg-white/30 items-center justify-center mr-3">
                             <Icon name="arrow-down" size={22} color="white" />
                         </View>
@@ -62,7 +61,7 @@ export function BalanceHeader({
                     </View>
 
                     {/* Expenses */}
-                    <View className="flex-1 flex-row items-center bg-white/5 dark:bg-dark-surface rounded-2xl p-4 ml-2">
+                    <View className="flex-1 flex-row items-center bg-white/10 dark:bg-dark-surface rounded-2xl p-4 ml-2">
                         <View className="w-8 h-8 rounded-full bg-white/30 items-center justify-center mr-3">
                             <Icon name="arrow-up" size={22} color="white" />
                         </View>

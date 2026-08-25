@@ -1,7 +1,7 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Link, useRouter } from 'expo-router';
-import React, { useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, Text, View } from 'react-native';
+import { useState } from 'react';
+import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/ui/button';
@@ -57,6 +57,13 @@ export default function RegisterScreen() {
                     keyboardShouldPersistTaps="handled"
                     className="px-6"
                 >
+                    {/* Back button */}
+                    <Link href="/login" asChild>
+                        <Pressable className="flex-row items-center mb-8">
+                            <MaterialCommunityIcons name="arrow-left" size={24} color="#6b7280" />
+                            <Text className="text-gray-500 ml-2">Volver</Text>
+                        </Pressable>
+                    </Link>
                     {/* Header */}
                     <View className="items-center mt-8 mb-8">
                         <View className="w-16 h-16 rounded-full bg-primary-500 items-center justify-center mb-4">

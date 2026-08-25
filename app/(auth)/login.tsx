@@ -1,11 +1,12 @@
 import { InfoModal } from '@/components/ui/info-modal';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Link, useRouter } from 'expo-router';
-import React, { useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, Text, View } from 'react-native';
+import { useState } from 'react';
+import { KeyboardAvoidingView, Platform, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { useAuthStore } from '@/store/auth-store';
 import { validateEmail, validatePassword } from '@/utils/validation';
@@ -47,82 +48,80 @@ export default function LoginScreen() {
     };
 
     return (
-        <SafeAreaView className="flex-1 bg-light-bg dark:bg-dark-bg">
+        <SafeAreaView className="flex-1 bg-primary dark:bg-dark-bg" edges={['top']}>
             <KeyboardAvoidingView
+                className='flex-1'
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                className="flex-1"
             >
-                <ScrollView
-                    contentContainerStyle={{ flexGrow: 1 }}
-                    keyboardShouldPersistTaps="handled"
-                    className="px-6"
-                >
-                    {/* Header */}
-                    <View className="items-center mt-12 mb-10">
-                        <View className="w-20 h-20 rounded-full bg-primary-500 items-center justify-center mb-6">
-                            <MaterialCommunityIcons name="wallet" size={40} color="#fff" />
+                <View className='flex-1 justify-end'>
+                    <Card variant="elevated" className='p-7 py-10'>
+                        {/* Header */}
+                        <View className="items-center mt-4 mb-10">
+                            <View className="w-20 h-20 rounded-full bg-primary-500 items-center justify-center mb-6">
+                                <MaterialCommunityIcons name="wallet" size={40} color="#fff" />
+                            </View>
+                            <Text className="text-3xl font-bold text-gray-700 dark:text-white mb-2">
+                                Bienvenido
+                            </Text>
+                            <Text className="text-base text-gray-500 dark:text-gray-400 text-center">
+                                Inicia sesión para gestionar tus finanzas
+                            </Text>
                         </View>
-                        <Text className="text-3xl font-bold text-gray-700 dark:text-white mb-2">
-                            Bienvenido
-                        </Text>
-                        <Text className="text-base text-gray-500 dark:text-gray-400 text-center">
-                            Inicia sesión para gestionar tus finanzas
-                        </Text>
-                    </View>
+                        
+                        {/* Form */}
+                        <View >
+                            <Input
+                                label="Correo electrónico"
+                                placeholder="tu@email.com"
+                                leftIcon="email-outline"
+                                value={email}
+                                onChangeText={setEmail}
+                                keyboardType="email-address"
+                                autoCapitalize="none"
+                                autoComplete="email"
+                                error={errors.email}
+                            />
 
-                    {/* Form */}
-                    <View className="flex-1">
-                        <Input
-                            label="Correo electrónico"
-                            placeholder="tu@email.com"
-                            leftIcon="email-outline"
-                            value={email}
-                            onChangeText={setEmail}
-                            keyboardType="email-address"
-                            autoCapitalize="none"
-                            autoComplete="email"
-                            error={errors.email}
-                        />
+                            <Input
+                                label="Contraseña"
+                                placeholder="••••••••"
+                                leftIcon="lock-outline"
+                                value={password}
+                                onChangeText={setPassword}
+                                secureTextEntry
+                                autoComplete="password"
+                                error={errors.password}
+                            />
 
-                        <Input
-                            label="Contraseña"
-                            placeholder="••••••••"
-                            leftIcon="lock-outline"
-                            value={password}
-                            onChangeText={setPassword}
-                            secureTextEntry
-                            autoComplete="password"
-                            error={errors.password}
-                        />
+                            <Link href="/forgot-password" asChild>
+                                <Text className="text-right text-primary-500 font-medium mb-10">
+                                    ¿Olvidaste tu contraseña?
+                                </Text>
+                            </Link>
 
-                        <Link href="/forgot-password" asChild>
-                            <Text className="text-right text-primary-500 font-medium mb-6">
-                                ¿Olvidaste tu contraseña?
+                            <Button
+                                onPress={handleLogin}
+                                isLoading={isLoading}
+                                className="mb-4"
+                                size="lg"
+                            >
+                                Iniciar Sesión
+                            </Button>
+                        </View>
+
+                        {/* Footer */}
+                        {/* <View className="flex-row justify-center py-8">
+                            <Text className="text-gray-500 dark:text-gray-400">
+                                ¿No tienes cuenta?{' '}
                             </Text>
-                        </Link>
-
-                        <Button
-                            onPress={handleLogin}
-                            isLoading={isLoading}
-                            className="mb-4"
-                            size="lg"
-                        >
-                            Iniciar Sesión
-                        </Button>
-                    </View>
-
-                    {/* Footer */}
-                    <View className="flex-row justify-center py-8">
-                        <Text className="text-gray-500 dark:text-gray-400">
-                            ¿No tienes cuenta?{' '}
-                        </Text>
-                        <Link href="/register" asChild>
-                            <Text className="text-primary-500 font-semibold">
-                                Regístrate
-                            </Text>
-                        </Link>
-                    </View>
-                </ScrollView>
+                            <Link href="/register" asChild>
+                                <Text className="text-primary-500 font-semibold">
+                                    Regístrate
+                                </Text>
+                            </Link>
+                        </View> */}
+                    </Card>
+                </View>
             </KeyboardAvoidingView>
 
             <InfoModal

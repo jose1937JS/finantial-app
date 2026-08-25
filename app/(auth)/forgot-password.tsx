@@ -1,11 +1,12 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Link, useRouter } from 'expo-router';
-import React, { useState } from 'react';
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, View } from 'react-native';
+import { useState } from 'react';
+import { KeyboardAvoidingView, Platform, Pressable, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AuthService } from '@/api/services/auth.service';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { validateEmail } from '@/utils/validation';
@@ -79,61 +80,60 @@ export default function ForgotPasswordScreen() {
     }
 
     return (
-        <SafeAreaView className="flex-1 bg-light-bg dark:bg-dark-bg">
+        <SafeAreaView className="flex-1 bg-primary dark:bg-dark-bg" edges={['top']}>
             <KeyboardAvoidingView
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                 className="flex-1"
             >
-                <ScrollView
-                    contentContainerStyle={{ flexGrow: 1 }}
-                    keyboardShouldPersistTaps="handled"
-                    className="px-6"
-                >
+                <View className='flex-1'>
                     {/* Back button */}
                     <Link href="/login" asChild>
-                        <Pressable className="flex-row items-center mt-4 mb-8">
-                            <MaterialCommunityIcons name="arrow-left" size={24} color="#6b7280" />
-                            <Text className="text-gray-500 ml-2">Volver</Text>
+                        <Pressable className="flex-row items-center mt-4 ml-2">
+                            <MaterialCommunityIcons name="arrow-left" size={24} color="#ffffffff" />
+                            <Text className="text-white ml-2">Volver</Text>
                         </Pressable>
                     </Link>
+                    
+                    <View className='flex-1 justify-end'>
+                        <Card variant="elevated" className='p-6 py-10'>
+                            <View className="items-center mb-10">
+                                <View className="w-20 h-20 rounded-full bg-primary-100 dark:bg-primary-900/30 items-center justify-center mb-6">
+                                    <MaterialCommunityIcons name="lock-reset" size={40} color={primaryColor} />
+                                </View>
+                                <Text className="text-2xl font-bold text-gray-700 dark:text-white mb-2">
+                                    ¿Olvidaste tu contraseña?
+                                </Text>
+                                <Text className="text-base text-gray-500 dark:text-gray-400 text-center px-4">
+                                    No te preocupes. Ingresa tu correo y te enviaremos instrucciones para recuperarla.
+                                </Text>
+                            </View>
 
-                    {/* Header */}
-                    <View className="items-center mb-10">
-                        <View className="w-20 h-20 rounded-full bg-primary-100 dark:bg-primary-900/30 items-center justify-center mb-6">
-                            <MaterialCommunityIcons name="lock-reset" size={40} color={primaryColor} />
-                        </View>
-                        <Text className="text-2xl font-bold text-gray-700 dark:text-white mb-2">
-                            ¿Olvidaste tu contraseña?
-                        </Text>
-                        <Text className="text-base text-gray-500 dark:text-gray-400 text-center px-4">
-                            No te preocupes. Ingresa tu correo y te enviaremos instrucciones para recuperarla.
-                        </Text>
+                            {/* Form */}
+                            <View>
+                                <Input
+                                    label="Correo electrónico"
+                                    placeholder="tu@email.com"
+                                    leftIcon="email-outline"
+                                    value={email}
+                                    onChangeText={setEmail}
+                                    keyboardType="email-address"
+                                    autoCapitalize="none"
+                                    autoComplete="email"
+                                    error={error}
+                                />
+
+                                <Button
+                                    onPress={handleResetPassword}
+                                    isLoading={isLoading}
+                                    className="mt-4"
+                                    size="lg"
+                                >
+                                    Enviar Instrucciones
+                                </Button>
+                            </View>
+                        </Card>
                     </View>
-
-                    {/* Form */}
-                    <View className="flex-1">
-                        <Input
-                            label="Correo electrónico"
-                            placeholder="tu@email.com"
-                            leftIcon="email-outline"
-                            value={email}
-                            onChangeText={setEmail}
-                            keyboardType="email-address"
-                            autoCapitalize="none"
-                            autoComplete="email"
-                            error={error}
-                        />
-
-                        <Button
-                            onPress={handleResetPassword}
-                            isLoading={isLoading}
-                            className="mt-4"
-                            size="lg"
-                        >
-                            Enviar Instrucciones
-                        </Button>
-                    </View>
-                </ScrollView>
+                </View>
             </KeyboardAvoidingView>
         </SafeAreaView>
     );
